@@ -1,4 +1,4 @@
-<!-- SOT-Login: Slice of Thanks look for the BD /login page. Version 1.0.0
+<!-- SOT-Login: Slice of Thanks look for the BD /login page. Version 1.1.0
      Place it in the /login page content ABOVE the BD Member Login Page widget.
      BD still does the login, reCAPTCHA, password reset and redirect. This widget only styles it,
      moves BD's form into the Slice of Thanks card, and adds the links around it. -->
@@ -34,6 +34,8 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 .sot-login-card form > a{display:inline-block;margin-top:12px}
 /* BD's own "Get Listed Today" link list; the footer below has the sign up link */
 .sot-login-card ul{display:none}
+.sot-login-card .sot-quiet{background:transparent;color:var(--sot-ink)}
+.sot-login-card p{margin:0 0 4px;color:var(--sot-muted)}
 .sot-login-card .alert{border:2px solid var(--sot-edge);border-radius:14px;padding:10px 14px;margin:0 0 12px;background:var(--sot-line);color:var(--sot-ink)}
 .sot-login-card .g-recaptcha{margin-top:16px}
 .sot-login-card .module,.sot-login-card .row,.sot-login-card .fpad-lg,.sot-login-card .member-login-container{width:auto!important;max-width:none;margin:0!important;padding:0!important;
@@ -52,22 +54,47 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 </div>
 <script>
 (function () {
+  var tries = 0;
+  function loggedIn() {
+    var parts = document.cookie.split(';');
+    for (var i = 0; i < parts.length; i++) {
+      var kv = parts[i].trim().split('=');
+      if (kv[0] === 'userid' && Number(kv[1]) > 0) { return true; }
+    }
+    return false;
+  }
+  function hideTitles(shell) {
+    var hs = document.querySelectorAll('h1');
+    for (var i = 0; i < hs.length; i++) {
+      if (!shell.contains(hs[i])) { hs[i].style.display = 'none'; }
+    }
+  }
   function place() {
     var shell = document.getElementById('sot-login');
     var slot = document.getElementById('sot-login-slot');
     if (!shell || !slot || slot.getAttribute('data-done')) { return; }
+    hideTitles(shell);
     var box = document.querySelector('.member-login-page-container');
     if (!box) {
       var pw = document.querySelector('input[type=password]');
       if (pw) { box = pw.closest('.module') || pw.closest('form'); }
     }
-    if (!box) { slot.style.display = 'none'; return; }
-    slot.appendChild(box);
-    slot.setAttribute('data-done', '1');
-    var hs = document.querySelectorAll('h1');
-    for (var i = 0; i < hs.length; i++) {
-      if (!shell.contains(hs[i])) { hs[i].style.display = 'none'; }
+    if (box) {
+      slot.appendChild(box);
+      slot.setAttribute('data-done', '1');
+      slot.style.display = '';
+      return;
     }
+    if (loggedIn()) {
+      var foot = shell.querySelector('.sot-login-foot'); if (foot) { foot.style.display = 'none'; }
+      slot.innerHTML = '<h2>You are logged in</h2><p>Your Kitchen is ready.</p><a class="btn" href="/kitchen">Go to the Kitchen</a><a class="btn sot-quiet" href="/logout">Log out</a>';
+      slot.setAttribute('data-done', '1');
+      slot.style.display = '';
+      return;
+    }
+    /* BD may add the form a moment later: keep looking for about 5 seconds */
+    slot.style.display = 'none';
+    if (tries++ < 20) { setTimeout(place, 250); }
   }
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', place); } else { place(); }
 })();

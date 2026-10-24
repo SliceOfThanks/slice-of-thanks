@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.4.2 =====
+/* ===== Slice of Thanks live layer v0.4.4 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -264,6 +264,13 @@ handleLogo = function (file) {
   const r = document.createElement('div'); r.className = 'field';
   r.innerHTML = '<label for="liveReply">Replies go to</label><input type="text" id="liveReply" maxlength="200" inputmode="email">';
   pb.closest('.field').after(f, r);
+  /* Log out ends the BD session; BD's /logout page does it */
+  if (LIVE.TOKEN) {
+    const lo = document.createElement('div'); lo.className = 'btn-row';
+    lo.innerHTML = '<button class="btn small" type="button" id="liveLogout">Log out</button>';
+    r.after(lo);
+    lo.querySelector('button').onclick = () => { store.set('draft', null); location.href = '/logout'; };
+  }
   let t = 0;
   const save = () => { clearTimeout(t); t = setTimeout(() => LIVE.call('/profile', { profile: { mailing_address: $('#liveAddrS').value.trim(), reply_to: $('#liveReply').value.trim() } }), 800); };
   $('#liveAddrS').addEventListener('input', save); $('#liveReply').addEventListener('input', save);

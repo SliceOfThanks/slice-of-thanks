@@ -9,8 +9,8 @@ import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
 import { pickProvider } from "./lib/mail/index.ts";
 
-const VERSION = "api-0.6.1";
-const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@6ee4e204b57bdb3c50150e9a5fe275383e9b22e9/brand";
+const VERSION = "api-0.6.2";
+const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@01ed0f0dd9a2749c966019b9d93740b7c228959c/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
 // BD's own domain. The www address redirects, and the redirect turns the API POST into a GET (405).

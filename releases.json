@@ -101,6 +101,12 @@
       "commit": "578ed1338d6f679742de95ab79149cc9256151ed",
       "date": "2026-10-24",
       "notes": "Plan changes go to BD upgrade page. Guests who build a pizza sign up on the free form at send and get their pizza back."
+    },
+    {
+      "version": "v0.6.0",
+      "commit": "01ed0f0dd9a2749c966019b9d93740b7c228959c",
+      "date": "2026-10-24",
+      "notes": "Full Potato scooter art in the email, Kitchen preview and recipient page. Sender logo hops with the bike. Mailing address optional (Slice of Thanks address by default). Failed sends say so."
     }
   ]
 }

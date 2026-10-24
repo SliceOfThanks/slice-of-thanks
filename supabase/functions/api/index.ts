@@ -8,8 +8,9 @@ import { buildEmail, SITE } from "./lib/email.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
 import { pickProvider } from "./lib/mail/index.ts";
+import { fillNote } from "./lib/merge.ts";
 
-const VERSION = "api-0.7.0";
+const VERSION = "api-0.8.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@08a8dc99a1c2fa71ebfbd7b8a9c1d0e5e7edae8a/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -104,8 +105,12 @@ async function deliver(sendId: string, pizzaImageUrl?: string) {
 async function createSend(memberId: string, envName: string, body: any, source: string, idem: string) {
   const sendId = crypto.randomUUID();
   const token = await recipientToken(env("LINK_SECRET"), sendId);
+  const recipient = body.recipient ?? {};
+  // Each person gets their own note: [first name], [last name], [role] and [company] are filled in here
+  const box = { ...(body.box ?? {}) };
+  if (typeof box.note === "string") box.note = fillNote(box.note, recipient).slice(0, 400);
   const payload = {
-    pizza: body.pizza ?? {}, box: body.box ?? {}, recipient: body.recipient ?? {}, consent: body.consent ?? null,
+    pizza: body.pizza ?? {}, box, recipient, consent: body.consent ?? null,
     send_type: body.send_type, special_delivery: !!body.special_delivery, scheduled_for: body.scheduled_for ?? null,
     is_test: !!body.is_test, source, label: typeof body.label === "string" ? body.label.slice(0, 120) : null,
   };
@@ -236,6 +241,16 @@ async function route(req: Request, path: string): Promise<Response> {
   }
   if (path === "/people/save" && req.method === "POST") {
     return json(req, await rpc("sot_save_contact", { p_member: memberId, p: body.person ?? {} }));
+  }
+  // Box presets: saved box setups (style, sticker, confetti, note, sign-off, button, gift). Limits per plan in app_settings preset_limits.
+  if (path === "/presets" && req.method === "GET") {
+    return json(req, { ok: true, ...(await rpc<Record<string, unknown>>("sot_presets", { p_member: memberId })) });
+  }
+  if (path === "/presets/save" && req.method === "POST") {
+    return json(req, await rpc("sot_save_preset", { p_member: memberId, p: body.preset ?? {} }));
+  }
+  if (path === "/presets/remove" && req.method === "POST") {
+    return json(req, await rpc("sot_remove_preset", { p_member: memberId, p_id: String(body.id ?? "") }));
   }
   // CSV list send: up to 50 rows per call. Each row becomes a queued send; the worker delivers them.
   if (path === "/send/bulk" && req.method === "POST") {

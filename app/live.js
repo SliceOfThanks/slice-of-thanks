@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.7.0 =====
+/* ===== Slice of Thanks live layer v0.8.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -80,6 +80,19 @@ function liveSendExtras() {
   lang.innerHTML = '<label for="liveLang">Their language</label><select id="liveLang"><option value="en">English</option><option value="es">Español</option></select>';
   sf.insertBefore(wrap, sf.children[1] || null);
   sf.insertBefore(lang, wrap.nextSibling);
+  const cr = document.createElement('div'); cr.className = 'two'; cr.id = 'liveCoRole';
+  cr.innerHTML = '<div class="field"><label for="liveCompany">Their company</label><input type="text" id="liveCompany" maxlength="120"></div>' +
+    '<div class="field"><label for="liveRole">Their role</label><input type="text" id="liveRole" maxlength="80"></div>';
+  sf.insertBefore(cr, wrap);
+  cr.querySelector('#liveCompany').addEventListener('input', e => { box.company = e.target.value; });
+  cr.querySelector('#liveRole').addEventListener('input', e => { box.role = e.target.value; });
+}
+/* Their company and role only matter when the note uses [company] or [role] */
+function showCoRole() {
+  const cr = $('#liveCoRole'); if (!cr) return;
+  const n = (box.note || '').toLowerCase(), co = n.indexOf('[company]') >= 0 || n.indexOf('{company}') >= 0, ro = n.indexOf('[role]') >= 0;
+  cr.hidden = !co && !ro; cr.children[0].hidden = !co; cr.children[1].hidden = !ro;
+  $('#liveCompany').value = box.company || ''; $('#liveRole').value = box.role || '';
 }
 
 /* --- A small sheet for terms, address and other prompts --- */
@@ -391,7 +404,7 @@ function buildPayload() {
   return {
     idem: (pizza.seed + '-' + box.contact + '-' + (box.to || '')).slice(0, 90),
     pizza: cleanPizza(pizza), box: b,
-    recipient: { name: box.to.trim(), email: box.contact.trim(), country: $('#liveCountry') ? $('#liveCountry').value.replace('OTHER', '') : '', locale: $('#liveLang') ? $('#liveLang').value : 'en' },
+    recipient: { name: box.to.trim(), email: box.contact.trim(), company: (box.company || '').trim(), role: (box.role || '').trim(), country: $('#liveCountry') ? $('#liveCountry').value.replace('OTHER', '') : '', locale: $('#liveLang') ? $('#liveLang').value : 'en' },
     consent: { basis: $('#liveBasis') ? $('#liveBasis').value : 'one_to_one', method: 'Selected in the Kitchen at send', note: box.meeting || '' },
     send_type: 'one_to_one', special_delivery: specialOn, image_data_url: img.length < 1900000 ? img : '',
     label: box.meeting ? 'After ' + box.meeting.toLowerCase() : 'Fresh pizza'
@@ -505,7 +518,7 @@ async function peopleSend(c, btn) {
   let r;
   try {
     r = await LIVE.call('/send', { idem: 'people-' + c.id + '-' + Date.now(), source: 'people', pizza: cleanPizza(p), box: boxPayload(b),
-      recipient: { name: c.name, email: c.contact, company: c.company, vegan: c.vegan, country, locale: 'en' }, consent, send_type: 'one_to_one',
+      recipient: { name: c.name, email: c.contact, company: c.company, role: c.role || '', vegan: c.vegan, country, locale: 'en' }, consent, send_type: 'one_to_one',
       label: qs.topic ? 'Follow-up: ' + qs.topic : 'Follow-up pizza', image_data_url: img.length < 1900000 ? img : '' });
   } catch (e) { r = { code: 'server_error' }; }
   btn.disabled = false; btn.textContent = label;
@@ -522,9 +535,9 @@ async function peopleSend(c, btn) {
     const n = $('#npName').value.trim(), em = $('#npContact').value.trim();
     if (!n) { $('#npName').focus(); toast('Add a name first.'); return; }
     if (em.indexOf('@') < 1) { $('#npContact').focus(); toast('Add their email address.'); return; }
-    const r = await LIVE.call('/people/save', { person: { name: n, email: em, company: $('#npCompany').value.trim(), vegan: $('#npVegan').checked } }).catch(() => null);
+    const r = await LIVE.call('/people/save', { person: { name: n, email: em, company: $('#npCompany').value.trim(), role: $('#npRole') ? $('#npRole').value.trim() : '', vegan: $('#npVegan').checked } }).catch(() => null);
     if (!r || !r.ok) { toast(r && r.code === 'bad_email' ? MSG.bad_email : MSG.server_error); return; }
-    ['#npName', '#npContact', '#npCompany'].forEach(sel => { $(sel).value = ''; }); $('#npVegan').checked = false; $('#addPerson').hidden = true;
+    ['#npName', '#npContact', '#npCompany', '#npRole'].forEach(sel => { if ($(sel)) $(sel).value = ''; }); $('#npVegan').checked = false; $('#addPerson').hidden = true;
     await loadPeople();
     const c = contacts.find(x => x.id === r.id); selContact = r.id; resetQs(c); renderPeople(); toast(n + ' added.');
   };
@@ -536,7 +549,7 @@ async function peopleSend(c, btn) {
   const card = $('#csvFile') && $('#csvFile').closest('.card');
   if (card) {
     const help = card.querySelector('small.muted');
-    if (help) help.textContent = 'Columns Slice of Thanks looks for: Name, Email, Company, Country (like US or CA), Permission (one_to_one, relationship or permission) and Vegan (yes or no). Extra columns are ignored. Up to 500 people per list.';
+    if (help) help.textContent = 'Columns Slice of Thanks looks for: Name (or First and Last), Email, Company, Role, Country (like US or CA), Permission (one_to_one, relationship or permission) and Vegan (yes or no). Extra columns are ignored. Up to 500 people per list.';
     const f = document.createElement('div'); f.className = 'two';
     f.innerHTML = '<div class="field"><label for="bulkCountry">Country for rows without one</label><select id="bulkCountry"></select></div>' +
       '<div class="field"><label for="bulkBasis">How you know them, for rows without a Permission column</label><select id="bulkBasis">' + BASIS_OPTIONS.replace('We just met and this is a one-to-one thank-you', 'We met one to one and this is a thank-you') + '</select></div>';
@@ -548,7 +561,7 @@ async function peopleSend(c, btn) {
   const d = $('#bulkDate');
   if (d) { d.type = 'datetime-local'; const t = new Date(Date.now() + 864e5); t.setHours(9, 0, 0, 0); d.value = new Date(t.getTime() - t.getTimezoneOffset() * 6e4).toISOString().slice(0, 16); }
   const ch = $('#copyHeader');
-  if (ch) ch.onclick = () => { const hdr = 'Name,Email,Company,Country,Permission,Vegan'; try { navigator.clipboard.writeText(hdr).then(() => toast('Column headers copied. Paste them into row 1 of your spreadsheet.'), () => toast('Headers: ' + hdr)); } catch (e) { toast('Headers: ' + hdr); } };
+  if (ch) ch.onclick = () => { const hdr = 'First,Last,Email,Company,Role,Country,Permission,Vegan'; try { navigator.clipboard.writeText(hdr).then(() => toast('Column headers copied. Paste them into row 1 of your spreadsheet.'), () => toast('Headers: ' + hdr)); } catch (e) { toast('Headers: ' + hdr); } };
 })();
 function prettyWhen(v) { const d = new Date(v); return isNaN(d) ? v : d.toLocaleString('en-US', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
 const _renderBulk = renderBulk;
@@ -565,11 +578,15 @@ loadList = function (txt) {
   const data = parseCSV(txt); if (data.length < 2) return;
   const h = data[0].map(x => x.trim().toLowerCase());
   const iC = h.findIndex(x => x.includes('country')), iP = h.findIndex(x => x.includes('permission') || x.includes('consent') || x === 'basis');
+  const iR = h.findIndex(x => x === 'role' || x.includes('title') || x.includes('position')), iF = h.findIndex(x => x.includes('first')), iL = h.findIndex(x => x.includes('last'));
   bulk.rows.forEach((r, i) => {
     const row = data[i + 1] || [];
     r.country = iC >= 0 ? (row[iC] || '').trim().toUpperCase().slice(0, 2) : '';
     const pv = iP >= 0 ? (row[iP] || '').trim().toLowerCase().split(' ').join('_').split('-').join('_') : '';
     r.basis = ['one_to_one', 'relationship', 'permission'].includes(pv) ? pv : '';
+    r.role = iR >= 0 ? (row[iR] || '').trim() : '';
+    if (iF >= 0) r.first = (row[iF] || '').trim();
+    if (iL >= 0) r.last = (row[iL] || '').trim();
     r.ok = !!r.name && r.contact.indexOf('@') > 0 && r.contact.indexOf('.', r.contact.indexOf('@')) > 0;
   });
   if (bulk.rows.length > 500) { bulk.rows = bulk.rows.slice(0, 500); toast('Lists can have up to 500 people. The first 500 were loaded.'); }
@@ -594,7 +611,7 @@ $('#bulkSend').onclick = async () => {
   const tally = { ok: 0 }; let stop = '';
   for (let i = 0; i < good.length && !stop; i += 50) {
     const rows = good.slice(i, i + 50).map((r, k) => ({ i: i + k, pizza: cleanPizza(bulkPizza(r)), box: boxPayload(bulkBox(r)),
-      recipient: { name: r.name, email: r.contact, company: r.company, vegan: r.vegan, country: r.country || country, locale: 'en' },
+      recipient: { name: r.name, email: r.contact, company: r.company, role: r.role || '', first_name: r.first || undefined, last_name: r.last || undefined, vegan: r.vegan, country: r.country || country, locale: 'en' },
       consent: { basis: r.basis || basis, method: 'CSV list upload' }, send_type: 'one_to_one', image: !!img && !r.vegan }));
     let res;
     try { res = await LIVE.call('/send/bulk', { batch, rows, scheduled_for: when, label: bulk.sticker + ' list', image_data_url: img.length < 1900000 ? img : '' }); } catch (e) { res = { code: 'server_error' }; }
@@ -617,13 +634,155 @@ $('#bulkSend').onclick = async () => {
   }
 };
 
+/* --- Role and first/last name for notes: People and CSV lists --- */
+const _personFromServer = personFromServer;
+personFromServer = function (x) { const c = _personFromServer(x); c.role = x.role || ''; return c; };
+const _qsBuild = qsBuild;
+qsBuild = function (c) { const r = _qsBuild(c); r.b.company = c.company; r.b.role = c.role; return r; };
+(function roleInPeople() {
+  const co = $('#npCompany'); if (!co || $('#npRole')) return;
+  const f = document.createElement('div'); f.className = 'field';
+  f.innerHTML = '<label for="npRole">Role</label><input type="text" id="npRole" maxlength="80" placeholder="Like Managing Partner">';
+  co.closest('.field').after(f);
+})();
+
+/* --- Box presets: saved box setups. A Slice 1, The Whole Pie 10, Pizza Party 20 (app_settings preset_limits). --- */
+let presets = [], presetLimit = 1, editingPreset = null;
+const PRESET_KEYS = ['style', 'sticker', 'confetti', 'tone', 'note', 'sign', 'linkLabel', 'link'];
+function presetData(bx) {
+  const d = {}; PRESET_KEYS.forEach(k => { if (bx[k] !== undefined && bx[k] !== null) d[k] = bx[k]; });
+  const rw = bx.reward || {}; if (rw.text || rw.code || rw.link) d.reward = { text: rw.text || '', code: rw.code || '', link: rw.link || '', exp: rw.exp || '' };
+  return d;
+}
+function applyPreset(pr) {
+  const d = pr.data || {};
+  PRESET_KEYS.forEach(k => { if (d[k] !== undefined) box[k] = d[k]; });
+  box.reward = Object.assign({ text: '', code: '', link: '', exp: '' }, d.reward || {});
+  renderBox(); showCoRole();
+}
+async function loadPresets() {
+  if (!account || !LIVE.TOKEN) return;
+  const r = await LIVE.call('/presets').catch(() => null);
+  if (!r || !r.ok) return;
+  presets = r.presets || []; presetLimit = r.limit || 1;
+  renderPresetPicker();
+  if (!$('#view-settings').hidden) renderPresetCard();
+}
+function presetSummary(pr) {
+  const d = pr.data || {}; const st = (typeof STYLES !== 'undefined' && STYLES[d.style]) || d.style || 'Box';
+  return [st, d.sticker, d.note ? '"' + d.note.slice(0, 40) + (d.note.length > 40 ? '..."' : '"') : ''].filter(Boolean).join(' · ');
+}
+function askPresetName(title, value, then) {
+  const p = document.createElement('div'); p.className = 'field';
+  p.innerHTML = '<label for="presetName">Preset name</label><input type="text" id="presetName" maxlength="60" placeholder="Like Client thank-you">';
+  p.querySelector('input').value = value || '';
+  liveSheet(title, p, [{ label: 'Save', primary: true, run: () => { const v = $('#presetName').value.trim(); if (!v) { toast('Give the preset a name.'); return; } closeLiveSheet(); then(v); } }]);
+  setTimeout(() => { const i = $('#presetName'); if (i) i.focus(); }, 50);
+}
+function presetFull() {
+  const names = { free: 'A Slice', pro: 'The Whole Pie', team: 'Pizza Party' }, plan = (LIVE.session && LIVE.session.plan) || 'free';
+  const p = document.createElement('p'); p.className = 'muted';
+  p.textContent = names[plan] + ' holds ' + presetLimit + ' preset' + (presetLimit === 1 ? '' : 's') + ', and they are all in use. Change or remove one in Settings' + (plan === 'free' ? ', or upgrade to The Whole Pie for 10.' : plan === 'pro' ? ', or move to Pizza Party for 20.' : '.');
+  liveSheet('Your presets are full', p, [{ label: 'Open Settings', primary: true, run: () => { closeLiveSheet(); show('settings'); } }].concat(plan === 'free' ? [{ label: 'See plans', run: () => { closeLiveSheet(); upgrade('general'); } }] : []));
+}
+async function savePreset(id, name, data) {
+  const r = await LIVE.call('/presets/save', { preset: { id: id || undefined, name, data } }).catch(() => null);
+  if (r && r.code === 'preset_limit') { presetLimit = r.limit || presetLimit; presetFull(); return false; }
+  if (!r || !r.ok) { toast(MSG.server_error); return false; }
+  await loadPresets(); return true;
+}
+/* Picker at the top of the box step */
+function renderPresetPicker() {
+  const panel = SOTR.querySelector('.panel[data-step="4"]'); if (!panel) return;
+  let row = $('#presetRow');
+  if (!row) {
+    row = document.createElement('div'); row.id = 'presetRow'; row.className = 'field';
+    row.innerHTML = '<label for="presetSel">Start from a preset</label><div class="inline"><select id="presetSel"></select><button class="btn small" type="button" id="presetSave">Save as preset</button></div>';
+    panel.querySelector('h2').after(row);
+    row.querySelector('#presetSel').addEventListener('change', e => {
+      const pr = presets.find(x => x.id === e.target.value); if (!pr) return;
+      applyPreset(pr); toast('Loaded "' + pr.name + '".'); e.target.value = '';
+    });
+    row.querySelector('#presetSave').onclick = () => {
+      if (presets.length >= presetLimit) { presetFull(); return; }
+      askPresetName('Save these box choices', '', async name => { if (await savePreset(null, name, presetData(box))) toast('Saved "' + name + '". Load it any time from the top of this step.'); });
+    };
+    const ban = document.createElement('div'); ban.id = 'presetBanner'; ban.className = 'card'; ban.hidden = true;
+    ban.innerHTML = '<p class="eyebrow">Editing a preset</p><h3 id="presetBannerName"></h3><p class="muted" style="font-size:.9rem">Set the box the way you want it, then save. Your pizza and recipient are not part of a preset.</p>' +
+      '<div class="btn-row"><button class="btn primary small" type="button" id="presetDone">Save preset</button><button class="btn ghost small" type="button" id="presetCancel">Cancel</button></div>';
+    panel.querySelector('h2').after(ban);
+    ban.querySelector('#presetDone').onclick = async () => {
+      const ep = editingPreset; if (!ep) return;
+      if (await savePreset(ep.id, ep.name, presetData(box))) { editingPreset = null; toast('Saved "' + ep.name + '".'); show('settings'); }
+    };
+    ban.querySelector('#presetCancel').onclick = () => { editingPreset = null; show('settings'); };
+  }
+  const sel = row.querySelector('#presetSel');
+  sel.innerHTML = '<option value="">' + (presets.length ? 'Choose a preset' : 'No presets yet') + '</option>';
+  presets.forEach(pr => { const o = document.createElement('option'); o.value = pr.id; o.textContent = pr.name; sel.appendChild(o); });
+  sel.disabled = !presets.length;
+  row.hidden = !account || !!editingPreset;
+  $('#presetBanner').hidden = !editingPreset;
+  if (editingPreset) $('#presetBannerName').textContent = editingPreset.name;
+}
+function editPreset(pr) {
+  editingPreset = pr ? { id: pr.id, name: pr.name } : null;
+  currentMeetingId = null; editingSignature = false;
+  box = boxFromProfile(null);
+  if (pr) PRESET_KEYS.forEach(k => { if (pr.data && pr.data[k] !== undefined) box[k] = pr.data[k]; });
+  if (pr && pr.data && pr.data.reward) box.reward = Object.assign({ text: '', code: '', link: '', exp: '' }, pr.data.reward);
+  step = 4; saidStep = 4; show('make'); renderStep();
+}
+const _renderStep = renderStep;
+renderStep = function () {
+  _renderStep();
+  const ep = !!editingPreset && step === 4;
+  if (ep) { $('#makeFor').textContent = 'Editing preset: ' + editingPreset.name; $('#next').hidden = true; $('#back').style.visibility = 'hidden'; }
+  renderPresetPicker();
+  if (step === 5) showCoRole();
+};
+const _show = show;
+show = function (v) { if (v !== 'make') editingPreset = null; _show(v); };
+/* Settings: manage presets */
+function renderPresetCard() {
+  if (!account) return;
+  let card = $('#presetCard');
+  if (!card) {
+    const sigCard = $('#editSig') && $('#editSig').closest('.card'); if (!sigCard) return;
+    card = document.createElement('div'); card.className = 'card'; card.id = 'presetCard';
+    card.innerHTML = '<h2>Box presets</h2><p class="muted" style="font-size:.9rem">Save box choices you use often: style, sticker, confetti, note, sign-off, button and gift. Load one at the top of the box step instead of setting everything again.</p><p class="muted" id="presetCount"></p><ul class="feed" id="presetList"></ul><div class="btn-row"><button class="btn small primary" type="button" id="presetNew">New preset</button></div>';
+    sigCard.after(card);
+    card.querySelector('#presetNew').onclick = () => {
+      if (presets.length >= presetLimit) { presetFull(); return; }
+      askPresetName('Name your new preset', '', async name => {
+        if (await savePreset(null, name, presetData(boxFromProfile(null)))) { const pr = presets.find(x => x.name === name); editPreset(pr || { id: null, name, data: {} }); }
+      });
+    };
+  }
+  $('#presetCount').textContent = presets.length + ' of ' + presetLimit + ' used.';
+  const ul = $('#presetList'); ul.innerHTML = '';
+  if (!presets.length) { const li = document.createElement('li'); li.className = 'muted'; li.textContent = 'No presets yet.'; ul.appendChild(li); }
+  presets.forEach(pr => {
+    const li = document.createElement('li'); li.style.cssText = 'display:flex;flex-direction:column;gap:6px';
+    const t = document.createElement('div'); t.innerHTML = '<b></b><br><span class="muted" style="font-size:.85rem"></span>';
+    t.querySelector('b').textContent = pr.name; t.querySelector('span').textContent = presetSummary(pr);
+    const row = document.createElement('div'); row.className = 'btn-row';
+    [['Edit', () => editPreset(pr)], ['Rename', () => askPresetName('Rename preset', pr.name, async name => { if (await savePreset(pr.id, name)) toast('Renamed.'); })],
+      ['Remove', () => liveSheet('Remove "' + pr.name + '"?', null, [{ label: 'Remove', primary: true, run: async () => { closeLiveSheet(); const r = await LIVE.call('/presets/remove', { id: pr.id }).catch(() => null); if (r && r.ok) { toast('Removed.'); loadPresets(); } else toast(MSG.server_error); } }])]]
+      .forEach(([l, fn]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small' + (l === 'Remove' ? ' ghost' : ''); b.textContent = l; b.onclick = fn; row.appendChild(b); });
+    li.append(t, row); ul.appendChild(li);
+  });
+}
+const _renderSettingsP = renderSettings;
+renderSettings = function () { _renderSettingsP(); renderPresetCard(); };
+
 /* --- Start: sign in with the BD pass, restore a guest draft --- */
 (async function liveStart() {
   if (!LIVE.TOKEN) { account = null; refreshPlan(true); return; }
   const s = await LIVE.call('/session');
   if (!s || !s.member_id) { account = null; refreshPlan(true); return; }
   applySession(s);
-  loadPeople();
+  loadPeople(); loadPresets();
   if (s.needs_terms) setTimeout(() => askTerms(() => {}), 600);
   const d = store.get('draft', null);
   if (d && d.pizza && Date.now() - (d.at || 0) < 7 * 864e5) {

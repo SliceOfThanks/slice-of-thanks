@@ -129,6 +129,16 @@ textarea{min-height:92px;resize:vertical}
 .count{font-family:var(--mono);font-size:.85rem;color:var(--muted)}
 /* pizza box (a physical object, fixed colors in both themes) */
 .box-preview{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* Box step: the preview floats at the top while the member edits, until they unpin it */
+.box-float{position:relative}
+.box-float.pinned{position:sticky;top:8px;z-index:6;background:var(--bg);padding:6px 0 8px;margin-top:-6px}
+.box-float.pinned .box-preview{grid-template-columns:1fr 1fr}
+.box-float.pinned .lid,.box-float.pinned .inside{min-height:108px;padding:10px 12px}
+.box-float.pinned .inside .hand{font-size:.95rem;max-height:96px;overflow:auto}
+.box-pin{position:absolute;top:-4px;right:-6px;z-index:7;min-width:32px;height:32px;padding:0 10px;border-radius:999px;border:2.5px solid var(--edge);background:var(--surface);color:var(--ink);font:800 .8rem var(--body);cursor:pointer;box-shadow:2px 2px 0 var(--edge)}
+.box-float.pinned .box-pin{top:0;right:-4px}
+.tokens{margin-top:6px}
+.tokens .chip{font-size:.8rem;padding:5px 10px}
 @media (max-width:420px){.box-preview{grid-template-columns:1fr}}
 .lid{background:#c99b6b;color:#3a2616;border-radius:12px;min-height:150px;padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden;border:2.5px solid #3E2416;box-shadow:4px 4px 0 #3E2416}
 .lid::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 2px,transparent 2px 7px);pointer-events:none}
@@ -528,9 +538,12 @@ body.is-free .pro-tag{display:inline-block}
 
     <div class="panel" data-step="4" hidden>
       <h2>Box it up</h2>
-      <div class="box-preview">
-        <div class="lid" id="lidPreview"><div class="lid-logo" id="lidLogo"></div><div class="lid-biz" id="lidBiz"></div><div class="lid-sticker" id="lidSticker"></div><div class="lid-vegan" hidden>🌱 Vegan</div></div>
-        <div class="inside"><p class="eyebrow" style="color:#7a5a3c">Inside the lid</p><p class="hand" id="notePreview"></p><p class="hand sign" id="signPreview"></p></div>
+      <div class="box-float" id="boxFloat">
+        <button class="box-pin" id="boxPin" type="button"></button>
+        <div class="box-preview">
+          <div class="lid" id="lidPreview"><div class="lid-logo" id="lidLogo"></div><div class="lid-biz" id="lidBiz"></div><div class="lid-sticker" id="lidSticker"></div><div class="lid-vegan" hidden>🌱 Vegan</div></div>
+          <div class="inside"><p class="eyebrow" style="color:#7a5a3c">Inside the lid</p><p class="hand" id="notePreview"></p><p class="hand sign" id="signPreview"></p></div>
+        </div>
       </div>
       <div class="field">
         <label>Your logo on the box<span class="pro-tag">Pro</span></label>
@@ -540,7 +553,7 @@ body.is-free .pro-tag{display:inline-block}
       <div class="field"><label>Box style</label><div class="chips" id="styleChips"></div></div>
       <div class="field"><label for="stickerSel">Occasion sticker</label><select id="stickerSel"></select></div>
       <div class="field"><label>Confetti when they open the box</label><div class="chips" id="confettiChips"></div><small>Tap one to see it.</small></div>
-      <div class="field"><label for="noteText">Your note</label><textarea id="noteText" maxlength="280"></textarea></div>
+      <div class="field"><label for="noteText">Your note</label><textarea id="noteText" maxlength="280"></textarea><div class="chips tokens" data-for="noteText" aria-label="Add a detail that changes for each person"></div><small>Tap a detail to add it. Each person gets their own.</small></div>
       <div class="field"><label for="signText">Sign-off</label><input type="text" id="signText" maxlength="40"></div>
       <div class="field"><label>Tone of Gerald's review</label><div class="chips" id="toneChips"></div></div>
       <div class="two">
@@ -704,7 +717,7 @@ body.is-free .pro-tag{display:inline-block}
       <div class="field"><label for="bulkStickerSel">Occasion sticker</label><select id="bulkStickerSel"></select></div>
       <div class="field"><label>Confetti when they open the box</label><div class="chips" id="bulkConfetti"></div></div>
       <div class="field"><label>Box style</label><div class="chips" id="bulkStyle"></div></div>
-      <div class="field"><label for="bulkNote">Note inside the lid</label><textarea id="bulkNote" maxlength="280"></textarea><small>Use {first} for their first name and {company} for their company.</small></div>
+      <div class="field"><label for="bulkNote">Note inside the lid</label><textarea id="bulkNote" maxlength="280"></textarea><div class="chips tokens" data-for="bulkNote" aria-label="Add a detail that changes for each person"></div><small>Tap a detail to add it. Each person gets their own.</small></div>
       <div class="field"><label for="bulkSign">Sign-off</label><input type="text" id="bulkSign" maxlength="40"></div>
       <p class="eyebrow" id="bulkPreviewLabel">Preview</p>
       <div class="box-preview">
@@ -773,7 +786,7 @@ body.is-free .pro-tag{display:inline-block}
       <div class="field"><label>Logo<span class="pro-tag">Pro</span></label><div class="upload"><span class="thumb" id="logoThumb2">None</span><label class="btn small" for="logoFile2">Upload logo</label><input type="file" id="logoFile2" accept="image/*"></div></div>
       <div class="field"><label>Brand colors<span class="pro-tag">Pro</span></label><div class="upload"><input type="color" id="brand1" value="#1f4e79" aria-label="Brand color 1"><input type="color" id="brand2" value="#f1ad2d" aria-label="Brand color 2"><small class="muted">Used for your box and brand color confetti.</small></div></div>
       <div class="field"><label for="pBiz">Business name</label><input type="text" id="pBiz" maxlength="40"></div>
-      <div class="field"><label for="pNote">Default thank-you note</label><textarea id="pNote" maxlength="280"></textarea></div>
+      <div class="field"><label for="pNote">Default thank-you note</label><textarea id="pNote" maxlength="280"></textarea><div class="chips tokens" data-for="pNote" aria-label="Add a detail that changes for each person"></div><small>Tap a detail to add it. Each person gets their own.</small></div>
       <div class="two">
         <div class="field"><label for="pLinkLabel">Next-step button<span class="pro-tag">Pro</span></label><input type="text" id="pLinkLabel" maxlength="30"></div>
         <div class="field"><label for="pLink">Button link</label><input type="url" id="pLink"></div>
@@ -907,6 +920,20 @@ function hex(h){h=h.replace('#','');return[0,2,4].map(i=>parseInt(h.slice(i,i+2)
 function mix(a,b,t){const A=hex(a),B=hex(b);return'rgb('+A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')+')'}
 const ease=t=>1-Math.pow(1-t,3);
 function first(n){return (n||'there').trim().split(/\s+/)[0]}
+/* Details that change for each person in a note: [first name] [last name] [role] [company]. {first} and {company} still work.
+   A detail with no value is dropped so the note still reads well. */
+const NOTE_TOKENS=[['[first name]','First name'],['[last name]','Last name'],['[role]','Role'],['[company]','Company']];
+function personParts(o){o=o||{};const n=(o.name||'').trim().split(/\s+/).filter(Boolean);
+ return{first:(o.first||n[0]||'').trim(),last:(o.last||n.slice(1).join(' ')||'').trim(),role:(o.role||'').trim(),company:(o.company||'').trim()}}
+function fillNote(t,o){if(!t)return'';const v=personParts(o);
+ const map={'[first name]':v.first,'[last name]':v.last,'[role]':v.role,'[company]':v.company,'{first}':v.first,'{company}':v.company||'your team'};
+ let out=t;Object.keys(map).forEach(k=>{const re=new RegExp(k.replace(/[[\]{}]/g,c=>'\\'+c),'gi');out=out.replace(re,map[k]||'\u0000')});
+ return out.replace(/ ?\u0000/g,'').replace(/ +([,.!?])/g,'$1').replace(/  +/g,' ').trim()}
+function hasGreeting(t){return /^\s*(hi|hello|hey|dear|hola|good (morning|afternoon|evening))\b/i.test(t||'')}
+function tokenChips(){document.querySelectorAll('.tokens').forEach(w=>{if(w.childElementCount)return;const ta=$('#'+w.dataset.for);
+ NOTE_TOKENS.forEach(([tok,lab])=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent='+ '+lab;b.title='Adds '+tok;
+  b.onclick=()=>{const a=ta.selectionStart??ta.value.length,z=ta.selectionEnd??a,pre=ta.value.slice(0,a),sp=pre&&!/\s$/.test(pre)?' ':'';
+   ta.value=pre+sp+tok+ta.value.slice(z);const pos=(pre+sp+tok).length;ta.focus();ta.setSelectionRange(pos,pos);ta.dispatchEvent(new Event('input',{bubbles:true}))};w.appendChild(b)})})}
 function slug(s){return (s||'pizza').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,24)||'pizza'}
 let toastTimer;
 let viewAs=store.get('viewAs','free');
@@ -1340,7 +1367,10 @@ function suggestName(){
 function renderLid(el,logoEl,bizEl,stEl,b,vg){el.dataset.style=b.style;let lsp=el.querySelector('.lid-sponsor');if(b.sponsor){if(!lsp){lsp=document.createElement('div');lsp.className='lid-sponsor';el.appendChild(lsp)}lsp.textContent='Presented by '+b.sponsor.name;lsp.hidden=false}else if(lsp)lsp.hidden=true;logoEl.innerHTML='';el.querySelector('.lid-vegan').hidden=!vg;
  if(profile.logo&&isPro()){const i=document.createElement('img');i.src=profile.logo;i.alt=profile.business+' logo';logoEl.appendChild(i)}
  bizEl.textContent=profile.business;stEl.textContent=b.sticker}
-function renderBoxPreview(){renderLid($('#lidPreview'),$('#lidLogo'),$('#lidBiz'),$('#lidSticker'),box,pizza.vegan);$('#notePreview').textContent=box.note;$('#signPreview').textContent=box.sign}
+function renderBoxPreview(){renderLid($('#lidPreview'),$('#lidLogo'),$('#lidBiz'),$('#lidSticker'),box,pizza.vegan);$('#notePreview').textContent=box.to?fillNote(box.note,{name:box.to,company:box.company,role:box.role}):box.note;$('#signPreview').textContent=box.sign}
+function renderBoxPin(){const pinned=store.get('boxPinned',true),f=$('#boxFloat'),b=$('#boxPin');f.classList.toggle('pinned',pinned);
+ b.textContent=pinned?'\u2715':'Pin';b.setAttribute('aria-label',pinned?'Stop the box preview from following you':'Keep the box preview on screen while you edit');b.title=b.getAttribute('aria-label')}
+$('#boxPin').onclick=()=>{store.set('boxPinned',!store.get('boxPinned',true));renderBoxPin();if(!store.get('boxPinned',true))toast('The preview stays at the top. Tap Pin to bring it back.')};
 function renderThumbs(){['#logoThumb','#logoThumb2','#logoThumb3'].forEach(s=>{const t=$(s);t.innerHTML='';if(profile.logo){const i=document.createElement('img');i.src=profile.logo;i.alt='';t.appendChild(i)}else t.textContent='None'})}
 function renderBox(){
  if(!isPro()&&PRO_STYLES.includes(box.style))box.style='kraft';if(!isPro()&&PRO_CONF.includes(box.confetti))box.confetti='classic';
@@ -1349,7 +1379,7 @@ function renderBox(){
  box.confetti=okConf(box.confetti);makeChips($('#confettiChips'),seasonConfetti(),()=>box.confetti,v=>{box.confetti=v;burst(v)},{locked:v=>!isPro()&&PRO_CONF.includes(v),onLocked:v=>{burst(v);upgrade('confetti')}});
  makeChips($('#toneChips'),[['playful','Playful'],['polished','Polished']],()=>box.tone,v=>box.tone=v);
  $('#bizName').value=profile.business;$('#noteText').value=box.note;$('#signText').value=box.sign;$('#linkLabel').value=box.linkLabel;$('#linkUrl').value=box.link;const rw=box.reward||{};$('#rwText').value=rw.text||'';$('#rwCode').value=rw.code||'';$('#rwLink').value=rw.link||'';$('#rwExp').value=rw.exp||'';
- renderThumbs();renderBoxPreview()}
+ renderThumbs();renderBoxPreview();renderBoxPin();tokenChips()}
 $('#bizName').addEventListener('input',e=>{profile.business=e.target.value;saveProfile();renderBoxPreview()});
 $('#noteText').addEventListener('input',e=>{box.note=e.target.value;renderBoxPreview()});
 $('#signText').addEventListener('input',e=>{box.sign=e.target.value;renderBoxPreview()});
@@ -1426,7 +1456,7 @@ function openRecipient(p,b){
  $('#rs1').hidden=false;$('#rs2').hidden=true;$('#rbox').classList.remove('open');$('#rOpen').textContent='Open the box';
  const sc=$('.scooter');sc.style.animation='none';void sc.offsetWidth;sc.style.animation='';
  $('#rFrom').textContent=profile.name+(profile.business?' from '+profile.business:'')+' sent you a pizza';
- renderLid($('#rLid'),$('#rLogo'),$('#rBiz'),$('#rSticker'),b,p.vegan);const sl=$('#rScootLogo');sl.innerHTML='';if(profile.logo&&isPro()){const li=document.createElement('img');li.src=profile.logo;li.alt=(profile.business||'Sender')+' logo';sl.appendChild(li)}else sl.textContent=profile.business||'🍕';$('#rVegan').hidden=!p.vegan;renderSponsorBlock(b);$('#rNote').textContent=(b.to?'Hi '+first(b.to)+', ':'')+b.note;$('#rSign').textContent=b.sign;
+ renderLid($('#rLid'),$('#rLogo'),$('#rBiz'),$('#rSticker'),b,p.vegan);const sl=$('#rScootLogo');sl.innerHTML='';if(profile.logo&&isPro()){const li=document.createElement('img');li.src=profile.logo;li.alt=(profile.business||'Sender')+' logo';sl.appendChild(li)}else sl.textContent=profile.business||'🍕';$('#rVegan').hidden=!p.vegan;renderSponsorBlock(b);const rn=b.to?fillNote(b.note,{name:b.to,company:b.company,role:b.role}):b.note;$('#rNote').textContent=(b.to&&!hasGreeting(rn)?'Hi '+first(b.to)+', ':'')+rn;$('#rSign').textContent=b.sign;
  const bitten=Math.random()<.35;startEating(p,bitten);
  $('#rPotato').textContent=bitten?'Delivered by Potato, Head of Delivery. She took one tiny bite on the way. Gerald has spoken to her.':'Delivered by Potato, Head of Delivery. She attempted to eat one slice in transit. She was stopped. Mostly.';$('#rPizza').alt=p.name||'A pizza';$('#rName').textContent=p.name||'A Mystery Pizza';
  const r=review(p,b);$('#rReview').textContent=r.text;$('#rRating').textContent='Rating: '+'🍕'.repeat(r.stars)+' '+r.stars+' of 5 slices';
@@ -1475,7 +1505,7 @@ $('#ovClose').onclick=closeOv;document.addEventListener('keydown',e=>{if(e.key==
 
 /* ---------- settings ---------- */
 function saveProfile(){store.set('profile',profile)}
-function renderSettings(){
+function renderSettings(){tokenChips();
  $('#mode-'+settings.mode).checked=true;$('#extOnly').checked=settings.extOnly;
  drawPizza($('#sigCanvas'),signature,96);$('#sigName').textContent=signature.name||'Your signature pizza';
  $('#pName').value=profile.name;$('#pBiz').value=profile.business;$('#pNote').value=profile.note;$('#pLinkLabel').value=profile.linkLabel;$('#pLink').value=profile.link;renderThumbs();
@@ -1601,11 +1631,11 @@ $('#sampleCsv').onclick=()=>loadList(SAMPLE_CSV);
 $('#copyHeader').onclick=()=>{try{navigator.clipboard.writeText('Name,Email,Phone,Company,Vegan').then(()=>toast('Column headers copied. Paste them into row 1 of your spreadsheet.'),()=>toast('Headers: Name, Email, Phone, Company, Vegan'))}catch(e){toast('Headers: Name, Email, Phone, Company, Vegan')}};
 $('#bulkBack').onclick=()=>show('people');
 $('#feedMore').onclick=()=>show('news');$('#newsBack').onclick=()=>show('gerald');
-function merge(t,r){return t.replace(/\{first\}/g,first(r.name)).replace(/\{company\}/g,r.company||'your team')}
+function merge(t,r){return fillNote(t,r)}
 function bulkBox(r){return{style:bulk.style,sticker:bulk.sticker,confetti:bulk.confetti,tone:'playful',note:merge(bulk.note,r),sign:bulk.sign,to:r.name,contact:r.contact,meeting:bulk.sticker,linkLabel:profile.linkLabel,link:profile.link,method:'email',reward:Object.assign({text:'',code:'',link:'',exp:''},profile.reward||{})}}
 function bulkPizza(r){if(bulk.mode==='signature'){const p=clonePizza(signature);if(r.vegan){veganize(p)}return p}
  return geraldPizza(['classic','fancy','fun'][Math.abs(r.name.length)%3],first(r.name),r.vegan)}
-function renderBulk(){
+function renderBulk(){tokenChips();
  if(!bulk.sign)bulk.sign=profile.sign;
  const good=bulk.rows.filter(r=>r.ok),bad=bulk.rows.length-good.length,veg=good.filter(r=>r.vegan).length;
  $('#listSummary').textContent=bulk.rows.length?bulk.rows.length+' people loaded. '+good.length+' ready'+(bad?', '+bad+' missing an email or phone.':'.'):'No list yet. Upload a CSV or try the sample list.';

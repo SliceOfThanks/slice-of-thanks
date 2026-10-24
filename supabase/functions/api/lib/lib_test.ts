@@ -2,6 +2,7 @@ import { ok as assert, deepStrictEqual as assertEquals } from "node:assert";
 import { verifyBdToken } from "./auth.ts";
 import { b64url, hmacHex, recipientToken, tokenHash } from "./crypto.ts";
 import { buildEmail, senderHeadline, senderLabel } from "./email.ts";
+import { fillNote } from "./merge.ts";
 import { dataUrlToBlob, publitioSignature } from "./publitio.ts";
 import { billingLines, invoiceList, matchProduct } from "./billing.ts";
 
@@ -67,6 +68,13 @@ Deno.test("sender headline matches the Kitchen preview", () => {
   assertEquals(senderHeadline({ name: "Ana", business: "Taller" }, "de"), "Ana de Taller");
   const e = buildEmail({ sender: { name: "John Doe", business: "Lawfecta" }, link: "l", unsubscribeSender: "a", unsubscribeAll: "b" });
   assert(e.subject.startsWith("John Doe from Lawfecta sent you") && e.html.includes("John Doe from Lawfecta sent you a pizza"));
+});
+Deno.test("note details are filled for each person", () => {
+  assertEquals(fillNote("Hi [first name], thanks to the [company] team.", { name: "Jordan Reyes", company: "Brightline" }), "Hi Jordan, thanks to the Brightline team.");
+  assertEquals(fillNote("[First Name] [last name] ([role])", { name: "Ana María López", role: "CEO" }), "Ana María López (CEO)");
+  assertEquals(fillNote("Great meeting, [first name] [last name].", { name: "Sam" }), "Great meeting, Sam.");
+  assertEquals(fillNote("Hi {first}, from {company}", { name: "Sam" }), "Hi Sam, from your team");
+  assertEquals(fillNote("Hi [first name]", { first_name: "Al", name: "Albert Smith" }), "Hi Al");
 });
 Deno.test("publitio signature and image parsing", async () => {
   assertEquals((await publitioSignature("s", "1", "2")).length, 40);

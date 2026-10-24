@@ -130,7 +130,9 @@
       box.sticker ? el('div', { class: 'lid-sticker', text: box.sticker }) : null,
       pizza.vegan ? el('div', { class: 'lid-vegan', text: '🌱 Vegan' }) : null
     ]);
-    var greet = d.recipient_name ? (lang === 'es' ? 'Hola ' : 'Hi ') + first(d.recipient_name) + ', ' : '';
+    /* Notes can start with their own greeting, like "Hi [first name]": then the page does not add another */
+    var ownGreeting = /^\s*(hi|hello|hey|dear|hola|good (morning|afternoon|evening))\b/i.test(box.note || '');
+    var greet = d.recipient_name && !ownGreeting ? (lang === 'es' ? 'Hola ' : 'Hi ') + first(d.recipient_name) + ', ' : '';
     var inside = el('div', { class: 'inside' }, [el('p', { class: 'hand', text: greet + (box.note || '') }), el('p', { class: 'hand sign', text: box.sign || '' })]);
     var rbox = el('div', { class: 'rbox' }, [inside, lid]);
     s1.appendChild(rbox);

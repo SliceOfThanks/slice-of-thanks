@@ -144,11 +144,23 @@ function drawPizza(cv,p,px,now){
   else if(cd.style==='dollop'){for(let i=0;i<14;i++){const a=r()*6.283,d=Math.sqrt(r())*R*.7;c.beginPath();c.arc(cx+Math.cos(a)*d,cy+Math.sin(a)*d,R*(.06+r()*.04),0,6.283);c.fill()}}
   else for(let i=0;i<26;i++){const a=r()*6.283,d=Math.sqrt(r())*R*.68;blob(c,cx+Math.cos(a)*d,cy+Math.sin(a)*d,R*(.11+r()*.1),r()*9,.2);c.fill()}
   c.globalAlpha=1;if(b>.4){c.fillStyle='rgba(150,80,25,'+((b-.4)*.6)+')';for(let i=0;i<20;i++){const a=r()*6.283,d=Math.sqrt(r())*R*.72;c.beginPath();c.arc(cx+Math.cos(a)*d,cy+Math.sin(a)*d,R*(.015+r()*.03),0,6.283);c.fill()}}}}
+ if(p.baked&&p.bakeLevel>0)bakeMarks(c,p,cx,cy,R,seed);
  if(p._baking){const r=rng(Math.floor(now/180)+seed);c.fillStyle='rgba(255,252,235,.7)';for(let i=0;i<9;i++){const a=r()*6.283,d=Math.sqrt(r())*R*.7;c.beginPath();c.arc(cx+Math.cos(a)*d,cy+Math.sin(a)*d,R*(.015+r()*.025),0,6.283);c.fill()}}
  for(const t of p.toppings)drawTop(c,t,cx,cy,R,u,b,now,p.vegan);
  if(p.sign&&p.sign.text)drawSign(c,p.sign.text,cx,cy,R,u,now,p._signAt,p.vegan,b);
  c.restore();
 }
+/* Longer bakes show on the pizza: 1 = cheese bubbles, 2 = leopard char on the crust, 3 = darker crispy edge and oregano */
+function bakeMarks(c,p,cx,cy,R,seed){const lv=p.bakeLevel,r=rng(seed+31);c.save();
+ if(p.cheese||p.cheeseDabs){for(let i=0;i<(lv>=3?16:11);i++){const a=r()*6.283,d=Math.sqrt(r())*R*.7,x=cx+Math.cos(a)*d,y=cy+Math.sin(a)*d,s=R*(.022+r()*.022);
+  c.fillStyle='rgba(255,236,190,.55)';c.beginPath();c.arc(x,y,s,0,6.283);c.fill();
+  c.fillStyle='rgba(140,70,20,.55)';c.beginPath();c.arc(x+s*.25,y+s*.2,s*.5,0,6.283);c.fill()}}
+ base(c,cx,cy,R,seed,.045);c.clip();
+ if(lv>=3){base(c,cx,cy,R,seed,.045);c.strokeStyle='rgba(95,45,12,.38)';c.lineWidth=R*.09;c.stroke()}
+ if(lv>=2){for(let i=0;i<(lv>=3?30:22);i++){const a=r()*6.283,d=R*(.91+r()*.07),x=cx+Math.cos(a)*d,y=cy+Math.sin(a)*d;
+  c.fillStyle='rgba(55,25,8,'+(.45+r()*.35)+')';blob(c,x,y,R*(.014+r()*.018),r()*9,.3);c.fill()}}
+ c.restore();
+ if(lv>=3){c.save();c.fillStyle='#4f6b2a';for(let i=0;i<40;i++){const a=r()*6.283,d=Math.sqrt(r())*R*.78;c.save();c.translate(cx+Math.cos(a)*d,cy+Math.sin(a)*d);c.rotate(r()*3);c.fillRect(-R*.009,-R*.004,R*.018,R*.008);c.restore()}c.restore()}}
 function wrapLines(c,text,max){const words=text.split(/\s+/);const lines=[];let cur='';
  for(const w of words){const t=cur?cur+' '+w:w;if(c.measureText(t).width<=max||!cur)cur=t;else{lines.push(cur);cur=w}}if(cur)lines.push(cur);return lines}
 function drawSign(c,text,cx,cy,R,u,now,at,vg,b){
@@ -172,12 +184,12 @@ function pizzaImage(p,bitten){const cv=document.createElement('canvas');const pc
  try{return cv.toDataURL('image/png')}catch(e){return''}}
 
 function review(p,b){
- const n=p.toppings.length,has=k=>p.toppings.some(t=>t.k===k),lab=labelText(p);
+ const n=p.toppings.length,has=k=>p.toppings.some(t=>t.k===k),lab=labelText(p),pers=b.kind==='personal'||b.personal===true;
  const lines=[];
  if(b.tone==='polished'){
-  lines.push(lab?'A thoughtful touch with the "'+lab+'" spelled in pepperoni. Clearly a productive meeting.':'Balanced, well dressed, and delivered on time.');
+  lines.push(lab?'A thoughtful touch with the "'+lab+'" spelled in pepperoni. '+(pers?'Someone is very loved.':'Clearly a productive meeting.'):'Balanced, well dressed, and delivered on time.');
   if(p.vegan)lines.push('Fully plant-based and thoughtfully made.');
-  lines.push(p.bake<.6?'Lightly baked. Fresh, like a new partnership.':'The crust shows real follow-through.');
+  lines.push(p.bakeLevel===3?'Five full minutes in the oven. Crispy, golden and perfectly charred.':p.bake<.6?'Lightly baked. Fresh, like a new partnership.':'The crust shows real follow-through.');
   return{text:lines.join(' '),stars:5}}
  if(n>60)lines.push('I counted '+n+' toppings and lost track twice. Respect.');
  else if(n<4)lines.push('Minimalist. Confident. I see what you did here.');
@@ -187,14 +199,16 @@ function review(p,b){
   lines.push(meats>=5?'Every meat in the kitchen. My cardiologist and I are both impressed.':meats>=3?'A serious meat lineup. This pizza means business.':has('bacon')?'Bacon. Nobody has ever been sad about bacon.':'A little protein. Strong choice.')}
  if(has('jalapeno')||has('buffalo'))lines.push(has('buffalo')?'Buffalo drizzle. I needed a glass of milk to finish this review.':'Jalapeños. Brave, a little dangerous. I like it.');
  if(has('pickle'))lines.push('Pickles on a pizza. I was skeptical. I am now a believer.');
- if(lab)lines.push('Spelling "'+lab+'" in pepperoni? This meeting went well.');
+ if(lab)lines.push('Spelling "'+lab+'" in pepperoni? '+(pers?'Someone is feeling very special.':'This meeting went well.'));
  if(p.vegan)lines.push('Plant-based and still bold. I approve.');
  const ck=cheeseKey(p);if(ck==='goat')lines.push('Goat cheese. Someone has taste.');else if(ck==='parm')lines.push('The parmesan flakes are very refined.');else if(!ck)lines.push('No cheese. Brave.');
  if(has('handshake'))lines.push('Strong handshake energy.');
  if(p.sauce==='purple')lines.push('The purple sauce is a mystery I am choosing to trust.');
  if(p.bake<.6)lines.push('A little doughy. Brave choice.');
  if(!lines.length)lines.push('Solid crust, honest sauce, a pizza made by someone who cares.');
- return{text:lines.slice(0,3).join(' '),stars:p.bake<.6?4:5}}
+ const bl=BAKE_LINES[p.bakeLevel];if(bl)lines.unshift(bl);
+ return{text:lines.slice(0,3).join(' '),stars:p.bakeLevel===3?5:p.bake<.6?4:5}}
+const BAKE_LINES=['Quick bake. Somebody has a meeting to get to.','','Stone-fired. Look at those char spots on the crust.',"Five full minutes in the oven. Crispy edge, perfect char, a little oregano. Chef's kiss."];
 /* ---------- confetti ---------- */
 const CONFETTI=[['none','None'],['classic','Classic confetti'],['fireworks','Fireworks'],['paws','Paw prints'],['shamrocks','Shamrocks'],['petals','Flower petals'],['leaves','Falling leaves'],['bats','Bats'],['caps','Grad caps'],['suns','Suns'],['pizza','Pizza slices'],['hearts','Hearts'],['stars','Stars'],['gold','Gold sparkles'],['brand','Brand color confetti'],['logo','Logo confetti'],['snow','Snowflakes']];
 const PRO_CONF=['gold','brand','logo'];

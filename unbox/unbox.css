@@ -59,6 +59,8 @@ html:has(.sot-u),body:has(.sot-u){background:#FFF3E0!important}
 .sot-u .lid[data-style="gold"]{background:linear-gradient(135deg,#f3d27a,#b8872c);color:#3a2808}
 .sot-u .lid-logo{max-width:70%;display:flex;justify-content:center;position:relative}
 .sot-u .lid-logo img{max-height:56px;max-width:100%;object-fit:contain;display:block}
+.sot-u .lid-logo.photo img{width:72px;height:72px;max-height:none;border-radius:50%;object-fit:cover;border:3px solid #3E2416}
+.sot-u .u-scoot-logo img.photo{border-radius:50%;aspect-ratio:1;object-fit:cover}
 .sot-u .lid-biz{font:400 1.2rem var(--display);text-align:center;position:relative}
 .sot-u .lid-sticker{max-width:92%;text-align:center;line-height:1.15;position:relative;background:#D62828;color:#FFF3E0;font:400 1.05rem var(--script);padding:3px 12px 5px;border-radius:999px;transform:rotate(-5deg);border:2px solid #3E2416}
 .sot-u .lid-vegan{position:relative;background:#4c6b28;color:#fff;font:700 .72rem var(--body);padding:3px 9px;border-radius:999px;border:1.5px solid #3E2416}

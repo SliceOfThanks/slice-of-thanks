@@ -10,7 +10,7 @@ import { billingLines, fetchTransactions, invoiceList, type ProductMatch } from 
 import { pickProvider } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
 
-const VERSION = "api-0.8.0";
+const VERSION = "api-0.9.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@08a8dc99a1c2fa71ebfbd7b8a9c1d0e5e7edae8a/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -224,6 +224,13 @@ async function route(req: Request, path: string): Promise<Response> {
     const url = await publitioUpload({ key: env("PUBLITIO_API_KEY"), secret: env("PUBLITIO_API_SECRET"), blob, folder: "slice-of-thanks", title: `logo-${memberId}` });
     await rpc("sot_update_profile", { p_member: memberId, p: { logo_url: url } });
     return json(req, { ok: true, logo_url: url });
+  }
+  // A photo for a personal pizza's lid. Kept with that send only; the member's logo is not changed
+  if (path === "/photo" && req.method === "POST") {
+    const blob = dataUrlToBlob(String(body.data_url ?? ""), 1_000_000);
+    if (!blob) return json(req, { error: "bad_image" }, 400);
+    const url = await publitioUpload({ key: env("PUBLITIO_API_KEY"), secret: env("PUBLITIO_API_SECRET"), blob, folder: "slice-of-thanks", title: `photo-${memberId}-${Date.now()}` });
+    return json(req, { ok: true, photo_url: url });
   }
   if (path === "/send" && req.method === "POST") {
     const { sendId, r } = await createSend(memberId, m.session.env, body, body.source === "people" ? "people" : "kitchen", String(body.idem ?? "") || crypto.randomUUID());

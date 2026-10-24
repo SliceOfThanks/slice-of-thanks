@@ -118,14 +118,14 @@
     var bark = el('p', { class: 'u-bark', hidden: true, text: t.woof });
     var pet = el('button', { class: 'u-pet', type: 'button', 'aria-label': 'Pet Potato' });
     var scootLogo = el('span', { class: 'u-scoot-logo' });
-    if (sender.logo_url) scootLogo.appendChild(el('img', { src: sender.logo_url, alt: (sender.business || who) + ' logo' })); else scootLogo.textContent = sender.business || who;
+    if (sender.logo_url) scootLogo.appendChild(el('img', { src: sender.logo_url, alt: sender.personal ? '' : (sender.business || who) + ' logo', class: sender.personal ? 'photo' : '' })); else scootLogo.textContent = sender.business || who;
     var scoot = el('div', { class: 'u-scoot' }, [bark, pet, el('img', { src: BASE + '/brand/characters/potato-delivery-side.png', alt: 'Potato the bulldog driving a red delivery scooter in her helmet and goggles' }), scootLogo]);
     var pets = 0;
     pet.addEventListener('click', function () { pets++; pet.classList.remove('hop'); void pet.offsetWidth; pet.classList.add('hop'); bark.hidden = false; setTimeout(function () { bark.hidden = true; }, 900); if (pets === 5) P.burst('potato'); });
     s1.appendChild(scoot);
     s1.appendChild(el('p', { class: 'u-from', text: t.sent(senderHeadline(sender, t.from)) }));
     var lid = el('div', { class: 'lid', 'data-style': box.style || 'kraft' }, [
-      sender.logo_url ? el('div', { class: 'lid-logo' }, [el('img', { src: sender.logo_url, alt: '' })]) : null,
+      sender.logo_url ? el('div', { class: sender.personal ? 'lid-logo photo' : 'lid-logo' }, [el('img', { src: sender.logo_url, alt: '' })]) : null,
       el('div', { class: 'lid-biz', text: sender.business || who }),
       box.sticker ? el('div', { class: 'lid-sticker', text: box.sticker }) : null,
       pizza.vegan ? el('div', { class: 'lid-vegan', text: '🌱 Vegan' }) : null

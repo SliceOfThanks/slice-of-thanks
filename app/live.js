@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.8.0 =====
+/* ===== Slice of Thanks live layer v0.9.4 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -401,6 +401,8 @@ function boxPayload(bx) {
   const rw = bx.reward || {};
   const b = { style: bx.style, sticker: bx.sticker, confetti: bx.confetti, tone: bx.tone, note: bx.note, sign: bx.sign, meeting: bx.meeting,
     pro_style: PRO_STYLES.includes(bx.style) || PRO_CONF.includes(bx.confetti) };
+  /* Personal pizzas leave off the business name, logo, button and gift; the photo goes up before the send */
+  if (bx.kind === 'personal') { b.personal = true; if (isPro() && bx.photo && bx.photo.indexOf('http') === 0) b.photo_url = bx.photo; return b; }
   if (isPro() && bx.link) { b.cta_label = bx.linkLabel || 'Book a follow-up'; b.cta_url = bx.link; }
   if (isPro() && rw.code) b.gift = { text: rw.text || '', code: rw.code, url: rw.link || '', expires: rw.exp || '' };
   if (isPro() && profile.logo) b.logo_url = profile.logo;
@@ -435,6 +437,11 @@ async function liveSend() {
   if ($('#liveCountry')) store.set('lastCountry', $('#liveCountry').value);
   const btn = $('#sendNow'); btn.disabled = true; const label = btn.textContent; btn.textContent = 'Sending...';
   let r;
+  if (box.kind === 'personal' && isPro() && box.photo && box.photo.indexOf('data:image') === 0) {
+    let u = {}; try { u = await LIVE.call('/photo', { data_url: box.photo }); } catch (e) { u = {}; }
+    if (!u.photo_url) { btn.disabled = false; btn.textContent = label; toast('The photo did not upload. Try again, or remove the photo.'); return; }
+    box.photo = u.photo_url;
+  }
   try { r = await LIVE.call('/send', buildPayload()); } catch (e) { r = { code: 'server_error' }; }
   btn.disabled = false; btn.textContent = label;
   if (r.ok && r.delivered === false && r.reason === 'provider_error') {
@@ -676,7 +683,7 @@ qsBuild = function (c) { const r = _qsBuild(c); r.b.company = c.company; r.b.rol
 
 /* --- Box presets: saved box setups. A Slice 1, The Whole Pie 10, Pizza Party 20 (app_settings preset_limits). --- */
 let presets = [], presetLimit = 1, editingPreset = null;
-const PRESET_KEYS = ['style', 'sticker', 'confetti', 'tone', 'note', 'sign', 'linkLabel', 'link'];
+const PRESET_KEYS = ['style', 'sticker', 'confetti', 'tone', 'note', 'sign', 'linkLabel', 'link', 'kind'];
 function presetData(bx) {
   const d = {}; PRESET_KEYS.forEach(k => { if (bx[k] !== undefined && bx[k] !== null) d[k] = bx[k]; });
   const rw = bx.reward || {}; if (rw.text || rw.code || rw.link) d.reward = { text: rw.text || '', code: rw.code || '', link: rw.link || '', exp: rw.exp || '' };

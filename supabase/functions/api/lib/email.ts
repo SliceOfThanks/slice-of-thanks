@@ -19,7 +19,7 @@ export type EmailInput = {
 const T = {
   en: {
     subject: (s: string) => `${s} sent you a slice of thanks`,
-    hi: (n?: string) => (n ? `Hi ${n},` : "Hi,"),
+    hi: (n?: string) => { const f = (n ?? "").trim().split(" ")[0]; return f ? `Hi ${f},` : "Hi,"; },
     lead: (s: string) => `${s} sent you a pizza. Potato is on her way with it now.`,
     button: "Open your pizza",
     note: "It only takes a minute, and there may be something hidden under the pizza.",
@@ -36,7 +36,7 @@ const T = {
   },
   es: {
     subject: (s: string) => `${s} te envió una porción de agradecimiento`,
-    hi: (n?: string) => (n ? `Hola ${n}:` : "Hola:"),
+    hi: (n?: string) => { const f = (n ?? "").trim().split(" ")[0]; return f ? `Hola ${f}:` : "Hola:"; },
     lead: (s: string) => `${s} te envió una pizza. Potato ya va en camino con ella.`,
     button: "Abre tu pizza",
     note: "Solo toma un minuto, y puede que haya algo escondido debajo de la pizza.",

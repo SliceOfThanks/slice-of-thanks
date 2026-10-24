@@ -164,6 +164,8 @@ textarea{min-height:92px;resize:vertical}
 .lid[data-style="gold"]{background:linear-gradient(135deg,#f3d27a,#b8872c);color:#3a2808}
 .lid-logo{max-width:70%;display:flex;justify-content:center;position:relative}
 .lid-logo img{max-height:56px;max-width:100%;object-fit:contain;display:block}
+.lid-logo.photo img,.thumb.photo img{width:72px;height:72px;max-height:none;border-radius:50%;object-fit:cover;border:3px solid var(--edge)}
+.thumb.photo img{width:100%;height:100%;border:0}
 .lid-biz{font:400 1.2rem var(--display);text-align:center;position:relative}
 .lid-sticker{max-width:92%;text-align:center;line-height:1.15;position:relative;background:#D62828;color:#FFF3E0;font:400 1.05rem var(--script);padding:3px 12px 5px;border-radius:999px;transform:rotate(-5deg);border:2px solid #3E2416}
 .lid-vegan{position:relative;background:#4c6b28;color:#fff;font:700 .72rem var(--body);padding:3px 9px;border-radius:999px;border:1.5px solid #3E2416}
@@ -547,8 +549,9 @@ body.is-free .pro-tag{display:inline-block}
       <h2>Bake it</h2>
       <p class="muted">The bake doubles as your break. Step away and come back when it dings.</p>
       <div class="chips" id="bakeChips"></div>
+      <small id="bakeHint" class="muted">10 sec is a quick bake. 1 min adds cheese bubbles. 3 min adds stone-fired char. 5 min is Gerald's perfect bake.</small>
       <div class="btn-row"><button class="btn primary" id="bakeStart">Start baking</button><button class="btn" id="bakeEarly" hidden>Take it out early</button></div>
-      <p id="bakeDone" class="muted" hidden>Golden and bubbly. Time to box it up.</p>
+      <p id="bakeDone" class="muted" hidden></p>
       <div class="field">
         <label for="pizzaName">Name your pizza</label>
         <div class="inline"><input type="text" id="pizzaName" maxlength="40"><button class="btn" id="suggestName">Suggest</button></div>
@@ -557,6 +560,7 @@ body.is-free .pro-tag{display:inline-block}
 
     <div class="panel" data-step="4" hidden>
       <h2>Box it up</h2>
+      <div class="field"><label>What kind of pizza is this?</label><div class="chips" id="kindChips"></div><small id="kindHelp"></small></div>
       <div class="box-float" id="boxFloat">
         <button class="box-pin" id="boxPin" type="button"></button>
         <div class="box-preview">
@@ -564,22 +568,27 @@ body.is-free .pro-tag{display:inline-block}
           <div class="inside"><p class="eyebrow" style="color:#7a5a3c">Inside the lid</p><p class="hand" id="notePreview"></p><p class="hand sign" id="signPreview"></p></div>
         </div>
       </div>
-      <div class="field">
+      <div class="field" data-personal hidden>
+        <label>Photo on the box<span class="pro-tag">Pro</span></label>
+        <div class="upload"><span class="thumb photo" id="photoThumb">None</span><label class="btn small" for="photoFile">Upload photo</label><input type="file" id="photoFile" accept="image/*"><button class="btn small ghost" id="photoRemove">Remove</button></div>
+        <small>A headshot or a fun picture, like the birthday person or the team.</small>
+      </div>
+      <div class="field" data-biz>
         <label>Your logo on the box<span class="pro-tag">Pro</span></label>
         <div class="upload"><span class="thumb" id="logoThumb">None</span><label class="btn small" for="logoFile">Upload logo</label><input type="file" id="logoFile" accept="image/*"><button class="btn small ghost" id="logoRemove">Remove</button></div>
       </div>
-      <div class="field"><label for="bizName">Business name on the lid</label><input type="text" id="bizName" maxlength="40"></div>
+      <div class="field" data-biz><label for="bizName">Business name on the lid</label><input type="text" id="bizName" maxlength="40"></div>
       <div class="field"><label>Box style</label><div class="chips" id="styleChips"></div></div>
       <div class="field"><label for="stickerSel">Occasion sticker</label><select id="stickerSel"></select></div>
       <div class="field"><label>Confetti when they open the box</label><div class="chips" id="confettiChips"></div><small>Tap one to see it.</small></div>
       <div class="field"><label for="noteText">Your note</label><textarea id="noteText" maxlength="280"></textarea><div class="chips tokens" data-for="noteText" aria-label="Add a detail that changes for each person"></div><small>Tap a detail to add it. Each person gets their own.</small></div>
       <div class="field"><label for="signText">Sign-off</label><input type="text" id="signText" maxlength="40"></div>
       <div class="field"><label>Tone of Gerald's review</label><div class="chips" id="toneChips"></div></div>
-      <div class="two">
+      <div class="two" data-biz>
         <div class="field"><label for="linkLabel">Next-step button<span class="pro-tag">Pro</span></label><input type="text" id="linkLabel" maxlength="30"></div>
         <div class="field"><label for="linkUrl">Button link</label><input type="url" id="linkUrl"></div>
       </div>
-      <div class="reward-set">
+      <div class="reward-set" data-biz>
         <p class="group-label" style="margin:0">🎁 Gift under the pizza<span class="pro-tag">Pro</span></p>
         <small class="muted">Optional. They eat the pizza to reveal it, like a discount code for upgrading.</small>
         <div class="field"><label for="rwText">What it is</label><input type="text" id="rwText" maxlength="60" placeholder="20% off your first 3 months"></div>
@@ -608,6 +617,7 @@ body.is-free .pro-tag{display:inline-block}
         </div>
         <div class="field"><label for="mtgTitle">Meeting</label><input type="text" id="mtgTitle"></div>
         <div class="field"><label>Send by</label><div class="chips" id="methodChips"></div></div>
+        <div class="field"><label for="fromName">From (your name)</label><input type="text" id="fromName" maxlength="40" autocomplete="name"></div>
         <div class="msg"><span class="eyebrow" id="msgLabel"></span><span class="subj" id="msgSubj"></span><span id="msgBody"></span></div>
         <p class="muted" style="font-size:.82rem">The link is a sample. The real app creates one for each pizza.</p>
       </div>
@@ -788,6 +798,12 @@ body.is-free .pro-tag{display:inline-block}
   <!-- SETTINGS -->
   <section id="view-settings" hidden>
     <div class="card" id="planCard"></div>
+    <div class="card" id="youCard">
+      <h2>You</h2>
+      <p class="muted" style="font-size:.9rem;margin:0">Your name goes on every pizza and email. Your business name shows on business pizzas.</p>
+      <div class="field"><label for="pName">Your name</label><input type="text" id="pName" maxlength="40" autocomplete="name"></div>
+      <div class="field"><label for="pBiz">Business name</label><input type="text" id="pBiz" maxlength="40" autocomplete="organization"></div>
+    </div>
     <div class="card">
       <h2>After a meeting ends</h2>
       <label class="radio"><input type="radio" name="mode" value="ask" id="mode-ask"><span><b>Ask me each time</b><small>You get a prompt and choose to make a fresh pizza, send your signature pizza, or skip.</small></span></label>
@@ -802,10 +818,8 @@ body.is-free .pro-tag{display:inline-block}
     <div class="card fold" id="boxCard">
       <button class="fold-head" type="button" id="boxCardHead" aria-expanded="false" aria-controls="boxCardBody"><span><h2>Your box</h2><small class="muted" id="boxCardSum"></small></span><span class="fold-ic" aria-hidden="true">▾</span></button>
       <div class="fold-body" id="boxCardBody" hidden>
-      <div class="field"><label for="pName">Your name</label><input type="text" id="pName" maxlength="40"></div>
       <div class="field"><label>Logo<span class="pro-tag">Pro</span></label><div class="upload"><span class="thumb" id="logoThumb2">None</span><label class="btn small" for="logoFile2">Upload logo</label><input type="file" id="logoFile2" accept="image/*"></div></div>
       <div class="field"><label>Brand colors<span class="pro-tag">Pro</span></label><div class="upload"><input type="color" id="brand1" value="#1f4e79" aria-label="Brand color 1"><input type="color" id="brand2" value="#f1ad2d" aria-label="Brand color 2"><small class="muted">Used for your box and brand color confetti.</small></div></div>
-      <div class="field"><label for="pBiz">Business name</label><input type="text" id="pBiz" maxlength="40"></div>
       <div class="field"><label for="pNote">Default thank-you note</label><textarea id="pNote" maxlength="280"></textarea><div class="chips tokens" data-for="pNote" aria-label="Add a detail that changes for each person"></div><small>Tap a detail to add it. Each person gets their own.</small></div>
       <div class="two">
         <div class="field"><label for="pLinkLabel">Next-step button<span class="pro-tag">Pro</span></label><input type="text" id="pLinkLabel" maxlength="30"></div>
@@ -921,7 +935,7 @@ const TOPS={
 const STICKERS=['Thank You','Great Meeting','Nice to Meet You',"Let's Do This"];
 const STYLES={kraft:'Kraft',classic:'Classic',gold:'Fancy gold',midnight:'Midnight gold',plaid:'Plaid',floral:'Floral',picnic:'Picnic',garden:'Spring garden',hearts:'Hearts'};
 const PRO_STYLES=['gold','midnight','plaid','floral','picnic','garden','hearts'];
-const BAKES=[[10,'10 sec demo'],[60,'1 min'],[180,'3 min'],[300,'5 min']];
+const BAKES=[[10,'10 sec'],[60,'1 min'],[180,'3 min'],[300,'5 min']];
 const STEPS=['Dough','Sauce','Toppings','Bake','Box','Send'];
 
 const DEFAULT_PROFILE={name:'Stacey Lake',business:'Lawfecta',logo:null,link:'https://www.lawfecta.com',linkLabel:'Book a follow-up',
@@ -1016,7 +1030,9 @@ function defaultSignature(){
  p.sign={text:'Thank you'};
  return p}
 function boxFromProfile(m){return{style:profile.boxStyle,sticker:profile.sticker,confetti:'classic',tone:'playful',note:profile.note,sign:profile.sign,
- to:m?m.who:'',contact:m?m.contact||'':'',meeting:m?m.title:'',linkLabel:profile.linkLabel,link:profile.link,method:'email',reward:Object.assign({text:'',code:'',link:'',exp:''},profile.reward||{})}}
+ to:m?m.who:'',contact:m?m.contact||'':'',meeting:m?m.title:'',linkLabel:profile.linkLabel,link:profile.link,method:'email',reward:Object.assign({text:'',code:'',link:'',exp:''},profile.reward||{}),kind:store.get('sendKind','business'),photo:null}}
+/* A personal pizza (birthday, congrats) drops the business parts: no logo, business name, button or gift, and can carry a photo instead */
+function isPersonal(b){return!!b&&b.kind==='personal'}
 
 /* ---------- drawing ---------- */
 let curShape='round';
@@ -1115,11 +1131,23 @@ function drawPizza(cv,p,px,now){
   else if(cd.style==='dollop'){for(let i=0;i<14;i++){const a=r()*6.283,d=Math.sqrt(r())*R*.7;c.beginPath();c.arc(cx+Math.cos(a)*d,cy+Math.sin(a)*d,R*(.06+r()*.04),0,6.283);c.fill()}}
   else for(let i=0;i<26;i++){const a=r()*6.283,d=Math.sqrt(r())*R*.68;blob(c,cx+Math.cos(a)*d,cy+Math.sin(a)*d,R*(.11+r()*.1),r()*9,.2);c.fill()}
   c.globalAlpha=1;if(b>.4){c.fillStyle='rgba(150,80,25,'+((b-.4)*.6)+')';for(let i=0;i<20;i++){const a=r()*6.283,d=Math.sqrt(r())*R*.72;c.beginPath();c.arc(cx+Math.cos(a)*d,cy+Math.sin(a)*d,R*(.015+r()*.03),0,6.283);c.fill()}}}}
+ if(p.baked&&p.bakeLevel>0)bakeMarks(c,p,cx,cy,R,seed);
  if(p._baking){const r=rng(Math.floor(now/180)+seed);c.fillStyle='rgba(255,252,235,.7)';for(let i=0;i<9;i++){const a=r()*6.283,d=Math.sqrt(r())*R*.7;c.beginPath();c.arc(cx+Math.cos(a)*d,cy+Math.sin(a)*d,R*(.015+r()*.025),0,6.283);c.fill()}}
  for(const t of p.toppings)drawTop(c,t,cx,cy,R,u,b,now,p.vegan);
  if(p.sign&&p.sign.text)drawSign(c,p.sign.text,cx,cy,R,u,now,p._signAt,p.vegan,b);
  c.restore();
 }
+/* Longer bakes show on the pizza: 1 = cheese bubbles, 2 = leopard char on the crust, 3 = darker crispy edge and oregano */
+function bakeMarks(c,p,cx,cy,R,seed){const lv=p.bakeLevel,r=rng(seed+31);c.save();
+ if(p.cheese||p.cheeseDabs){for(let i=0;i<(lv>=3?16:11);i++){const a=r()*6.283,d=Math.sqrt(r())*R*.7,x=cx+Math.cos(a)*d,y=cy+Math.sin(a)*d,s=R*(.022+r()*.022);
+  c.fillStyle='rgba(255,236,190,.55)';c.beginPath();c.arc(x,y,s,0,6.283);c.fill();
+  c.fillStyle='rgba(140,70,20,.55)';c.beginPath();c.arc(x+s*.25,y+s*.2,s*.5,0,6.283);c.fill()}}
+ base(c,cx,cy,R,seed,.045);c.clip();
+ if(lv>=3){base(c,cx,cy,R,seed,.045);c.strokeStyle='rgba(95,45,12,.38)';c.lineWidth=R*.09;c.stroke()}
+ if(lv>=2){for(let i=0;i<(lv>=3?30:22);i++){const a=r()*6.283,d=R*(.91+r()*.07),x=cx+Math.cos(a)*d,y=cy+Math.sin(a)*d;
+  c.fillStyle='rgba(55,25,8,'+(.45+r()*.35)+')';blob(c,x,y,R*(.014+r()*.018),r()*9,.3);c.fill()}}
+ c.restore();
+ if(lv>=3){c.save();c.fillStyle='#4f6b2a';for(let i=0;i<40;i++){const a=r()*6.283,d=Math.sqrt(r())*R*.78;c.save();c.translate(cx+Math.cos(a)*d,cy+Math.sin(a)*d);c.rotate(r()*3);c.fillRect(-R*.009,-R*.004,R*.018,R*.008);c.restore()}c.restore()}}
 function wrapLines(c,text,max){const words=text.split(/\s+/);const lines=[];let cur='';
  for(const w of words){const t=cur?cur+' '+w:w;if(c.measureText(t).width<=max||!cur)cur=t;else{lines.push(cur);cur=w}}if(cur)lines.push(cur);return lines}
 function drawSign(c,text,cx,cy,R,u,now,at,vg,b){
@@ -1391,7 +1419,7 @@ cv.addEventListener('pointermove',e=>{if(!down)return;const[nx,ny,px,py]=toNorm(
 
 /* bake */
 function renderBake(){makeChips($('#bakeChips'),BAKES.map(([s,l])=>[s,l]),()=>bakeDur,v=>bakeDur=v);
- $('#pizzaName').value=pizza.name||'';$('#bakeDone').hidden=!pizza.baked||baking;
+ $('#pizzaName').value=pizza.name||'';$('#bakeDone').hidden=!pizza.baked||baking;$('#bakeDone').textContent=BAKE_DONE[pizza.bakeLevel||0];
  $('#bakeStart').hidden=baking;$('#bakeEarly').hidden=!baking;$('#bakeStart').textContent=pizza.baked?'Bake again':'Start baking'}
 $('#bakeStart').onclick=()=>{pSay('Potato is sitting by the oven, watching very closely.');baking=true;pizza._baking=true;pizza.bake=0;pizza.baked=false;bakeStart=performance.now();
  $('#stage').classList.add('hot');$('#timer').hidden=false;renderBake();renderStep();gSay('I will be watching through the oven window. Go stretch.');
@@ -1400,7 +1428,10 @@ $('#bakeEarly').onclick=()=>finishBake(false);
 function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 function bakeTick(now){const t=(now-bakeStart)/(bakeDur*1000);pizza.bake=Math.min(1,t);
  $('#timer').textContent=fmt(Math.max(0,Math.ceil(bakeDur-(now-bakeStart)/1000)));if(t>=1)finishBake(false,true)}
+const BAKE_DONE=['Quick bake. Golden and ready to box up.','Golden and bubbly. Time to box it up.','Stone-fired, with char spots on the crust. Time to box it up.',"Gerald's perfect bake. Crispy edge, char and a little oregano. Time to box it up."];
+function bakeLevelFor(secs){return secs>=300?3:secs>=180?2:secs>=60?1:0}
 function finishBake(silent,full){baking=false;pizza._baking=false;pizza.baked=true;if(full)pizza.bake=1;pizza.bake=Math.max(pizza.bake,.15);
+ pizza.bakeLevel=bakeLevelFor(full?bakeDur:(performance.now()-bakeStart)/1000);if(pizza.bakeLevel===3&&!silent)setTimeout(()=>awardEgg('perfectBake'),1200);
  $('#stage').classList.remove('hot');$('#timer').hidden=true;try{wakeLock&&wakeLock.release();wakeLock=null}catch(e){}
  if(!pizza.name)pizza.name=suggestName();if(step===3)renderStep();
  if(!silent)gSay(full?'That smell. That is the smell of success.':'A little early. I am choosing to be supportive.');if(!silent)pSay(full?'Woof! Woof! Potato says your pizza is ready.':'Potato heard the oven door. She is suspicious.',6000);if(!silent)toast(full?'Woof! Your pizza is ready.':'Out of the oven. A little early, but Gerald is open-minded.')}
@@ -1421,8 +1452,10 @@ function suggestName(){
 
 /* box */
 function renderLid(el,logoEl,bizEl,stEl,b,vg){el.dataset.style=b.style;let lsp=el.querySelector('.lid-sponsor');if(b.sponsor){if(!lsp){lsp=document.createElement('div');lsp.className='lid-sponsor';el.appendChild(lsp)}lsp.textContent='Presented by '+b.sponsor.name;lsp.hidden=false}else if(lsp)lsp.hidden=true;logoEl.innerHTML='';el.querySelector('.lid-vegan').hidden=!vg;
- if(profile.logo&&isPro()){const i=document.createElement('img');i.src=profile.logo;i.alt=profile.business+' logo';logoEl.appendChild(i)}
- bizEl.textContent=profile.business;stEl.textContent=b.sticker}
+ const pers=isPersonal(b);logoEl.classList.toggle('photo',pers);
+ if(pers){if(b.photo&&isPro()){const i=document.createElement('img');i.src=b.photo;i.alt='';logoEl.appendChild(i)}bizEl.textContent=profile.name}
+ else{if(profile.logo&&isPro()){const i=document.createElement('img');i.src=profile.logo;i.alt=profile.business+' logo';logoEl.appendChild(i)}bizEl.textContent=profile.business}
+ stEl.textContent=b.sticker}
 function renderBoxPreview(){renderLid($('#lidPreview'),$('#lidLogo'),$('#lidBiz'),$('#lidSticker'),box,pizza.vegan);$('#notePreview').textContent=box.to?fillNote(box.note,{name:box.to,company:box.company,role:box.role}):box.note;$('#signPreview').textContent=box.sign}
 function renderBoxPin(){const pinned=store.get('boxPinned',true),f=$('#boxFloat'),b=$('#boxPin');f.classList.toggle('pinned',pinned);
  b.textContent=pinned?'\u2715':'Pin';b.setAttribute('aria-label',pinned?'Stop the box preview from following you':'Keep the box preview on screen while you edit');b.title=b.getAttribute('aria-label')}
@@ -1434,8 +1467,13 @@ function renderBox(){
  fillOccasions($('#stickerSel'),box.sticker);
  box.confetti=okConf(box.confetti);makeChips($('#confettiChips'),seasonConfetti(),()=>box.confetti,v=>{box.confetti=v;burst(v)},{locked:v=>!isPro()&&PRO_CONF.includes(v),onLocked:v=>{burst(v);upgrade('confetti')}});
  makeChips($('#toneChips'),[['playful','Playful'],['polished','Polished']],()=>box.tone,v=>box.tone=v);
+ if(!box.kind)box.kind='business';makeChips($('#kindChips'),[['business','Business'],['personal','Personal']],()=>box.kind,v=>{box.kind=v;store.set('sendKind',v);renderBox()});
+ const pers=isPersonal(box);$('#kindHelp').textContent=pers?'For birthdays, congrats and friends. Your business details stay off this box.':'Your logo, business name, button and gift go on this box.';
+ document.querySelectorAll('[data-step="4"] [data-biz]').forEach(e=>e.hidden=pers);document.querySelectorAll('[data-step="4"] [data-personal]').forEach(e=>e.hidden=!pers);
+ const pt=$('#photoThumb');pt.innerHTML='';if(box.photo){const i=document.createElement('img');i.src=box.photo;i.alt='';pt.appendChild(i)}else pt.textContent='None';
  $('#bizName').value=profile.business;$('#noteText').value=box.note;$('#signText').value=box.sign;$('#linkLabel').value=box.linkLabel;$('#linkUrl').value=box.link;const rw=box.reward||{};$('#rwText').value=rw.text||'';$('#rwCode').value=rw.code||'';$('#rwLink').value=rw.link||'';$('#rwExp').value=rw.exp||'';
  renderThumbs();renderBoxPreview();renderBoxPin();tokenChips()}
+$('#fromName').addEventListener('input',e=>{profile.name=e.target.value;saveProfile();renderMsg()});
 $('#bizName').addEventListener('input',e=>{profile.business=e.target.value;saveProfile();renderBoxPreview()});
 $('#noteText').addEventListener('input',e=>{box.note=e.target.value;renderBoxPreview()});
 $('#signText').addEventListener('input',e=>{box.sign=e.target.value;renderBoxPreview()});
@@ -1450,6 +1488,13 @@ function handleLogo(file){if(!file)return;const fr=new FileReader();fr.onload=()
 $('#logoFile').addEventListener('change',e=>handleLogo(e.target.files[0]));
 $('#logoFile2').addEventListener('change',e=>handleLogo(e.target.files[0]));
 $('#logoRemove').onclick=()=>{profile.logo=null;saveProfile();renderThumbs();renderBoxPreview()};
+/* The photo is cropped to a square so it sits in the round frame on the lid */
+function handlePhoto(file){if(!file)return;const fr=new FileReader();fr.onload=()=>{const img=new Image();img.onload=()=>{
+ const sz=Math.min(img.width,img.height),out=Math.min(360,sz),c=document.createElement('canvas');c.width=c.height=out;
+ c.getContext('2d').drawImage(img,(img.width-sz)/2,(img.height-sz)/2,sz,sz,0,0,out,out);box.photo=c.toDataURL('image/jpeg',.85);renderBox();toast('Photo added to the box.')};
+ img.onerror=()=>toast('That file could not be read as an image. Try a PNG or JPG.');img.src=fr.result};fr.readAsDataURL(file)}
+$('#photoFile').addEventListener('change',e=>{handlePhoto(e.target.files[0]);e.target.value=''});
+$('#photoRemove').onclick=()=>{box.photo=null;renderBox()};
 
 /* send */
 function msgText(){const f=first(box.to),link='sliceofthanks.app/p/'+slug(f+'-'+(pizza.name||'pizza'));const mt=(box.meeting||'meeting').toLowerCase();
@@ -1462,6 +1507,7 @@ function renderSend(){
  $('#sendFields').hidden=editingSignature;$('#sendNow').hidden=editingSignature;$('#copyMsg').hidden=editingSignature;
  $('#saveSig').className=editingSignature?'btn primary':'btn ghost';if(editingSignature)$('#previewR').className='btn';$('#saveSig').hidden=!account&&!editingSignature;
  $('#toName').value=box.to;$('#toContact').value=box.contact;$('#mtgTitle').value=box.meeting;
+ $('#fromName').value=profile.name||'';$('#fromName').closest('.field').hidden=!account;
  makeChips($('#methodChips'),[['email','Email'],['text','Text message']],()=>box.method,v=>{box.method=v;renderMsg()});renderMsg()}
 $('#toName').addEventListener('input',e=>{box.to=e.target.value;renderMsg()});
 $('#toContact').addEventListener('input',e=>{box.contact=e.target.value;if(/^[\d\s()+-]{7,}$/.test(e.target.value)&&box.method!=='text'){box.method='text';renderSend()}});
@@ -1488,12 +1534,12 @@ $('#saveSig').onclick=()=>{signature=clonePizza(pizza);signature.baked=true;sign
 
 /* ---------- recipient preview ---------- */
 function review(p,b){
- const n=p.toppings.length,has=k=>p.toppings.some(t=>t.k===k),lab=labelText(p);
+ const n=p.toppings.length,has=k=>p.toppings.some(t=>t.k===k),lab=labelText(p),pers=b.kind==='personal'||b.personal===true;
  const lines=[];
  if(b.tone==='polished'){
-  lines.push(lab?'A thoughtful touch with the "'+lab+'" spelled in pepperoni. Clearly a productive meeting.':'Balanced, well dressed, and delivered on time.');
+  lines.push(lab?'A thoughtful touch with the "'+lab+'" spelled in pepperoni. '+(pers?'Someone is very loved.':'Clearly a productive meeting.'):'Balanced, well dressed, and delivered on time.');
   if(p.vegan)lines.push('Fully plant-based and thoughtfully made.');
-  lines.push(p.bake<.6?'Lightly baked. Fresh, like a new partnership.':'The crust shows real follow-through.');
+  lines.push(p.bakeLevel===3?'Five full minutes in the oven. Crispy, golden and perfectly charred.':p.bake<.6?'Lightly baked. Fresh, like a new partnership.':'The crust shows real follow-through.');
   return{text:lines.join(' '),stars:5}}
  if(n>60)lines.push('I counted '+n+' toppings and lost track twice. Respect.');
  else if(n<4)lines.push('Minimalist. Confident. I see what you did here.');
@@ -1503,20 +1549,23 @@ function review(p,b){
   lines.push(meats>=5?'Every meat in the kitchen. My cardiologist and I are both impressed.':meats>=3?'A serious meat lineup. This pizza means business.':has('bacon')?'Bacon. Nobody has ever been sad about bacon.':'A little protein. Strong choice.')}
  if(has('jalapeno')||has('buffalo'))lines.push(has('buffalo')?'Buffalo drizzle. I needed a glass of milk to finish this review.':'Jalapeños. Brave, a little dangerous. I like it.');
  if(has('pickle'))lines.push('Pickles on a pizza. I was skeptical. I am now a believer.');
- if(lab)lines.push('Spelling "'+lab+'" in pepperoni? This meeting went well.');
+ if(lab)lines.push('Spelling "'+lab+'" in pepperoni? '+(pers?'Someone is feeling very special.':'This meeting went well.'));
  if(p.vegan)lines.push('Plant-based and still bold. I approve.');
  const ck=cheeseKey(p);if(ck==='goat')lines.push('Goat cheese. Someone has taste.');else if(ck==='parm')lines.push('The parmesan flakes are very refined.');else if(!ck)lines.push('No cheese. Brave.');
  if(has('handshake'))lines.push('Strong handshake energy.');
  if(p.sauce==='purple')lines.push('The purple sauce is a mystery I am choosing to trust.');
  if(p.bake<.6)lines.push('A little doughy. Brave choice.');
  if(!lines.length)lines.push('Solid crust, honest sauce, a pizza made by someone who cares.');
- return{text:lines.slice(0,3).join(' '),stars:p.bake<.6?4:5}}
+ const bl=BAKE_LINES[p.bakeLevel];if(bl)lines.unshift(bl);
+ return{text:lines.slice(0,3).join(' '),stars:p.bakeLevel===3?5:p.bake<.6?4:5}}
+const BAKE_LINES=['Quick bake. Somebody has a meeting to get to.','','Stone-fired. Look at those char spots on the crust.',"Five full minutes in the oven. Crispy edge, perfect char, a little oregano. Chef's kiss."];
 function openRecipient(p,b){
+ const pers=isPersonal(b);if(pers)b=Object.assign({},b,{link:'',reward:null});
  rCurrentBox=b;const ov=$('#recipient');ov.hidden=false;document.body.style.overflow='hidden';
  $('#rs1').hidden=false;$('#rs2').hidden=true;$('#rbox').classList.remove('open');$('#rOpen').textContent='Open the box';
  const sc=$('.scooter');sc.style.animation='none';void sc.offsetWidth;sc.style.animation='';
- $('#rFrom').textContent=profile.name+(profile.business?' from '+profile.business:'')+' sent you a pizza';
- renderLid($('#rLid'),$('#rLogo'),$('#rBiz'),$('#rSticker'),b,p.vegan);const sl=$('#rScootLogo');sl.innerHTML='';if(profile.logo&&isPro()){const li=document.createElement('img');li.src=profile.logo;li.alt=(profile.business||'Sender')+' logo';sl.appendChild(li)}else sl.textContent=profile.business||'🍕';$('#rVegan').hidden=!p.vegan;renderSponsorBlock(b);const rn=b.to?fillNote(b.note,{name:b.to,company:b.company,role:b.role}):b.note;$('#rNote').textContent=(b.to&&!hasGreeting(rn)?'Hi '+first(b.to)+', ':'')+rn;$('#rSign').textContent=b.sign;
+ $('#rFrom').textContent=profile.name+(profile.business&&!pers?' from '+profile.business:'')+' sent you a pizza';
+ renderLid($('#rLid'),$('#rLogo'),$('#rBiz'),$('#rSticker'),b,p.vegan);const sl=$('#rScootLogo');sl.innerHTML='';if(pers){if(b.photo&&isPro()){const li=document.createElement('img');li.src=b.photo;li.alt='';li.style.borderRadius='50%';sl.appendChild(li)}else sl.textContent='🍕'}else if(profile.logo&&isPro()){const li=document.createElement('img');li.src=profile.logo;li.alt=(profile.business||'Sender')+' logo';sl.appendChild(li)}else sl.textContent=profile.business||'🍕';$('#rVegan').hidden=!p.vegan;renderSponsorBlock(b);const rn=b.to?fillNote(b.note,{name:b.to,company:b.company,role:b.role}):b.note;$('#rNote').textContent=(b.to&&!hasGreeting(rn)?'Hi '+first(b.to)+', ':'')+rn;$('#rSign').textContent=b.sign;
  const bitten=Math.random()<.35;startEating(p,bitten);
  $('#rPotato').textContent=bitten?'Delivered by Potato, Head of Delivery. She took one tiny bite on the way. Gerald has spoken to her.':'Delivered by Potato, Head of Delivery. She attempted to eat one slice in transit. She was stopped. Mostly.';$('#rPizza').alt=p.name||'A pizza';$('#rName').textContent=p.name||'A Mystery Pizza';
  const r=review(p,b);$('#rReview').textContent=r.text;$('#rRating').textContent='Rating: '+'🍕'.repeat(r.stars)+' '+r.stars+' of 5 slices';
@@ -1566,7 +1615,7 @@ $('#ovClose').onclick=closeOv;document.addEventListener('keydown',e=>{if(e.key==
 /* ---------- settings ---------- */
 function saveProfile(){store.set('profile',profile)}
 function renderBoxCard(){const open=store.get('boxCardOpen',false);$('#boxCard').classList.toggle('open',open);$('#boxCardBody').hidden=!open;$('#boxCardHead').setAttribute('aria-expanded',String(open));
- $('#boxCardSum').textContent=open?'':[profile.name,profile.business].filter(Boolean).join(' · ')||'Your name, logo, business and default note'}
+ $('#boxCardSum').textContent=open?'':'Logo, colors, default note and button'}
 $('#boxCardHead').onclick=()=>{store.set('boxCardOpen',!store.get('boxCardOpen',false));renderBoxCard()};
 $('#veganDefault').addEventListener('change',e=>{settings.veganDefault=e.target.checked;store.set('settings',settings);if(step<=1&&!pizza.toppings.length&&pizza.vegan!==settings.veganDefault){pizza.vegan=settings.veganDefault;pizza.cheese=swapCheese(cheeseKey(pizza),pizza.vegan);(pizza.cheeseDabs||[]).forEach(d=>d.k=swapCheese(d.k,pizza.vegan))}
  toast(settings.veganDefault?'Every new pizza starts vegan now.':'New pizzas are no longer vegan by default.')});
@@ -1932,6 +1981,7 @@ const EGGS=[
  {id:'spell',title:'Spell her name',hint:'Write something very special on a pizza.',rw:15},
  {id:'toss10',title:'Ten tosses',hint:'Toss the dough way more than you need to.',rw:10},
  {id:'ducks',title:'The duck pizza',hint:'Potato has strong feelings about ducks.',rw:10},
+ {id:'perfectBake',title:"Gerald's perfect bake",hint:'Some pizzas are worth the full wait.',rw:10},
  {id:'bowtie',title:'Bother Gerald',hint:'Gerald is very proud of his bow tie.',rw:5},
  {id:'holiday',title:'Holiday Potato',hint:'Check back on a holiday.',rw:20,locked:true},
  {id:'back',title:'A pizza back',hint:'Happens when someone you sent a pizza to makes one back.',rw:10,locked:true}];
@@ -2157,7 +2207,7 @@ document.fonts&&document.fonts.ready.then(kick);
 
 if(account)renderToday();else startFresh(null);
 /* ---------- plans: locks and upgrade ---------- */
-['#logoFile','#logoFile2','#logoFile3'].forEach(x=>$(x).addEventListener('click',e=>{if(!isPro()){e.preventDefault();upgrade('logo')}}));
+['#logoFile','#logoFile2','#logoFile3','#photoFile'].forEach(x=>$(x).addEventListener('click',e=>{if(!isPro()){e.preventDefault();upgrade('logo')}}));
 ['#brand1','#brand2'].forEach((x,ix)=>{$(x).addEventListener('click',e=>{if(!isPro()){e.preventDefault();upgrade('brand')}});
  $(x).addEventListener('input',e=>{profile[ix?'brand2':'brand1']=e.target.value;saveProfile()});$(x).addEventListener('change',()=>burst('brand'))});
 ['#pLinkLabel','#pLink'].forEach(x=>$(x).addEventListener('focus',e=>{if(!isPro()){e.target.blur();upgrade('button')}}));

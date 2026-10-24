@@ -95,6 +95,12 @@
       "commit": "bba5c012b1a6a2a907895de72d24f30ddaf8e9e0",
       "date": "2026-10-24",
       "notes": "Billing inside the app (plan, payment history, change plan, update card). SOT-Join page for /join. Checkout links live."
+    },
+    {
+      "version": "v0.5.1",
+      "commit": "578ed1338d6f679742de95ab79149cc9256151ed",
+      "date": "2026-10-24",
+      "notes": "Plan changes go to BD upgrade page. Guests who build a pizza sign up on the free form at send and get their pizza back."
     }
   ]
 }

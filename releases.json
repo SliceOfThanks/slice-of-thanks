@@ -17,6 +17,12 @@
       "commit": "0525e6811c2cb8b61710bf93951098d9a1353f00",
       "date": "2026-10-23",
       "notes": "Kitchen member app with live email send, SOT-App widget."
+    },
+    {
+      "version": "v0.3.1",
+      "commit": "ab97186416c595a9a695baef174cde9ffd870294",
+      "date": "2026-10-23",
+      "notes": "Brand palette, calmer dark mode, current pricing, Special Delivery option."
     }
   ]
 }

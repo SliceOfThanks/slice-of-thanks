@@ -1,0 +1,119 @@
+<!-- SOT-Join: the Slice of Thanks sign up page for /join. Version 1.0.0
+     Put it alone in the /join page content. Each plan button goes to BD's own sign up form for that plan
+     (BD creates the account, shows the legal checkbox and takes any payment). Plan IDs: A Slice 10, The Whole Pie 12, Pizza Party 11. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Yellowtail&family=Work+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{--sot-bg:#FFF3E0;--sot-surface:#FFFAF2;--sot-ink:#3E2416;--sot-muted:#7A5641;--sot-line:#EBCFA8;--sot-edge:#3E2416;
+  --sot-tomato:#D62828;--sot-tomato-ink:#FFF3E0;--sot-tomato-text:#C21F1F;--sot-mustard:#F5C04E}
+@media (prefers-color-scheme: dark){:root{--sot-bg:#24160F;--sot-surface:#3E2416;--sot-ink:#E3D0B8;--sot-muted:#BBA088;--sot-line:#634433;
+  --sot-edge:#17110E;--sot-tomato:#D93A30;--sot-tomato-ink:#FFF3E0;--sot-tomato-text:#FF8A7A}}
+html,body{background:var(--sot-bg)!important;color:var(--sot-ink);margin:0}
+body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.5;padding:0 16px}
+#sot-join [hidden]{display:none!important}
+.sot-join{max-width:960px;margin:0 auto;padding:28px 0 56px;display:flex;flex-direction:column;gap:22px}
+.sot-join-head{max-width:460px;width:100%;margin:0 auto;box-sizing:border-box;background:var(--sot-tomato);color:var(--sot-tomato-ink);border:3px solid var(--sot-edge);border-radius:24px;
+  box-shadow:6px 6px 0 var(--sot-edge);padding:18px 22px 16px;text-decoration:none;display:block}
+.sot-join-head .sot-slice{font:400 1.6rem "Yellowtail",cursive;color:var(--sot-mustard);display:block;line-height:1}
+.sot-join-head .sot-thanks{font:400 2.4rem "Shrikhand",Georgia,serif;display:block;line-height:1.05;text-shadow:3px 3px 0 var(--sot-edge)}
+.sot-join-head .sot-tag{font-weight:600;font-size:.95rem;display:block;margin-top:6px}
+.sot-join-title{text-align:center}
+.sot-join-title h2{font:400 2rem "Shrikhand",Georgia,serif;margin:0 0 6px;color:var(--sot-ink)}
+.sot-join-title p{margin:0;color:var(--sot-muted)}
+.sot-plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
+@media (max-width:820px){.sot-plans{grid-template-columns:1fr;max-width:460px;margin:0 auto;width:100%}}
+.sot-plan{background:var(--sot-surface);border:3px solid var(--sot-edge);border-radius:22px;box-shadow:6px 6px 0 var(--sot-edge);padding:22px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box}
+.sot-plan.sot-pick{border-color:var(--sot-tomato);box-shadow:6px 6px 0 var(--sot-tomato)}
+.sot-plan .sot-badge{align-self:flex-start;font:700 .72rem "Work Sans",sans-serif;text-transform:uppercase;letter-spacing:.06em;background:var(--sot-mustard);color:#3E2416;border:2px solid var(--sot-edge);border-radius:999px;padding:2px 10px}
+.sot-plan h3{font:400 1.6rem "Shrikhand",Georgia,serif;margin:0;color:var(--sot-ink)}
+.sot-plan .sot-price{font-weight:700;font-size:1.15rem}
+.sot-plan .sot-price small{display:block;font-weight:500;font-size:.88rem;color:var(--sot-muted)}
+.sot-plan ul{margin:4px 0 8px;padding:0 0 0 20px;color:var(--sot-ink)}
+.sot-plan li{margin:4px 0}
+.sot-plan .sot-go{margin-top:auto;display:block;text-align:center;text-decoration:none;font:700 1.05rem "Work Sans",sans-serif;color:var(--sot-tomato-ink);background:var(--sot-tomato);
+  border:3px solid var(--sot-edge);border-radius:999px;padding:13px 20px;box-shadow:4px 4px 0 var(--sot-edge)}
+.sot-plan .sot-go.sot-quiet{background:transparent;color:var(--sot-ink)}
+.sot-join-foot{text-align:center;display:flex;flex-direction:column;gap:8px}
+.sot-join-foot a{color:var(--sot-tomato-text);font-weight:700}
+.sot-join-foot .sot-muted{color:var(--sot-muted)}
+.sot-join-in{max-width:460px;margin:0 auto;text-align:center;background:var(--sot-surface);border:3px solid var(--sot-edge);border-radius:22px;box-shadow:6px 6px 0 var(--sot-edge);padding:22px}
+.sot-join-in a{display:inline-block;margin-top:12px;text-decoration:none;font-weight:700;color:var(--sot-tomato-ink);background:var(--sot-tomato);border:3px solid var(--sot-edge);border-radius:999px;padding:12px 22px}
+</style>
+<div class="sot-join" id="sot-join">
+  <a class="sot-join-head" href="/kitchen"><span class="sot-slice">Slice of</span><span class="sot-thanks">Thanks</span><span class="sot-tag">Thank-you pizzas, made fresh after every meeting</span></a>
+  <div class="sot-join-title">
+    <h2>Pick your plan</h2>
+    <p>Start free. Upgrade anytime from your Kitchen.</p>
+  </div>
+  <div class="sot-join-in" id="sot-join-in" hidden>
+    <b>You already have an account.</b><br><span>Change your plan anytime from Settings in your Kitchen.</span><br>
+    <a href="/kitchen">Go to the Kitchen</a>
+  </div>
+  <div class="sot-plans" id="sot-plans">
+    <div class="sot-plan">
+      <h3>A Slice</h3>
+      <div class="sot-price">Free<small>Forever</small></div>
+      <ul>
+        <li>10 emails a month</li>
+        <li>Kraft and Classic boxes</li>
+        <li>Classic toppings and confetti</li>
+        <li>Special Delivery, $2.99 for Pro features on one pizza</li>
+      </ul>
+      <a class="sot-go sot-quiet" href="/checkout/10">Start free</a>
+    </div>
+    <div class="sot-plan sot-pick">
+      <span class="sot-badge">Most popular</span>
+      <h3>The Whole Pie</h3>
+      <div class="sot-price">$9 a month<small>or $90 a year. 14-day free trial.</small></div>
+      <ul>
+        <li>250 emails a month</li>
+        <li>Your logo and brand colors</li>
+        <li>All box styles and Pro confetti</li>
+        <li>Gift codes and your own button</li>
+        <li>Email packs when you need more</li>
+      </ul>
+      <a class="sot-go" href="/checkout/12">Start my free trial</a>
+    </div>
+    <div class="sot-plan">
+      <h3>Pizza Party</h3>
+      <div class="sot-price">$29 a month<small>or $290 a year. 14-day free trial.</small></div>
+      <ul>
+        <li>Everything in The Whole Pie</li>
+        <li>3 seats, extra seats $8 each</li>
+        <li>1,000 emails a month, shared</li>
+      </ul>
+      <a class="sot-go sot-quiet" href="/checkout/11">Start my team trial</a>
+    </div>
+  </div>
+  <div class="sot-join-foot" id="sot-join-foot">
+    <span class="sot-muted">Already have an account? <a href="/login?loc=%2Fkitchen">Log in</a></span>
+    <a href="/kitchen">Back to the Kitchen</a>
+  </div>
+</div>
+<script>
+(function () {
+  function loggedIn() {
+    var parts = document.cookie.split(';');
+    for (var i = 0; i < parts.length; i++) {
+      var kv = parts[i].trim().split('=');
+      if (kv[0] === 'userid' && Number(kv[1]) > 0) { return true; }
+      if (kv[0] === 'loggedin' && kv[1] === '1') { return true; }
+    }
+    return false;
+  }
+  function place() {
+    var shell = document.getElementById('sot-join');
+    if (!shell) { return; }
+    /* BD's page titles sit outside our shell: hide them */
+    var hs = document.querySelectorAll('h1, h2, h3');
+    for (var i = 0; i < hs.length; i++) { if (!shell.contains(hs[i])) { hs[i].style.display = 'none'; } }
+    /* Members who are logged in change plans from the Kitchen, so they do not start a second account here */
+    if (loggedIn()) {
+      document.getElementById('sot-plans').hidden = true;
+      document.getElementById('sot-join-foot').hidden = true;
+      document.getElementById('sot-join-in').hidden = false;
+    }
+  }
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', place); } else { place(); }
+})();
+</script>

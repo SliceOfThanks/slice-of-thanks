@@ -3,7 +3,7 @@ import { verifyBdToken } from "./auth.ts";
 import { b64url, hmacHex, recipientToken, tokenHash } from "./crypto.ts";
 import { buildEmail, senderLabel } from "./email.ts";
 import { dataUrlToBlob, publitioSignature } from "./publitio.ts";
-import { billingLines, matchProduct } from "./billing.ts";
+import { billingLines, invoiceList, matchProduct } from "./billing.ts";
 
 const SECRET = "abc123DEF456ghi789JKL012mno345PQR678stu9";
 async function sign(payload: object, secret = SECRET) {
@@ -116,4 +116,17 @@ Deno.test("brevo adapter: retries only temporary failures", async () => {
   assertEquals(await brevo.send(MSG, "K", fakeFetch(400, { code: "invalid_parameter" })), { ok: false, retry: false, error: "brevo 400 invalid_parameter" });
   const net = await brevo.send(MSG, "K", (async () => { throw new Error("down"); }) as unknown as typeof fetch);
   assert(!net.ok && net.retry);
+});
+
+Deno.test("invoice list for the Billing card: newest first, no old ones", () => {
+  const now = Date.parse("2026-10-24T00:00:00Z");
+  const api = { status: "success", message: { invoices: [
+    { invoice_details: { id: 5, invoicenum: "", date: "2026-09-01", datepaid: "2026-09-01 10:00:00", status: "Paid", total: "9.00", items: [{ description: "The Whole Pie", amount: "9.00" }] } },
+    { invoice_details: { id: 7, invoicenum: "INV-7", date: "2026-10-20", datepaid: "0000-00-00 00:00:00", status: "Unpaid", total: "2.99", items: [{ description: "Special Delivery", amount: "2.99" }] } },
+    { invoice_details: { id: 1, date: "2023-01-01", datepaid: "2023-01-01", status: "Paid", total: "9.00", items: [] } },
+  ] } };
+  assertEquals(invoiceList(api, now), [
+    { id: "7", number: "INV-7", date: "2026-10-20T00:00:00.000Z", paidAt: null, status: "Unpaid", totalCents: 299, items: [{ description: "Special Delivery", amountCents: 299 }] },
+    { id: "5", number: "5", date: "2026-09-01T00:00:00.000Z", paidAt: "2026-09-01T10:00:00.000Z", status: "Paid", totalCents: 900, items: [{ description: "The Whole Pie", amountCents: 900 }] },
+  ]);
 });

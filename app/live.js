@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.4.8 =====
+/* ===== Slice of Thanks live layer v0.5.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -197,7 +197,7 @@ async function checkPurchases() {
   else { checkTries = 0; toast('We have not seen the payment yet. It will show up here as soon as it clears.'); }
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && checkTries === 0) checkPurchases(); });
-goPro = function () { closeUp(); location.href = LIVE.UPGRADE; };
+goPro = function () { closeUp(); location.href = bdLink('checkout_pro', '/checkout/12'); };
 
 /* --- Special Delivery: $2.99 one time, A Slice only. Unlocks Pro features for one pizza and includes its send. --- */
 let specialOn = false;
@@ -237,8 +237,83 @@ upgrade = function (key) {
 const _renderPlanCard2 = renderPlanCard;
 renderPlanCard = function () {
   _renderPlanCard2();
-  const t = $('#planTeam'); if (t) t.onclick = () => { location.href = LIVE.UPGRADE; };
+  const t = $('#planTeam'); if (t) t.onclick = openPlans;
+  const b = $('#planBilling'); if (b) b.onclick = () => { const c = $('#liveBilling'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 };
+
+/* --- Billing inside the app: plan, payment history, change plan. Card details stay on BD's secure page. --- */
+let billing = null; let billingAt = 0;
+const PLAN_NAMES = { free: 'A Slice', pro: 'The Whole Pie', team: 'Pizza Party' };
+function money(c) { return '$' + (c / 100).toFixed(2); }
+function shortDate(iso) { return iso ? new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''; }
+function bdLink(k, fallback) { return (billing && billing.links && billing.links[k]) || fallback; }
+function billingCard() {
+  let c = $('#liveBilling');
+  if (!c) {
+    const plan = $('#planCard'); if (!plan) return null;
+    c = document.createElement('div'); c.className = 'card'; c.id = 'liveBilling';
+    plan.after(c);
+  }
+  return c;
+}
+function renderBilling() {
+  const c = billingCard(); const s = LIVE.session; if (!c || !s) return;
+  c.innerHTML = '';
+  const h = document.createElement('h2'); h.textContent = 'Billing'; c.appendChild(h);
+  const lead = document.createElement('p'); lead.className = 'muted'; lead.style.margin = '4px 0 10px';
+  lead.textContent = 'Your plan: ' + (PLAN_NAMES[s.plan] || s.plan) + '. Payments are handled securely by our checkout; we never see your card number.';
+  c.appendChild(lead);
+  const list = document.createElement('ul'); list.className = 'feed'; list.id = 'liveInvoices';
+  if (!billing) { const li = document.createElement('li'); li.innerHTML = '<span class="muted">Loading your payment history...</span>'; list.appendChild(li); }
+  else if (!billing.invoices || !billing.invoices.length) { const li = document.createElement('li'); li.innerHTML = '<span class="muted">No payments yet.</span>'; list.appendChild(li); }
+  else billing.invoices.slice(0, 12).forEach(inv => {
+    const li = document.createElement('li');
+    const st = (inv.status || '').toLowerCase();
+    const row = document.createElement('div'); row.className = 'row-h';
+    const d = document.createElement('span'); d.className = 'feed-date'; d.textContent = shortDate(inv.date) + ' · Invoice ' + inv.number;
+    const pill = document.createElement('span'); pill.className = 'pill' + (st === 'paid' ? ' ok' : st === 'unpaid' ? ' wait' : ''); pill.textContent = inv.status || '';
+    row.append(d, pill);
+    const what = document.createElement('b'); what.textContent = (inv.items || []).map(i => i.description).filter(Boolean).join(', ') || 'Payment';
+    const amt = document.createElement('span'); amt.textContent = money(inv.totalCents) + (inv.paidAt ? ' · paid ' + shortDate(inv.paidAt) : '');
+    li.append(row, what, amt); list.appendChild(li);
+  });
+  c.appendChild(list);
+  const btns = document.createElement('div'); btns.className = 'btn-row';
+  const cp = document.createElement('button'); cp.type = 'button'; cp.className = 'btn small primary'; cp.textContent = 'Change plan'; cp.onclick = openPlans;
+  const card = document.createElement('button'); card.type = 'button'; card.className = 'btn small'; card.textContent = 'Update card or billing address';
+  card.onclick = () => { location.href = bdLink('billing', '/account/billing'); };
+  btns.append(cp, card);
+  if (s.plan !== 'free') { const pk = document.createElement('button'); pk.type = 'button'; pk.className = 'btn small'; pk.textContent = 'Buy more emails'; pk.onclick = openPacks; btns.appendChild(pk); }
+  c.appendChild(btns);
+}
+async function loadBilling(force) {
+  if (!LIVE.session) return;
+  if (!force && billing && Date.now() - billingAt < 60000) { renderBilling(); return; }
+  renderBilling();
+  const r = await LIVE.call('/billing');
+  billing = r && r.ok ? r : { invoices: [], links: {} }; billingAt = Date.now();
+  renderBilling();
+}
+/* Plan picker: the three plans, each to BD's checkout for that plan */
+function openPlans() {
+  closeUp();
+  const s = LIVE.session; const cur = s ? s.plan : 'free';
+  const plans = [
+    ['free', 'A Slice', 'Free. 10 emails a month, Kraft and Classic boxes.', 'checkout_free', '/checkout/10'],
+    ['pro', 'The Whole Pie', '$9 a month or $90 a year. 250 emails a month, your logo, gift codes and your own button. 14-day free trial.', 'checkout_pro', '/checkout/12'],
+    ['team', 'Pizza Party', '$29 a month or $290 a year. 3 seats and 1,000 shared emails a month. 14-day free trial.', 'checkout_team', '/checkout/11']
+  ];
+  const p = document.createElement('div');
+  plans.forEach(([k, name, desc]) => {
+    const d = document.createElement('div'); d.className = 'field';
+    d.innerHTML = '<b>' + name + (k === cur ? ' (your plan)' : '') + '</b><br><span class="muted">' + desc + '</span>';
+    p.appendChild(d);
+  });
+  liveSheet('Change plan', p, plans.filter(x => x[0] !== cur).map(([k, name, , link, fb]) => ({
+    label: (k === 'free' ? 'Switch to ' : 'Choose ') + name, primary: k === 'pro',
+    run: () => { location.href = bdLink(link, fb); }
+  })));
+}
 
 /* --- Profile and logo save to Supabase --- */
 let profTimer = 0;
@@ -283,6 +358,7 @@ const _renderSettings = renderSettings;
 renderSettings = function () {
   _renderSettings();
   const s = LIVE.session; if (!s) return;
+  loadBilling();
   if ($('#liveAddrS') && document.activeElement !== host) { $('#liveAddrS').value = s.profile.mailing_address || ''; $('#liveReply').value = s.profile.reply_to || ''; }
 };
 

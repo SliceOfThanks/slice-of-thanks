@@ -61,3 +61,28 @@ export async function fetchTransactions(opts: { site: string; key: string; bdUse
   if (j.status && j.status !== "success") throw new Error("bd_api " + String(typeof j.message === "string" ? j.message : j.status).slice(0, 120));
   return j;
 }
+
+export type Invoice = { id: string; number: string; date: string | null; paidAt: string | null; status: string; totalCents: number; items: { description: string; amountCents: number }[] };
+
+const cents = (v: unknown) => { const n = Math.round(parseFloat(String(v ?? "0")) * 100); return isNaN(n) ? 0 : n; };
+
+// The member's invoices for the in-app Billing card: newest first, last 24 months, no card or payment details.
+export function invoiceList(apiResponse: any, now = Date.now()): Invoice[] {
+  const invoices = apiResponse?.message?.invoices;
+  if (!Array.isArray(invoices)) return [];
+  const out: Invoice[] = [];
+  for (const inv of invoices) {
+    const d = inv?.invoice_details ?? inv;
+    const id = String(d?.id ?? "").trim();
+    if (!id) continue;
+    const date = bdDate(d?.date);
+    if (date && now - Date.parse(date) > 2 * YEAR_MS) continue;
+    const items = Array.isArray(d?.items) ? d.items : (Array.isArray(d?.items?.item) ? d.items.item : []);
+    out.push({
+      id, number: String(d?.invoicenum || id), date, paidAt: bdDate(d?.datepaid),
+      status: String(d?.status ?? "").slice(0, 20), totalCents: cents(d?.total),
+      items: items.slice(0, 10).map((it: any) => ({ description: String(it?.description ?? "").slice(0, 120), amountCents: cents(it?.amount) })),
+    });
+  }
+  return out.sort((a, b) => String(b.date ?? "").localeCompare(String(a.date ?? ""))).slice(0, 50);
+}

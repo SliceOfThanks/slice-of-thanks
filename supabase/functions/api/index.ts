@@ -6,10 +6,10 @@ import { verifyBdToken } from "./lib/auth.ts";
 import { recipientToken, tokenHash } from "./lib/crypto.ts";
 import { buildEmail, SITE } from "./lib/email.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
-import { billingLines, fetchTransactions, type ProductMatch } from "./lib/billing.ts";
+import { billingLines, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
 import { pickProvider } from "./lib/mail/index.ts";
 
-const VERSION = "api-0.5.0";
+const VERSION = "api-0.5.1";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@6ee4e204b57bdb3c50150e9a5fe275383e9b22e9/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -148,6 +148,18 @@ async function route(req: Request, path: string): Promise<Response> {
   if (path === "/purchases/check" && req.method === "POST") {
     const b = await syncBilling(memberId, m.claims.uid, 4);
     return json(req, { ...(b.changed ? (await member(req))!.session : m.session), billing_checked: b.checked });
+  }
+  // In-app Billing card: the member's own invoices from BD (no card details ever leave BD)
+  if (path === "/billing" && req.method === "GET") {
+    if (!env("BD_API_KEY")) return json(req, { ok: false, code: "billing_unavailable" });
+    try {
+      const tx = await fetchTransactions({ site: env("BD_SITE_URL") || BD_API_SITE, key: env("BD_API_KEY"), bdUserId: m.claims.uid });
+      return json(req, { ok: true, invoices: invoiceList(tx), links: (await rpc("sot_setting", { p_env: "live", p_key: "bd_links" }).catch(() => null)) ?? {} });
+    } catch (e) {
+      console.error("billing list", String(e));
+      // A member with no billing record yet comes back as an error from BD
+      return json(req, { ok: true, invoices: [], links: (await rpc("sot_setting", { p_env: "live", p_key: "bd_links" }).catch(() => null)) ?? {} });
+    }
   }
   if (path === "/terms/accept" && req.method === "POST") {
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || null;

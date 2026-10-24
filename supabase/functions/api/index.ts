@@ -8,7 +8,7 @@ import { buildEmail, SITE } from "./lib/email.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, fetchTransactions, type ProductMatch } from "./lib/billing.ts";
 
-const VERSION = "api-0.4.0";
+const VERSION = "api-0.4.1";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@6ee4e204b57bdb3c50150e9a5fe275383e9b22e9/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -113,7 +113,11 @@ async function route(req: Request, path: string): Promise<Response> {
   // Which app version to load. Testers get staging, everyone else gets live.
   if (path === "/bootstrap" && req.method === "GET") {
     let envName = "live";
-    const claims = await verifyBdToken(req.headers.get("x-sot-auth") ?? undefined, env("BD_SHARED_SECRET"));
+    const pass = req.headers.get("x-sot-auth") ?? "";
+    const claims = await verifyBdToken(pass || undefined, env("BD_SHARED_SECRET"));
+    // Sign in report from SOT-App 1.2.0: which checks failed, by name only
+    const why = (new URL(req.url).searchParams.get("why") ?? "").slice(0, 300);
+    if (why) console.log("auth_why", why, pass ? (claims ? "pass_valid" : "pass_invalid") : "pass_empty");
     if (claims) {
       const { data } = await db().from("testers").select("bd_user_id").eq("bd_user_id", claims.uid).maybeSingle();
       if (data) envName = "staging";

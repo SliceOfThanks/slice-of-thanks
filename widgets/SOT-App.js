@@ -4,7 +4,8 @@
   if (!root) { return; }
   var api = root.getAttribute('data-api');
   var tok = root.getAttribute('data-token') || '';
-  fetch(api + '/bootstrap', { headers: { 'x-sot-auth': tok } }).then(function (r) { return r.json(); }).then(function (b) {
+  var why = root.getAttribute('data-why') || '';
+  fetch(api + '/bootstrap' + (why ? '?why=' + encodeURIComponent(why) : ''), { headers: { 'x-sot-auth': tok } }).then(function (r) { return r.json(); }).then(function (b) {
     var base = 'https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@' + b.commit;
     root.setAttribute('data-base', base);
     root.innerHTML = '';

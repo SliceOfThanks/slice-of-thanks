@@ -1,4 +1,4 @@
-<!-- SOT-Login: Slice of Thanks look for the BD /login page. Version 1.4.0
+<!-- SOT-Login: Slice of Thanks look for the BD /login page. Version 1.5.0
      Place it in the /login page content ABOVE the BD Member Login Page widget.
      BD still does the login, reCAPTCHA, password reset and redirect. This widget only styles it,
      moves BD's form into the Slice of Thanks card, and adds the links around it. -->
@@ -38,6 +38,8 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 .sot-login-card p{margin:0 0 4px;color:var(--sot-muted)}
 .sot-login-card .alert{border:2px solid var(--sot-edge);border-radius:14px;padding:10px 14px;margin:0 0 12px;background:var(--sot-line);color:var(--sot-ink)}
 .sot-login-card .g-recaptcha{margin-top:16px}
+/* BD's field notes, such as Required Field */
+.sot-login-card .help-block,.sot-login-card .error,.sot-login-card .text-muted{display:block;font-size:.88rem;margin-top:6px;color:var(--sot-tomato-text)}
 /* BD's login CSS sets the container colors with !important on a strong selector; the id here outranks it */
 #sot-login-slot .module,#sot-login-slot .row,#sot-login-slot .fpad-lg,#sot-login-slot .member-login-container,#sot-login-slot form,#sot-login-slot .form-group,#sot-login-slot fieldset{
   width:auto!important;max-width:none!important;margin-left:0!important;margin-right:0!important;padding:0!important;
@@ -59,7 +61,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 </div>
 <script>
 (function () {
-  var VERSION = '1.4.0';
+  var VERSION = '1.5.0';
   var NL = String.fromCharCode(10);
   var tries = 0;
   function cookieNames() {
@@ -121,6 +123,19 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
     }
     return out;
   }
+  /* The markup around the password box, with every value blanked, to see what draws the bar */
+  function around(slot) {
+    var pw = slot.querySelector('input[type=password]');
+    if (!pw) { return '-'; }
+    var host = pw.parentElement && pw.parentElement.parentElement ? pw.parentElement.parentElement : pw.parentElement;
+    var copy = host.cloneNode(true);
+    var all = copy.querySelectorAll('*');
+    for (var i = 0; i < all.length; i++) { all[i].removeAttribute('value'); all[i].removeAttribute('style'); }
+    var sizes = [];
+    var kids = host.querySelectorAll('*');
+    for (var j = 0; j < kids.length && j < 12; j++) { sizes.push(label(kids[j]) + ' ' + kids[j].offsetWidth + 'x' + kids[j].offsetHeight); }
+    return copy.outerHTML.slice(0, 900) + NL + 'sizes: ' + sizes.join(' / ');
+  }
   /* Open /login?sotdebug=1 to see what the widget found (names only, no values) */
   function debug(shell, found) {
     if (location.search.indexOf('sotdebug=1') < 0) { return; }
@@ -137,7 +152,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
       NL + 'cookies: ' + cookieNames().join(', ') +
       NL + 'headings: ' + heads.join(' / ') +
       NL + 'outside the card: ' + outside(shell).join(' / ') +
-      NL + 'fields in the card: ' + fields(document.getElementById('sot-login-slot')).join(' / ') +
+      NL + 'around the password box: ' + around(document.getElementById('sot-login-slot')) +
       NL + 'page: ' + location.pathname;
     shell.appendChild(pre);
   }

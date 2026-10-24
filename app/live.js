@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.5.0 =====
+/* ===== Slice of Thanks live layer v0.5.1 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -197,7 +197,8 @@ async function checkPurchases() {
   else { checkTries = 0; toast('We have not seen the payment yet. It will show up here as soon as it clears.'); }
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && checkTries === 0) checkPurchases(); });
-goPro = function () { closeUp(); location.href = bdLink('checkout_pro', '/checkout/12'); };
+/* Logged-in members change plans on BD's upgrade page, so they keep one account */
+goPro = function () { closeUp(); location.href = bdLink('change_plan', '/account/upgrade'); };
 
 /* --- Special Delivery: $2.99 one time, A Slice only. Unlocks Pro features for one pizza and includes its send. --- */
 let specialOn = false;
@@ -309,10 +310,10 @@ function openPlans() {
     d.innerHTML = '<b>' + name + (k === cur ? ' (your plan)' : '') + '</b><br><span class="muted">' + desc + '</span>';
     p.appendChild(d);
   });
-  liveSheet('Change plan', p, plans.filter(x => x[0] !== cur).map(([k, name, , link, fb]) => ({
-    label: (k === 'free' ? 'Switch to ' : 'Choose ') + name, primary: k === 'pro',
-    run: () => { location.href = bdLink(link, fb); }
-  })));
+  const note = document.createElement('p'); note.className = 'muted'; note.style.fontSize = '.88rem';
+  note.textContent = 'Next you pick the plan and confirm on our secure checkout. Your pizzas, contacts and settings stay the same.';
+  p.appendChild(note);
+  liveSheet('Change plan', p, [{ label: 'Continue to change plan', primary: true, run: () => { location.href = bdLink('change_plan', '/account/upgrade'); } }]);
 }
 
 /* --- Profile and logo save to Supabase --- */
@@ -435,7 +436,7 @@ $('#sendNow').onclick = () => {
   if (!account) {
     store.set('draft', { pizza: cleanPizza(pizza), box: JSON.parse(JSON.stringify(box)), at: Date.now() });
     liveSheet('Create your free account to send', (() => { const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'Your pizza is saved. Make a free account, sign in, and you will come right back to send it.'; return p; })(),
-      [{ label: 'Create free account', primary: true, run: () => { location.href = LIVE.SIGNUP; } }, { label: 'I already have one', run: () => { location.href = LIVE.LOGIN; } }]);
+      [{ label: 'Create free account', primary: true, run: () => { location.href = bdLink('checkout_free', '/checkout/10'); } }, { label: 'I already have one', run: () => { location.href = LIVE.LOGIN; } }]);
     return;
   }
   liveSend();

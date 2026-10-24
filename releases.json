@@ -107,6 +107,12 @@
       "commit": "01ed0f0dd9a2749c966019b9d93740b7c228959c",
       "date": "2026-10-24",
       "notes": "Full Potato scooter art in the email, Kitchen preview and recipient page. Sender logo hops with the bike. Mailing address optional (Slice of Thanks address by default). Failed sends say so."
+    },
+    {
+      "version": "v0.7.0",
+      "commit": "08a8dc99a1c2fa71ebfbd7b8a9c1d0e5e7edae8a",
+      "date": "2026-10-24",
+      "notes": "People on real data with real sends. CSV list sends (Pro and Team) with country and permission per row and scheduling. Name from Business in the email, recipient page and preview. Cream-backed Potato in the email. SOT-Login 1.6.1 and SOT-Join 1.0.1 px sizes."
     }
   ]
 }

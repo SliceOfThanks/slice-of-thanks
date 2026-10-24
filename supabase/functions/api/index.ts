@@ -10,7 +10,7 @@ import { billingLines, fetchTransactions, invoiceList, type ProductMatch } from 
 import { pickProvider } from "./lib/mail/index.ts";
 
 const VERSION = "api-0.7.0";
-const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@01ed0f0dd9a2749c966019b9d93740b7c228959c/brand";
+const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@08a8dc99a1c2fa71ebfbd7b8a9c1d0e5e7edae8a/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
 // BD's own domain. The www address redirects, and the redirect turns the API POST into a GET (405).

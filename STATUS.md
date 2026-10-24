@@ -1,6 +1,6 @@
 # Build status (read this first in a new session)
 
-Last updated: 2026-10-24. Live code version: v0.6.0 (see releases.json and app_settings.code_version).
+Last updated: 2026-10-24. Live code version: v0.7.0 (see releases.json and app_settings.code_version).
 
 ## Done and live
 - Supabase project cmnclubiarmthibqibuj. Edge Function `api` (api-0.4.0, verify_jwt false, own auth). Tables have RLS with no policies.
@@ -44,15 +44,17 @@ Git tags cannot be pushed. Use commit IDs.
 - Brevo returned 401 on the first real send; Stacey fixed the key and IP blocking and the next test email arrived in about 10 seconds with the pizza picture (2026-10-24). DMARC rua tag still to add in DNS (optional).
 - v0.6.0 (commit 01ed0f0): Potato delivery art rebuilt from brand/characters/potato-character-sheet.png (side view, mirrored, box text blanked, transparent, 560x322, palette PNG) so the helmet and wheels are not cut off. Logo box on the art: left 43%, top 41.5%, width 32.5%, height 27%, transform-origin 21.5% 31.5% so it hops with the image. api-0.6.2 points the email's ASSETS at this commit.
 
+- v0.7.0 with api-0.7.0 (2026-10-24, commit 08a8dc9): People tab on real data. GET /people (sot_people: contacts with last 10 pizzas, opened from recipient_events box_opened, has_consent), POST /people/save (sot_save_contact, optional basis). People "Send another pizza" posts /send with source people; people without consent on file get country and How you know them fields. CSV lists: POST /send/bulk, 50 rows per call, csv_import feature (Pro and Team), per-row Country and Permission columns with list defaults, optional schedule (datetime-local), rows queue and the worker (now 50 per minute) delivers them. Signature lists share one picture; Gerald's unique pizzas and vegan rows go without a picture. The sample list is hidden in the live app because its addresses are not real. sot_create_send keeps company, vegan and a label. Headline rule everywhere: "Name from Business", business alone when send_as is business (email subject and lead, unbox, preview). Email uses brand/characters/potato-delivery-side-email.png (cream background). Tests: scratchpad pw/people-test.js (21 checks) and pw/test.js pass.
+- BD (Stacey, 2026-10-24): A Slice after-signup redirect set to /kitchen, Pizza Party trial set to 14 days, DMARC rua added. Still hers: /join SEO title, BD duplicate terms checkbox (later).
+- SOT-Login 1.6.1 and SOT-Join 1.0.1 (px sizes) are in the repo; Stacey pastes them into BD.
+
 ## Next, in order
 1. Calendar connections (Calendly, TidyCal) feeding Home > This week, with Stacey's rules:
    - Pro and Team: each upcoming meeting has a choice to have a pizza ready when it ends (or the Settings default).
    - A Slice (free): the member picks which upcoming meetings get a pizza. When a picked meeting ends, their signature pizza is created for that person automatically (a signature pizza must be set; prompt them to set one in Settings if not) and an email tells them it is waiting. The member opens it and sends it (free sends are never automatic).
    - Home quick actions stay: Make a new pizza, Hire Gerald, Send the Pizza of the Month.
-2. People tab: CSV import with country and consent per contact, list sends.
 3. Spanish in the Kitchen UI.
 4. SOT-Admin widget: Releases, Subscription Plans, Pizza of the Month. Include a purchases list.
-5. SOT-Login and SOT-Join: switch rem sizes to px like SOT-Checkout 1.3.3 (BD root font size is 10px, so their text is smaller than designed). Do it with the next change to either widget.
 Then Phase 2 per the blueprint (webhooks, Calendly, TidyCal, birthdays).
 
 ## Working with Stacey

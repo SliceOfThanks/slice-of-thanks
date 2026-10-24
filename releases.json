@@ -65,6 +65,12 @@
       "commit": "eeb536ff8dadafe984dce04f88e7fa89eafa919c",
       "date": "2026-10-24",
       "notes": "Log out in Kitchen Settings. SOT-Login widget styles the BD login page."
+    },
+    {
+      "version": "v0.4.5",
+      "commit": "50c25bc04516f85f4adf6829837e6c50621f87b6",
+      "date": "2026-10-24",
+      "notes": "Pizza of the Month and Hire Gerald moved into the Kitchen behind two buttons."
     }
   ]
 }

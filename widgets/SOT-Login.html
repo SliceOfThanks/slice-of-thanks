@@ -1,4 +1,4 @@
-<!-- SOT-Login: Slice of Thanks look for the BD /login page. Version 1.2.0
+<!-- SOT-Login: Slice of Thanks look for the BD /login page. Version 1.3.0
      Place it in the /login page content ABOVE the BD Member Login Page widget.
      BD still does the login, reCAPTCHA, password reset and redirect. This widget only styles it,
      moves BD's form into the Slice of Thanks card, and adds the links around it. -->
@@ -38,8 +38,13 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 .sot-login-card p{margin:0 0 4px;color:var(--sot-muted)}
 .sot-login-card .alert{border:2px solid var(--sot-edge);border-radius:14px;padding:10px 14px;margin:0 0 12px;background:var(--sot-line);color:var(--sot-ink)}
 .sot-login-card .g-recaptcha{margin-top:16px}
-.sot-login-card .module,.sot-login-card .row,.sot-login-card .fpad-lg,.sot-login-card .member-login-container{width:auto!important;max-width:none;margin:0!important;padding:0!important;
-  background:transparent!important;border:0!important;box-shadow:none!important;color:inherit!important}
+/* BD's login CSS sets the container colors with !important on a strong selector; the id here outranks it */
+#sot-login-slot .module,#sot-login-slot .row,#sot-login-slot .fpad-lg,#sot-login-slot .member-login-container,#sot-login-slot form,#sot-login-slot .form-group,#sot-login-slot fieldset{
+  width:auto!important;max-width:none!important;margin-left:0!important;margin-right:0!important;padding:0!important;
+  background:transparent!important;border:0!important;box-shadow:none!important;color:var(--sot-ink)!important}
+/* Keep BD's password lock icon next to its field instead of floating to the top of the page */
+#sot-login-slot,#sot-login-slot form,#sot-login-slot .form-group,#sot-login-slot label{position:relative}
+#sot-login-slot .fa-lock,#sot-login-slot .glyphicon-lock{position:absolute!important;left:auto!important;right:4px!important;top:4px!important;bottom:auto!important;transform:none!important;color:var(--sot-muted)}
 .sot-login-foot{text-align:center;display:flex;flex-direction:column;gap:8px}
 .sot-login-foot a{color:var(--sot-tomato-text);font-weight:700}
 .sot-login-foot .sot-muted{color:var(--sot-muted)}
@@ -54,7 +59,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 </div>
 <script>
 (function () {
-  var VERSION = '1.2.0';
+  var VERSION = '1.3.0';
   var NL = String.fromCharCode(10);
   var tries = 0;
   function cookieNames() {
@@ -79,6 +84,25 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
       if (!shell.contains(hs[i])) { hs[i].style.display = 'none'; }
     }
   }
+  function label(el) {
+    var c = (typeof el.className === 'string' && el.className.trim()) ? '.' + el.className.trim().split(' ').join('.') : '';
+    return el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + c;
+  }
+  /* Visible elements that are not part of our shell: what draws the bar or icon left on the page */
+  function outside(shell) {
+    var out = [];
+    var all = document.body.querySelectorAll('*');
+    for (var i = 0; i < all.length && out.length < 12; i++) {
+      var el = all[i];
+      if (shell.contains(el) || el.contains(shell) || el.tagName === 'SCRIPT' || el.tagName === 'STYLE' || el.tagName === 'LINK') { continue; }
+      var cs = getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden') { continue; }
+      var r = el.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2) { continue; }
+      out.push(label(el) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' at ' + Math.round(r.top + window.scrollY) + (cs.position !== 'static' ? ' ' + cs.position : ''));
+    }
+    return out;
+  }
   /* Open /login?sotdebug=1 to see what the widget found (names only, no values) */
   function debug(shell, found) {
     if (location.search.indexOf('sotdebug=1') < 0) { return; }
@@ -94,6 +118,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
       NL + 'form moved into card: ' + found + ', logged in cookie: ' + loggedIn() +
       NL + 'cookies: ' + cookieNames().join(', ') +
       NL + 'headings: ' + heads.join(' / ') +
+      NL + 'outside the card: ' + outside(shell).join(' / ') +
       NL + 'page: ' + location.pathname;
     shell.appendChild(pre);
   }

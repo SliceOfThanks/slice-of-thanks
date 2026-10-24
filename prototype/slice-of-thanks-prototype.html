@@ -28,6 +28,18 @@
   --cloth-a:#6B2A22; --cloth-b:#3E2416;
   --warn-bg:#4a3510; --warn-ink:#f6cf72; --ok-bg:#263618; --ok-ink:#b6d88a; --oven:#0d0604; color-scheme:dark}
 *{box-sizing:border-box}
+/* Kitchen shortcuts: Pizza of the Month and Hire Gerald */
+.kx{display:flex;flex-direction:column;gap:14px;margin-bottom:6px}
+.kx-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kx-btn{display:flex;gap:10px;align-items:center;text-align:left;background:var(--surface);color:var(--ink);border:3px solid var(--edge);border-radius:18px;
+  box-shadow:4px 4px 0 var(--shade);padding:10px 12px;font:inherit;cursor:pointer}
+.kx-btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--shade)}
+.kx-btn b{display:block;font-size:.95rem;line-height:1.2}
+.kx-btn small{display:block;color:var(--muted);font-size:.8rem;line-height:1.3}
+.kx-btn[aria-expanded="true"]{background:var(--mustard);color:#3E2416}
+.kx-btn[aria-expanded="true"] small{color:#5A3B25}
+.kx-btn canvas,.kx-btn .g-av{width:44px;height:44px;flex:none}
+@media (max-width:380px){.kx-buttons{grid-template-columns:1fr}}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .checker{height:18px;margin:0 calc(-1 * max(16px,env(safe-area-inset-right,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));
@@ -399,6 +411,42 @@ body.is-free .pro-tag{display:inline-block}
   <!-- KITCHEN -->
   <section id="view-make" hidden>
     <p class="eyebrow" id="makeFor"></p>
+    <!-- Pizza of the Month and Hire Gerald: two ways to start a pizza, opened from the Kitchen -->
+    <div class="kx" id="kitchenExtras">
+      <div class="kx-buttons">
+        <button class="kx-btn" id="kxSpecialBtn" type="button" aria-expanded="false" aria-controls="kxSpecialWrap"><canvas id="kxSpecialCanvas" width="44" height="44" aria-hidden="true"></canvas><span><b>Pizza of the Month</b><small id="kxSpecialSub">This month's special</small></span></button>
+        <button class="kx-btn" id="kxHireBtn" type="button" aria-expanded="false" aria-controls="kxHireWrap"><span class="g-av" aria-hidden="true"></span><span><b>Hire Gerald</b><small>Short on time? He makes it</small></span></button>
+      </div>
+      <div class="kx-wrap" id="kxSpecialWrap" hidden>
+        <div class="card special" id="specialCard">
+          <div class="section-head" style="border:0;padding:0"><p class="eyebrow" id="spMonth"></p><span class="tag" id="spUntil"></span></div>
+          <div class="sp-row"><canvas id="spCanvas" width="140" height="140" aria-label="This month's special pizza"></canvas>
+            <div class="sp-text"><h2 id="spName"></h2><p id="spDesc"></p><p class="muted" style="font-size:.86rem" id="spComes"></p></div></div>
+          <p class="hint" id="spGerald"></p>
+          <div class="btn-row"><button class="btn primary" id="spSend" type="button">Send this pizza</button><button class="btn" id="spPreview" type="button">Preview the unboxing</button></div>
+          <p class="muted" style="font-size:.82rem">Free: send it once this month. Pro: send it as often as you like, with the special box and confetti.</p>
+        </div>
+        <div class="card sponsored" id="sponsorCard" hidden>
+          <div class="section-head" style="border:0;padding:0"><p class="eyebrow" id="soEyebrow">Sponsored</p><span class="tag">Sponsored</span></div>
+          <div class="sp-row"><canvas id="soCanvas" width="140" height="140" aria-label="This month's sponsored pizza"></canvas>
+            <div class="sp-text"><h2 id="soName"></h2><p id="soDesc"></p><p class="offer" id="soOffer"></p></div></div>
+          <p class="muted" style="font-size:.82rem">Free for everyone to send, and it doesn't count toward your monthly limit.</p>
+          <div class="btn-row"><button class="btn primary" id="soSend" type="button">Send this pizza</button><button class="btn" id="soPreview" type="button">Preview the unboxing</button></div>
+        </div>
+      </div>
+      <div class="kx-wrap" id="kxHireWrap" hidden>
+        <div class="card hire">
+          <div class="section-head" style="border:0;padding:0"><p class="eyebrow">Short on time?</p><span class="tag">Pro feature</span></div>
+          <h2>Hire Gerald to make it</h2>
+          <p class="muted">Tell him who it's for and the vibe. He builds, bakes, and names the pizza, then hands you the box to sign and send.</p>
+          <div class="field"><label for="hireFor">Who it's for</label><select id="hireFor"></select></div>
+          <div class="field"><label for="hireTopic">What did you talk about?</label><input type="text" id="hireTopic" maxlength="30" placeholder="Q1 launch"><small>Gerald spells it out in pepperoni, one letter per slice.</small></div>
+          <div class="field"><label>The vibe</label><div class="chips" id="hireVibe"></div></div>
+          <label class="check"><input type="checkbox" id="hireVegan"> Make it vegan<span class="muted" id="hireVeganNote"></span></label>
+          <div class="btn-row"><button class="btn primary" id="hireBtn">Hire Gerald</button></div>
+        </div>
+      </div>
+    </div>
     <ol class="steps" id="steps"></ol>
     <div class="stage" id="stage">
       <canvas id="pizza" aria-label="Your pizza. Tap to add to it."></canvas>
@@ -560,21 +608,6 @@ body.is-free .pro-tag{display:inline-block}
 
   <!-- GERALD -->
   <section id="view-gerald" hidden>
-    <div class="card special" id="specialCard">
-      <div class="section-head" style="border:0;padding:0"><p class="eyebrow" id="spMonth"></p><span class="tag" id="spUntil"></span></div>
-      <div class="sp-row"><canvas id="spCanvas" width="140" height="140" aria-label="This month's special pizza"></canvas>
-        <div class="sp-text"><h2 id="spName"></h2><p id="spDesc"></p><p class="muted" style="font-size:.86rem" id="spComes"></p></div></div>
-      <p class="hint" id="spGerald"></p>
-      <div class="btn-row"><button class="btn primary" id="spSend" type="button">Send this pizza</button><button class="btn" id="spPreview" type="button">Preview the unboxing</button></div>
-      <p class="muted" style="font-size:.82rem">Free: send it once this month. Pro: send it as often as you like, with the special box and confetti.</p>
-    </div>
-    <div class="card sponsored" id="sponsorCard" hidden>
-      <div class="section-head" style="border:0;padding:0"><p class="eyebrow" id="soEyebrow">Sponsored</p><span class="tag">Sponsored</span></div>
-      <div class="sp-row"><canvas id="soCanvas" width="140" height="140" aria-label="This month's sponsored pizza"></canvas>
-        <div class="sp-text"><h2 id="soName"></h2><p id="soDesc"></p><p class="offer" id="soOffer"></p></div></div>
-      <p class="muted" style="font-size:.82rem">Free for everyone to send, and it doesn't count toward your monthly limit.</p>
-      <div class="btn-row"><button class="btn primary" id="soSend" type="button">Send this pizza</button><button class="btn" id="soPreview" type="button">Preview the unboxing</button></div>
-    </div>
     <details class="card acc" id="meetCrew">
       <summary><span class="acc-icons"><span class="g-av"></span><span class="p-av"></span></span><span class="acc-t"><b>Meet the crew</b><small>Gerald, head critic, and Potato, head of delivery</small></span><span class="chev" aria-hidden="true"></span></summary>
     <div class="crew-member">
@@ -609,17 +642,6 @@ body.is-free .pro-tag{display:inline-block}
       <p class="group-label">Secret Menu</p>
       <ul class="eggs" id="secretList"></ul>
     </details>
-
-    <div class="card hire">
-      <div class="section-head" style="border:0;padding:0"><p class="eyebrow">Short on time?</p><span class="tag">Pro feature</span></div>
-      <h2>Hire Gerald to make it</h2>
-      <p class="muted">Tell him who it's for and the vibe. He builds, bakes, and names the pizza, then hands you the box to sign and send.</p>
-      <div class="field"><label for="hireFor">Who it's for</label><select id="hireFor"></select></div>
-      <div class="field"><label for="hireTopic">What did you talk about?</label><input type="text" id="hireTopic" maxlength="30" placeholder="Q1 launch"><small>Gerald spells it out in pepperoni, one letter per slice.</small></div>
-      <div class="field"><label>The vibe</label><div class="chips" id="hireVibe"></div></div>
-      <label class="check"><input type="checkbox" id="hireVegan"> Make it vegan<span class="muted" id="hireVeganNote"></span></label>
-      <div class="btn-row"><button class="btn primary" id="hireBtn">Hire Gerald</button></div>
-    </div>
 
     <div class="card">
       <h2>Gerald's tips</h2>
@@ -1135,7 +1157,7 @@ function makeChips(el,items,get,set,lk){el.innerHTML='';items.forEach(([val,labe
 function renderSteps(){const ol=$('#steps');ol.innerHTML='';STEPS.forEach((s,i)=>{const li=document.createElement('li');li.className=i===step?'on':(i<step?'done':'');
  const n=document.createElement('span');n.textContent=i<step?'✓':String(i+1);li.append(n,document.createTextNode(s));ol.appendChild(li)})}
 function renderStep(){
- renderSteps();
+ renderSteps();renderKitchenExtras();
  if(step!==3&&!baking)$('#potatoSay').hidden=true;
  if(saidStep!==step){saidStep=step;gSay(editingSignature&&step===5?'Your signature pizza. I will remember this one.':G_STEP[step])}
  document.querySelectorAll('.panel').forEach(p=>p.hidden=Number(p.dataset.step)!==step);
@@ -1502,12 +1524,21 @@ function fillFeed(ul,items){let seen=store.get('seenNews',[]);ul.innerHTML='';
   ul.appendChild(li)})}
 function renderTip(){$('#tipText').textContent=TIPS[tipIdx];$('#tipCount').textContent='Tip '+(tipIdx+1)+' of '+TIPS.length}
 $('#nextTip').onclick=()=>{tipIdx=(tipIdx+1)%TIPS.length;renderTip()};
-function renderGerald(){
+function renderGerald(){renderTip();renderFeed();renderTreats()}
+function renderHire(){
  const sel=$('#hireFor');const prev=sel.value;sel.innerHTML='';
  meetings.filter(m=>!m.internal).forEach(m=>{const o=document.createElement('option');o.value=m.id;o.textContent=m.who+' · '+m.title;sel.appendChild(o)});
  const o=document.createElement('option');o.value='';o.textContent='Someone else';sel.appendChild(o);
  const pm=meetings.find(m=>m.status==='prompt');sel.value=prev||(pm?pm.id:sel.options[0].value);syncHireVegan();
- makeChips($('#hireVibe'),VIBES,()=>hireVibe,v=>hireVibe=v);renderTip();renderFeed();renderTreats();renderSpecial()}
+ makeChips($('#hireVibe'),VIBES,()=>hireVibe,v=>hireVibe=v)}
+/* Kitchen shortcuts show while starting a pizza (the dough step) and open one card at a time */
+function renderKitchenExtras(){const kx=$('#kitchenExtras');kx.hidden=step!==0||editingSignature;if(kx.hidden)return;
+ renderHire();renderSpecial();const sp=currentSpecial(),so=sponsorData();
+ $('#kxSpecialBtn').hidden=!sp&&!so.active;
+ if(sp){$('#kxSpecialSub').textContent=sp.name;drawPizza($('#kxSpecialCanvas'),specialPizza(sp),44)}}
+function toggleKx(which){[['Special','#kxSpecialBtn','#kxSpecialWrap'],['Hire','#kxHireBtn','#kxHireWrap']].forEach(([k,b,w])=>{
+  const open=k===which&&$(w).hidden;$(w).hidden=!open;$(b).setAttribute('aria-expanded',open?'true':'false')})}
+$('#kxSpecialBtn').onclick=()=>toggleKx('Special');$('#kxHireBtn').onclick=()=>toggleKx('Hire');
 function syncHireVegan(){const m=meetings.find(x=>x.id===$('#hireFor').value);$('#hireVegan').checked=false;$('#hireVeganNote').textContent=m&&m.vegan?' ('+first(m.who)+' is marked vegan)':''}
 $('#hireFor').addEventListener('change',syncHireVegan);
 function placeLabels(p,text){text=(text||'').trim().slice(0,30);if(!text)return 0;p.toppings=p.toppings.filter(t=>t.k!=='label');p.sign={text};return 1;const parts=[];

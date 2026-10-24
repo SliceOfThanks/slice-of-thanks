@@ -1,6 +1,6 @@
 # Build status (read this first in a new session)
 
-Last updated: 2026-10-24. Live code version: v0.8.0 (see releases.json and app_settings.code_version).
+Last updated: 2026-10-24. Live code version: v0.9.0 (see releases.json and app_settings.code_version).
 
 ## Done and live
 - Supabase project cmnclubiarmthibqibuj. Edge Function `api` (api-0.4.0, verify_jwt false, own auth). Tables have RLS with no policies.
@@ -51,6 +51,9 @@ Git tags cannot be pushed. Use commit IDs.
 - v0.7.0 passed Stacey's ChatGPT test (People, add and send, Name from Business email, CSV now and scheduled, login and join sizes).
 - v0.8.0 with api-0.8.0 (2026-10-24, commit ae3b9f4): Box step preview floats (sticky) with an X to unpin and Pin to bring it back (store boxPinned). Note details [first name] [last name] [role] [company] (and old {first} {company}) via buttons under every note; filled per person by api lib/merge.ts fillNote at send, and by fillNote in the prototype for previews. Notes that start with a greeting skip the automatic "Hi Name," on the pizza page and preview. Box presets: table box_presets (removed_at, no hard deletes), sot_presets / sot_save_preset / sot_remove_preset, limits in app_settings preset_limits {free 1, pro 10, team 20}; GET /presets, POST /presets/save, /presets/remove. Picker and Save as preset at the top of the box step; Box presets card in Settings with Edit (box step in preset mode), Rename, Remove. Contacts have role; Kitchen send step shows Their company and Their role only when the note uses them; Add person has Role. CSV: First/Last/Role columns, Consent column (yes, opted in, client and so on map to permission or relationship), Download a sample CSV (example.com rows are always skipped). Tests: pw/presets-test.js (32 checks), pw/people-test.js, pw/test.js pass.
 - Small, with the next api deploy: the email greeting uses the full recipient name ("Hi List Test One,"); use the first name.
+
+- v0.8.0 passed Stacey's ChatGPT test except one issue (CSV upload added unsaved people to People), fixed in v0.9.0.
+- v0.9.0 (2026-10-24, commit 25c55c6, app only): toppings. TOPS gains g 'meat' (sausage, ham, bacon; canadianBacon, meatball, bbqChicken with pro:true) and g 'veg' (bananaPepper, jalapeno, buffalo drizzle; sunTomato, pickle with pro:true). Chips: Meats and Veggies and heat sections; pro:true toppings are locked on A Slice (makeChips locked). Vegan pizzas show PLANT_NAMES. sock and hat moved to g 'retired' (hidden from chips, still drawn on old pizzas). Drawing cases and Gerald review lines are in BOTH prototype and shared/pizza-core.js (keep them in sync). PREMADES: hotmess (Hot Mess Express, white sauce, banana peppers, olives, jalapenos, buffalo; in FREE_PREMADES) and heartattack (Heart Attack Express, Kevin's order: light sauce via pm.light, four cheeses with extra, six meats; Pro). Fixed veganize() calling itself forever (it existed since the first commit). Tests: pw/tops-test.js plus the other suites pass.
 
 ## Next, in order
 1. Calendar connections (Calendly, TidyCal) feeding Home > This week, with Stacey's rules:

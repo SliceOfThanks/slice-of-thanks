@@ -119,6 +119,12 @@
       "commit": "ae3b9f44f88ff6d26117cb245b7a0222528ac1b4",
       "date": "2026-10-24",
       "notes": "Floating box preview with X and Pin. Note details [first name] [last name] [role] [company]. Box presets (A Slice 1, The Whole Pie 10, Pizza Party 20). Sample CSV download with Consent column. Contact role."
+    },
+    {
+      "version": "v0.9.0",
+      "commit": "25c55c6a7cf62db8870101c859ecfe2a8ae08d1e",
+      "date": "2026-10-24",
+      "notes": "Meats and veggies (some Pro only), Hot Mess Express (all plans) and Heart Attack Express (Pro), sock and tiny hat retired, vegan fix, CSV upload no longer adds unsaved people."
     }
   ]
 }

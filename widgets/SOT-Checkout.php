@@ -1,16 +1,14 @@
 <?php
-/* SOT-Checkout: Slice of Thanks look for BD's sign up pages (/checkout/...). Version 1.2.0
-   BD's checkout pages cannot be edited, so this widget is loaded from the site-wide widget
-   Bootstrap Theme - Footer - Scripts and prints nothing unless the page address starts with /checkout.
-   Add ?sotdebug=1 to any page address to see a small box proving the widget loaded there. */
+/* SOT-Checkout: Slice of Thanks look for BD's sign up pages (/checkout/...). Version 1.3.0
+   BD's checkout pages skip the site footer widgets, so this widget is loaded from the default widget
+   Bootstrap Theme - Signup Page - H1 Title, which only appears on the sign up pages.
+   Add ?sotdebug=1 to the page address to see a small box proving the widget loaded there. */
 $sot_co_uri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
-$sot_co_on = (strpos($sot_co_uri, '/checkout') === 0);
-if (!$sot_co_on && strpos($sot_co_uri, 'sotdebug=1') !== false) {
-  echo '<div style="position:fixed;bottom:8px;left:8px;z-index:99999;background:#fff;color:#000;border:2px solid #000;border-radius:8px;padding:6px 10px;font:13px monospace">SOT-Checkout 1.2.0 loaded here. It only styles /checkout pages.</div>';
+if (strpos($sot_co_uri, 'sotdebug=1') !== false) {
+  echo '<div style="position:fixed;bottom:8px;left:8px;z-index:99999;background:#fff;color:#000;border:2px solid #000;border-radius:8px;padding:6px 10px;font:13px monospace">SOT-Checkout 1.3.0 loaded. Server address: ' . htmlspecialchars($sot_co_uri) . '</div>';
 }
-if ($sot_co_on) {
 ?>
-<!-- It only runs on pages whose address starts with /checkout.
+<!-- The script hides all of this on any page whose address does not start with /checkout.
      BD still creates the account, checks the legal boxes, and takes any payment. This widget only styles it,
      moves BD's form into the Slice of Thanks card, and adds the links around it. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,7 +85,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 </div>
 <script>
 (function () {
-  var VERSION = 'checkout 1.2.0';
+  var VERSION = 'checkout 1.3.0';
   var NL = String.fromCharCode(10);
   var tries = 0;
   function cookieNames() {
@@ -188,6 +186,8 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
     var slot = document.getElementById('sot-login-slot');
     if (!shell || !slot) { return; }
     if (location.pathname.indexOf('/checkout') !== 0) { shell.style.display = 'none'; return; }
+    /* The title widget sits inside BD's page, maybe inside the form itself: lift our shell out first */
+    if (shell.parentElement !== document.body) { document.body.insertBefore(shell, document.body.firstChild); }
     /* Name the plan from the address, like /checkout/a-slice */
     var names = { 'a-slice': 'A Slice', '10': 'A Slice', 'the-whole-pie': 'The Whole Pie', '12': 'The Whole Pie', 'pizza-party': 'Pizza Party', '11': 'Pizza Party' };
     var slug = location.pathname.split('/')[2] || '';
@@ -225,5 +225,4 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 })();
 </script>
 <?php
-}
 ?>

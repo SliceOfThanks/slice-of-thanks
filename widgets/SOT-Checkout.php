@@ -1,11 +1,11 @@
 <?php
-/* SOT-Checkout: Slice of Thanks look for BD's sign up pages (/checkout/...). Version 1.3.0
+/* SOT-Checkout: Slice of Thanks look for BD's sign up pages (/checkout/...). Version 1.3.1
    BD's checkout pages skip the site footer widgets, so this widget is loaded from the default widget
    Bootstrap Theme - Signup Page - H1 Title, which only appears on the sign up pages.
    Add ?sotdebug=1 to the page address to see a small box proving the widget loaded there. */
 $sot_co_uri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
 if (strpos($sot_co_uri, 'sotdebug=1') !== false) {
-  echo '<div style="position:fixed;bottom:8px;left:8px;z-index:99999;background:#fff;color:#000;border:2px solid #000;border-radius:8px;padding:6px 10px;font:13px monospace">SOT-Checkout 1.3.0 loaded. Server address: ' . htmlspecialchars($sot_co_uri) . '</div>';
+  echo '<div style="position:fixed;bottom:8px;left:8px;z-index:99999;background:#fff;color:#000;border:2px solid #000;border-radius:8px;padding:6px 10px;font:13px monospace">SOT-Checkout 1.3.1 loaded. Server address: ' . htmlspecialchars($sot_co_uri) . '</div>';
 }
 ?>
 <!-- The script hides all of this on any page whose address does not start with /checkout.
@@ -72,6 +72,14 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 .sot-login-foot{text-align:center;display:flex;flex-direction:column;gap:8px}
 .sot-login-foot a{color:var(--sot-tomato-text);font-weight:700}
 .sot-login-foot .sot-muted{color:var(--sot-muted)}
+/* 1.3.1: BD's Bootstrap rules win over the card rules above, so these repeat them with the id and !important */
+#sot-login-slot h1,#sot-login-slot h2,#sot-login-slot h3,#sot-login-slot legend{font:400 1.7rem "Shrikhand",Georgia,serif!important;color:var(--sot-ink)!important;border:0!important;margin:0 0 14px!important;padding:0!important}
+#sot-login-slot input[type=text],#sot-login-slot input[type=email],#sot-login-slot input[type=password],#sot-login-slot input[type=tel],#sot-login-slot select,#sot-login-slot textarea{
+  height:auto!important;border:3px solid var(--sot-edge)!important;border-radius:14px!important;background:var(--sot-field)!important;color:var(--sot-ink)!important;
+  padding:12px 14px!important;font:500 1rem "Work Sans",system-ui,sans-serif!important;box-shadow:none!important}
+#sot-login-slot .checkbox label,#sot-login-slot label:has(input[type=checkbox]){display:flex!important;gap:10px!important;align-items:flex-start!important;padding-left:0!important;font-weight:500!important}
+#sot-login-slot input[type=checkbox]{position:static!important;margin:3px 0 0!important;width:20px!important;height:20px!important;flex:none!important}
+#sot-login-slot input[type=submit],#sot-login-slot button[type=submit]{font:700 1.1rem "Work Sans",system-ui,sans-serif!important;border-radius:999px!important;padding:14px 20px!important;height:auto!important}
 </style>
 <div class="sot-login" id="sot-login">
   <a class="sot-login-head" href="/kitchen"><span class="sot-slice">Slice of</span><span class="sot-thanks">Thanks</span><span class="sot-tag">Thank-you pizzas, made fresh after every meeting</span></a>
@@ -85,7 +93,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 </div>
 <script>
 (function () {
-  var VERSION = 'checkout 1.3.0';
+  var VERSION = 'checkout 1.3.1';
   var NL = String.fromCharCode(10);
   var tries = 0;
   function cookieNames() {
@@ -110,48 +118,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
       if (!shell.contains(hs[i])) { hs[i].style.display = 'none'; }
     }
   }
-  function label(el) {
-    var c = (typeof el.className === 'string' && el.className.trim()) ? '.' + el.className.trim().split(' ').join('.') : '';
-    return el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + c;
-  }
-  /* Visible elements that are not part of our shell: what draws the bar or icon left on the page */
-  function outside(shell) {
-    var out = [];
-    var all = document.body.querySelectorAll('*');
-    for (var i = 0; i < all.length && out.length < 12; i++) {
-      var el = all[i];
-      if (shell.contains(el) || el.contains(shell) || el.tagName === 'SCRIPT' || el.tagName === 'STYLE' || el.tagName === 'LINK') { continue; }
-      var cs = getComputedStyle(el);
-      if (cs.display === 'none' || cs.visibility === 'hidden') { continue; }
-      var r = el.getBoundingClientRect();
-      if (r.width < 2 || r.height < 2) { continue; }
-      out.push(label(el) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' at ' + Math.round(r.top + window.scrollY) + (cs.position !== 'static' ? ' ' + cs.position : ''));
-    }
-    return out;
-  }
-  function fields(slot) {
-    var out = [];
-    var ins = slot.querySelectorAll('input, textarea, select');
-    for (var i = 0; i < ins.length; i++) {
-      var el = ins[i];
-      out.push(el.tagName.toLowerCase() + '[' + (el.type || '') + '] name=' + (el.name || '-') + (el.className ? ' .' + el.className : '') + ' ' + el.offsetWidth + 'x' + el.offsetHeight);
-    }
-    return out;
-  }
-  /* The markup around the password box, with every value blanked, to see what draws the bar */
-  function around(slot) {
-    var pw = slot.querySelector('input[type=password]');
-    if (!pw) { return '-'; }
-    var host = pw.parentElement && pw.parentElement.parentElement ? pw.parentElement.parentElement : pw.parentElement;
-    var copy = host.cloneNode(true);
-    var all = copy.querySelectorAll('*');
-    for (var i = 0; i < all.length; i++) { all[i].removeAttribute('value'); all[i].removeAttribute('style'); }
-    var sizes = [];
-    var kids = host.querySelectorAll('*');
-    for (var j = 0; j < kids.length && j < 12; j++) { sizes.push(label(kids[j]) + ' ' + kids[j].offsetWidth + 'x' + kids[j].offsetHeight); }
-    return copy.outerHTML.slice(0, 900) + NL + 'sizes: ' + sizes.join(' / ');
-  }
-  /* Open /login?sotdebug=1 to see what the widget found (names only, no values) */
+  /* Open /checkout/a-slice?sotdebug=1 to see what the widget found (names only, no values) */
   function debug(shell, found) {
     if (location.search.indexOf('sotdebug=1') < 0) { return; }
     var heads = [];
@@ -160,14 +127,12 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
     var pre = document.getElementById('sot-login-debug') || document.createElement('pre');
     pre.id = 'sot-login-debug';
     pre.style.cssText = 'white-space:pre-wrap;font:13px monospace;background:#fff;color:#000;border:2px solid #000;padding:10px;border-radius:8px';
-    pre.textContent = 'SOT-Login ' + VERSION + ' | try ' + tries +
+    pre.textContent = 'SOT-Checkout ' + VERSION + ' | try ' + tries +
       NL + 'login container: ' + !!document.querySelector('.member-login-page-container') +
       NL + 'forms: ' + document.querySelectorAll('form').length + ', password fields: ' + document.querySelectorAll('input[type=password]').length +
       NL + 'form moved into card: ' + found + ', logged in cookie: ' + loggedIn() +
       NL + 'cookies: ' + cookieNames().join(', ') +
       NL + 'headings: ' + heads.join(' / ') +
-      NL + 'outside the card: ' + outside(shell).join(' / ') +
-      NL + 'around the password box: ' + around(document.getElementById('sot-login-slot')) +
       NL + 'page: ' + location.pathname;
     shell.appendChild(pre);
   }

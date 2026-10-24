@@ -23,6 +23,12 @@
       "commit": "ab97186416c595a9a695baef174cde9ffd870294",
       "date": "2026-10-23",
       "notes": "Brand palette, calmer dark mode, current pricing, Special Delivery option."
+    },
+    {
+      "version": "v0.3.2",
+      "commit": "6d8834462f3358cac1fa9bea6b4c18c06ea18a8d",
+      "date": "2026-10-23",
+      "notes": "Plan IDs mapped, mid-month upgrade top-up, 14-day trial and yearly prices."
     }
   ]
 }

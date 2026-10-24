@@ -1,4 +1,4 @@
-<!-- SOT-Login: Slice of Thanks look for the BD /login page. Version 1.3.0
+<!-- SOT-Login: Slice of Thanks look for the BD /login page. Version 1.4.0
      Place it in the /login page content ABOVE the BD Member Login Page widget.
      BD still does the login, reCAPTCHA, password reset and redirect. This widget only styles it,
      moves BD's form into the Slice of Thanks card, and adds the links around it. -->
@@ -59,7 +59,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 </div>
 <script>
 (function () {
-  var VERSION = '1.3.0';
+  var VERSION = '1.4.0';
   var NL = String.fromCharCode(10);
   var tries = 0;
   function cookieNames() {
@@ -103,6 +103,24 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
     }
     return out;
   }
+  /* Login and reset forms only have email and password boxes. Any other text box is BD's hidden
+     anti-spam field, normally hidden by BD's default CSS, which this page has turned off. */
+  var KEEP = ['email', 'email_r', 'pass', 'password'];
+  function hideExtraFields(slot) {
+    var ins = slot.querySelectorAll('input[type=text], input:not([type])');
+    for (var i = 0; i < ins.length; i++) {
+      if (KEEP.indexOf((ins[i].name || '').toLowerCase()) < 0) { ins[i].style.setProperty('display', 'none', 'important'); }
+    }
+  }
+  function fields(slot) {
+    var out = [];
+    var ins = slot.querySelectorAll('input, textarea, select');
+    for (var i = 0; i < ins.length; i++) {
+      var el = ins[i];
+      out.push(el.tagName.toLowerCase() + '[' + (el.type || '') + '] name=' + (el.name || '-') + (el.className ? ' .' + el.className : '') + ' ' + el.offsetWidth + 'x' + el.offsetHeight);
+    }
+    return out;
+  }
   /* Open /login?sotdebug=1 to see what the widget found (names only, no values) */
   function debug(shell, found) {
     if (location.search.indexOf('sotdebug=1') < 0) { return; }
@@ -119,6 +137,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
       NL + 'cookies: ' + cookieNames().join(', ') +
       NL + 'headings: ' + heads.join(' / ') +
       NL + 'outside the card: ' + outside(shell).join(' / ') +
+      NL + 'fields in the card: ' + fields(document.getElementById('sot-login-slot')).join(' / ') +
       NL + 'page: ' + location.pathname;
     shell.appendChild(pre);
   }
@@ -134,6 +153,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
     }
     if (box) {
       slot.appendChild(box);
+      hideExtraFields(slot);
       slot.setAttribute('data-done', '1');
       slot.style.display = '';
       hideTitles(shell);

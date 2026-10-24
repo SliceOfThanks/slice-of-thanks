@@ -3,7 +3,7 @@
 
 export const SITE = "https://www.sliceofthanks.app";
 
-type Sender = { name?: string; business?: string; send_as?: string; mailing_address?: string; show_made_with?: boolean };
+type Sender = { name?: string; business?: string; send_as?: string; mailing_address?: string; platform_address?: string; show_made_with?: boolean };
 export type EmailInput = {
   locale?: string;
   recipientName?: string;
@@ -30,6 +30,7 @@ const T = {
     terms: "Terms",
     report: "Report",
     made: "Made with Slice of Thanks. Make your own, free.",
+    via: "Sent through Slice of Thanks",
     test: "TEST SEND",
   },
   es: {
@@ -45,6 +46,7 @@ const T = {
     terms: "Términos",
     report: "Reportar",
     made: "Hecho con Slice of Thanks. Crea la tuya gratis.",
+    via: "Enviado a través de Slice of Thanks",
     test: "ENVÍO DE PRUEBA",
   },
 };
@@ -60,10 +62,19 @@ export function senderLabel(s: Sender): string {
   return name || biz || "Someone";
 }
 
+// The member's own address when they added one; otherwise Slice of Thanks's address as the designated sender
+export function footerAddress(s: Sender, via: string): string {
+  const own = (s.mailing_address ?? "").trim();
+  if (own) return own;
+  const ours = (s.platform_address ?? "").trim();
+  return ours ? `${via}, ${ours}` : via;
+}
+
 export function buildEmail(i: EmailInput): { subject: string; html: string; text: string } {
   const t = i.locale === "es" ? T.es : T.en;
   const who = senderLabel(i.sender);
   const fullFrom = [i.sender.name, i.sender.business].filter(Boolean).join(", ");
+  const address = footerAddress(i.sender, t.via);
   const subject = (i.isTest ? `[${t.test}] ` : "") + t.subject(who);
   const html = `<!doctype html><html><body style="margin:0;background:#FFF3E0;font-family:Arial,Helvetica,sans-serif;color:#3E2416">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF3E0"><tr><td align="center" style="padding:24px 12px">
@@ -78,7 +89,7 @@ ${i.pizzaImageUrl ? `<img src="${esc(i.pizzaImageUrl)}" width="200" alt="" style
 <p style="margin:16px 0 0;font-size:14px;color:#6b4a3a">${esc(t.note)}</p>
 </td></tr>
 <tr><td style="padding:18px 24px 22px;font-size:12px;line-height:1.6;color:#6b4a3a;text-align:center;border-top:1px dashed #d8c4a4">
-${esc(fullFrom)}<br>${esc(i.sender.mailing_address)}<br>
+${esc(fullFrom)}<br>${esc(address)}<br>
 ${esc(t.why(who))}<br>
 <a href="${esc(i.unsubscribeSender)}" style="color:#C21F1F">${esc(t.unsubSender(who))}</a> · <a href="${esc(i.unsubscribeAll)}" style="color:#C21F1F">${esc(t.unsubAll)}</a><br>
 <a href="${SITE}/privacy" style="color:#C21F1F">${esc(t.privacy)}</a> · <a href="${SITE}/terms" style="color:#C21F1F">${esc(t.terms)}</a> · <a href="${SITE}/report" style="color:#C21F1F">${esc(t.report)}</a>
@@ -86,7 +97,7 @@ ${i.sender.show_made_with ? `<br><a href="${SITE}" style="color:#6b4a3a">${esc(t
 </td></tr></table></td></tr></table></body></html>`;
   const text = [
     t.hi(i.recipientName), "", t.lead(who), "", `${t.button}: ${i.link}`, "", t.note, "", "--",
-    fullFrom, i.sender.mailing_address ?? "", t.why(who),
+    fullFrom, address, t.why(who),
     `${t.unsubSender(who)}: ${i.unsubscribeSender}`, `${t.unsubAll}: ${i.unsubscribeAll}`,
     `${t.privacy}: ${SITE}/privacy`, `${t.terms}: ${SITE}/terms`,
   ].join("\n");

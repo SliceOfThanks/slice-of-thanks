@@ -51,6 +51,15 @@ Deno.test("email has legal footer, escapes, and Spanish", () => {
   assert(es.subject.includes("te envió"));
   assertEquals(senderLabel({ name: "Stacey", business: "Biz", send_as: "person" }), "Stacey");
 });
+Deno.test("footer uses the member's address, else Slice of Thanks's", () => {
+  const ours = "967 Kendall Dr, Ste A, #271, San Bernardino, CA 92407";
+  const own = buildEmail({ sender: { name: "Stacey", mailing_address: "PO Box 1", platform_address: ours }, link: "l", unsubscribeSender: "a", unsubscribeAll: "b" });
+  assert(own.html.includes("PO Box 1") && !own.html.includes("Kendall"));
+  const none = buildEmail({ sender: { name: "Stacey", mailing_address: "  ", platform_address: ours }, link: "l", unsubscribeSender: "a", unsubscribeAll: "b" });
+  assert(none.html.includes("Sent through Slice of Thanks, 967 Kendall Dr") && none.text.includes("967 Kendall Dr"));
+  const es = buildEmail({ locale: "es", sender: { name: "Stacey", platform_address: ours }, link: "l", unsubscribeSender: "a", unsubscribeAll: "b" });
+  assert(es.html.includes("Enviado a través de Slice of Thanks, 967 Kendall Dr"));
+});
 Deno.test("publitio signature and image parsing", async () => {
   assertEquals((await publitioSignature("s", "1", "2")).length, 40);
   assert(dataUrlToBlob("data:image/png;base64,iVBORw0KGgo=") !== null);

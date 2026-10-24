@@ -40,6 +40,9 @@ Git tags cannot be pushed. Use commit IDs.
 
 - api-0.6.0 (2026-10-24): send worker. pg_cron job sot-send-worker calls POST /api/worker every minute with a vault secret (no secret anywhere else). It delivers due queued sends: scheduled sends and provider retries, which before this sat in the queue forever. Sends stuck in sending for 15 minutes are marked failed and refunded, never retried. Pizza pictures are uploaded at create time and kept in pizzas.snapshot.image_url. The Kitchen has no schedule picker yet; it comes with the People tab CSV sends.
 
+- api-0.6.1 (2026-10-24): Stacey decided Slice of Thanks's address goes on every email (designated sender) unless the member adds their own. app_settings platform_address (live and staging) = 967 Kendall Dr, Ste A, #271, San Bernardino, CA 92407. sot_create_send no longer returns needs_address and stores sender.platform_address in the pizza snapshot; the footer reads "Sent through Slice of Thanks, <address>". This replaces the blueprint rule "Business mailing address required before the first send". Sending the same pizza again after a failed or skipped send now makes a new send. Still to ship in the app: Settings wording (address optional) and a clear message when a send fails.
+- Brevo returned 401 unauthorized on the first real send (2026-10-24, the only send so far). Brevo has never delivered for us yet. Likely the API key or Brevo's Authorised IPs blocking.
+
 ## Next, in order
 1. Calendar connections (Calendly, TidyCal) feeding Home > This week, with Stacey's rules:
    - Pro and Team: each upcoming meeting has a choice to have a pizza ready when it ends (or the Settings default).

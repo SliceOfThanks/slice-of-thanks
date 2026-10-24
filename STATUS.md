@@ -35,7 +35,7 @@ Git tags cannot be pushed. Use commit IDs.
 1. Scheduled-send worker and retries (pg_cron + pg_net calling the api).
    Then calendar connections (Calendly, TidyCal) feeding Home > This week, with Stacey's rules:
    - Pro and Team: each upcoming meeting has a choice to have a pizza ready when it ends (or the Settings default).
-   - A Slice (free): when a meeting ends, Gerald makes the pizza automatically and emails the member that it is waiting; the member opens it and sends it (free sends are never automatic).
+   - A Slice (free): the member picks which upcoming meetings get a pizza. When a picked meeting ends, their signature pizza is created for that person automatically (a signature pizza must be set; prompt them to set one in Settings if not) and an email tells them it is waiting. The member opens it and sends it (free sends are never automatic).
    - Home quick actions stay: Make a new pizza, Hire Gerald, Send the Pizza of the Month.
 2. People tab: CSV import with country and consent per contact, list sends.
 3. Spanish in the Kitchen UI.

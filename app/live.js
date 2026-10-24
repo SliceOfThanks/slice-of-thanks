@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.4.6 =====
+/* ===== Slice of Thanks live layer v0.4.7 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -393,7 +393,7 @@ renderToday = function () {
     const li = document.createElement('li'); li.className = 'meeting'; li.style.gridTemplateColumns = '1fr';
     const pro = LIVE.session && LIVE.session.plan !== 'free';
     li.innerHTML = '<div class="info"><b>No meetings yet</b><span class="muted">Calendly and TidyCal connections arrive in the next update. Your meetings for the week will show here. ' +
-      (pro ? 'You choose which meetings get a pizza, and Gerald has it ready when each one ends.' : 'After each meeting, Gerald makes a pizza for you and emails you when it is ready to send.') +
+      (pro ? 'You choose which meetings get a pizza, and it is ready when each one ends.' : 'Pick the meetings you want a pizza for. When each one ends, your signature pizza is made for that person and we email you that it is waiting to be sent. Set your signature pizza in Settings.') +
       ' Until then, use Make a new pizza above.</span></div>';
     ul.appendChild(li);
   }

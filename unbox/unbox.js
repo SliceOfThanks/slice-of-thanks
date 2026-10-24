@@ -126,7 +126,7 @@
     s1.appendChild(el('p', { class: 'u-from', text: t.sent(senderHeadline(sender, t.from)) }));
     var lid = el('div', { class: 'lid', 'data-style': box.style || 'kraft' }, [
       sender.logo_url ? el('div', { class: sender.personal ? 'lid-logo photo' : 'lid-logo' }, [el('img', { src: sender.logo_url, alt: '' })]) : null,
-      el('div', { class: 'lid-biz', text: sender.business || who }),
+      el('div', { class: 'lid-biz', text: (sender.personal && box.lid_text) ? String(box.lid_text).slice(0, 40) : (sender.business || who) }),
       box.sticker ? el('div', { class: 'lid-sticker', text: box.sticker }) : null,
       pizza.vegan ? el('div', { class: 'lid-vegan', text: '🌱 Vegan' }) : null
     ]);

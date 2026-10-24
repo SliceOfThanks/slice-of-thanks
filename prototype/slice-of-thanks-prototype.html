@@ -568,6 +568,7 @@ body.is-free .pro-tag{display:inline-block}
           <div class="inside"><p class="eyebrow" style="color:#7a5a3c">Inside the lid</p><p class="hand" id="notePreview"></p><p class="hand sign" id="signPreview"></p></div>
         </div>
       </div>
+      <div class="field" data-personal hidden><label for="lidText">Message on the lid</label><input type="text" id="lidText" maxlength="40" placeholder="Happy Retirement, Rebecca!"><small>Big letters on the lid. Leave it blank to show your name.</small></div>
       <div class="field" data-personal hidden>
         <label>Photo on the box<span class="pro-tag">Pro</span></label>
         <div class="upload"><span class="thumb photo" id="photoThumb">None</span><label class="btn small" for="photoFile">Upload photo</label><input type="file" id="photoFile" accept="image/*"><button class="btn small ghost" id="photoRemove">Remove</button></div>
@@ -1453,7 +1454,7 @@ function suggestName(){
 /* box */
 function renderLid(el,logoEl,bizEl,stEl,b,vg){el.dataset.style=b.style;let lsp=el.querySelector('.lid-sponsor');if(b.sponsor){if(!lsp){lsp=document.createElement('div');lsp.className='lid-sponsor';el.appendChild(lsp)}lsp.textContent='Presented by '+b.sponsor.name;lsp.hidden=false}else if(lsp)lsp.hidden=true;logoEl.innerHTML='';el.querySelector('.lid-vegan').hidden=!vg;
  const pers=isPersonal(b);logoEl.classList.toggle('photo',pers);
- if(pers){if(b.photo&&isPro()){const i=document.createElement('img');i.src=b.photo;i.alt='';logoEl.appendChild(i)}bizEl.textContent=profile.name}
+ if(pers){if(b.photo&&isPro()){const i=document.createElement('img');i.src=b.photo;i.alt='';logoEl.appendChild(i)}bizEl.textContent=(b.lidText||'').trim()||profile.name}
  else{if(profile.logo&&isPro()){const i=document.createElement('img');i.src=profile.logo;i.alt=profile.business+' logo';logoEl.appendChild(i)}bizEl.textContent=profile.business}
  stEl.textContent=b.sticker}
 function renderBoxPreview(){renderLid($('#lidPreview'),$('#lidLogo'),$('#lidBiz'),$('#lidSticker'),box,pizza.vegan);$('#notePreview').textContent=box.to?fillNote(box.note,{name:box.to,company:box.company,role:box.role}):box.note;$('#signPreview').textContent=box.sign}
@@ -1470,9 +1471,11 @@ function renderBox(){
  if(!box.kind)box.kind='business';makeChips($('#kindChips'),[['business','Business'],['personal','Personal']],()=>box.kind,v=>{box.kind=v;store.set('sendKind',v);renderBox()});
  const pers=isPersonal(box);$('#kindHelp').textContent=pers?'For birthdays, congrats and friends. Your business details stay off this box.':'Your logo, business name, button and gift go on this box.';
  document.querySelectorAll('[data-step="4"] [data-biz]').forEach(e=>e.hidden=pers);document.querySelectorAll('[data-step="4"] [data-personal]').forEach(e=>e.hidden=!pers);
+ $('#lidText').value=box.lidText||'';
  const pt=$('#photoThumb');pt.innerHTML='';if(box.photo){const i=document.createElement('img');i.src=box.photo;i.alt='';pt.appendChild(i)}else pt.textContent='None';
  $('#bizName').value=profile.business;$('#noteText').value=box.note;$('#signText').value=box.sign;$('#linkLabel').value=box.linkLabel;$('#linkUrl').value=box.link;const rw=box.reward||{};$('#rwText').value=rw.text||'';$('#rwCode').value=rw.code||'';$('#rwLink').value=rw.link||'';$('#rwExp').value=rw.exp||'';
  renderThumbs();renderBoxPreview();renderBoxPin();tokenChips()}
+$('#lidText').addEventListener('input',e=>{box.lidText=e.target.value;renderBoxPreview()});
 $('#fromName').addEventListener('input',e=>{profile.name=e.target.value;saveProfile();renderMsg()});
 $('#bizName').addEventListener('input',e=>{profile.business=e.target.value;saveProfile();renderBoxPreview()});
 $('#noteText').addEventListener('input',e=>{box.note=e.target.value;renderBoxPreview()});
@@ -1497,9 +1500,16 @@ $('#photoFile').addEventListener('change',e=>{handlePhoto(e.target.files[0]);e.t
 $('#photoRemove').onclick=()=>{box.photo=null;renderBox()};
 
 /* send */
-function msgText(){const f=first(box.to),link='sliceofthanks.app/p/'+slug(f+'-'+(pizza.name||'pizza'));const mt=(box.meeting||'meeting').toLowerCase();
- if(box.method==='text')return{subj:'',body:'Hi '+f+'! Thanks for the '+mt+' today. I sent you a little thank-you pizza: '+link};
- return{subj:'A thank-you pizza from '+profile.name,body:'Hi '+f+',\n\nThanks for the '+mt+' today. I made you a little thank-you pizza. Open the box here:\n'+link+'\n\n'+profile.name+'\n'+profile.business}}
+/* Thank-you and meeting stickers keep the thank-you wording; every other occasion gets the evergreen one. The email subject (api lib/email.ts) follows the same rule. */
+const THANKS_STICKERS=['Great Meeting','Nice to Meet You','Following Up',"Let's Do This"];
+function isThanksOccasion(st){st=String(st||'');return !st||st.toLowerCase().indexOf('thank')>=0||THANKS_STICKERS.includes(st)}
+function msgText(){const f=first(box.to),link='sliceofthanks.app/p/'+slug(f+'-'+(pizza.name||'pizza'));const pers=isPersonal(box);
+ const from=profile.name+(profile.business&&!pers?' from '+profile.business:''),thanks=isThanksOccasion(box.sticker);
+ const mtg=box.meeting&&!pers?'Thanks for the '+box.meeting.toLowerCase()+' today. ':'';
+ const line=thanks?mtg+'I made you a little thank-you pizza.':'I made you a little pizza'+(box.sticker?' for the occasion: '+box.sticker+'!':'.');
+ if(box.method==='text')return{subj:'',body:'Hi '+f+'! '+line+' Open the box here: '+link};
+ return{subj:thanks?from+' sent you a slice of thanks':'A special pizza delivery for you from '+from,
+  body:'Hi '+f+',\n\n'+line+' Open the box here:\n'+link+'\n\n'+profile.name+(profile.business&&!pers?'\n'+profile.business:'')}}
 function renderMsg(){const m=msgText();$('#msgLabel').textContent=box.method==='text'?'Your text':'Your email';$('#msgSubj').textContent=m.subj;$('#msgSubj').hidden=!m.subj;$('#msgBody').textContent=m.body}
 function renderSend(){
  $('#sendHeading').textContent=editingSignature?'Save your signature pizza':'Send it';

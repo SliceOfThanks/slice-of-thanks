@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.9.4 =====
+/* ===== Slice of Thanks live layer v0.10.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -347,8 +347,20 @@ saveProfile = function () {
   _saveProfile();
   if (!LIVE.session) return;
   clearTimeout(profTimer);
-  profTimer = setTimeout(() => LIVE.call('/profile', { profile: { display_name: profile.name, business_name: profile.business, brand_color_1: profile.brand1 || null, brand_color_2: profile.brand2 || null } }), 800);
+  pendingProfile = { display_name: profile.name, business_name: profile.business, brand_color_1: profile.brand1 || null, brand_color_2: profile.brand2 || null };
+  profTimer = setTimeout(flushProfile, 800);
 };
+/* Saves right away when the page closes or reloads, so a change typed just before is not lost */
+let pendingProfile = null;
+function flushProfile(closing) {
+  clearTimeout(profTimer);
+  const p = pendingProfile; pendingProfile = null;
+  if (!p || !LIVE.TOKEN) return;
+  if (!closing) { LIVE.call('/profile', { profile: p }); return; }
+  try { fetch(LIVE.API + '/profile', { method: 'POST', keepalive: true, headers: { 'x-sot-auth': LIVE.TOKEN, 'content-type': 'application/json' }, body: JSON.stringify({ profile: p }) }); } catch (e) { /* ignore */ }
+}
+addEventListener('pagehide', () => flushProfile(true));
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushProfile(true); });
 const _handleLogo = handleLogo;
 handleLogo = function (file) {
   _handleLogo(file);
@@ -360,14 +372,12 @@ handleLogo = function (file) {
   }, 600);
 };
 
-/* Mailing address and reply-to in Settings */
+/* Reply-to in Settings. Every email carries the Slice of Thanks mailing address, so members never enter one (Stacey, 2026-10-24). */
 (function settingsExtras() {
   const pb = $('#pBiz'); if (!pb) return;
-  const f = document.createElement('div'); f.className = 'field';
-  f.innerHTML = '<label for="liveAddrS">Your business mailing address (optional)</label><textarea id="liveAddrS" maxlength="300" rows="2"></textarea><small class="muted">Leave it blank and your emails show the Slice of Thanks mailing address. Add yours to show it instead.</small>';
   const r = document.createElement('div'); r.className = 'field';
-  r.innerHTML = '<label for="liveReply">Replies go to</label><input type="text" id="liveReply" maxlength="200" inputmode="email">';
-  pb.closest('.field').after(f, r);
+  r.innerHTML = '<label for="liveReply">Replies go to</label><input type="text" id="liveReply" maxlength="200" inputmode="email" autocomplete="email"><small class="muted">Your email. When a guest replies, it comes here. We also tell you here when a meeting pizza is waiting.</small>';
+  pb.closest('.field').after(r);
   /* Log out ends the BD session; BD's /logout page does it */
   if (LIVE.TOKEN) {
     const lo = document.createElement('div'); lo.className = 'btn-row';
@@ -376,15 +386,15 @@ handleLogo = function (file) {
     lo.querySelector('button').onclick = () => { store.set('draft', null); location.href = '/logout'; };
   }
   let t = 0;
-  const save = () => { clearTimeout(t); t = setTimeout(() => LIVE.call('/profile', { profile: { mailing_address: $('#liveAddrS').value.trim(), reply_to: $('#liveReply').value.trim() } }), 800); };
-  $('#liveAddrS').addEventListener('input', save); $('#liveReply').addEventListener('input', save);
+  const save = () => { clearTimeout(t); t = setTimeout(() => LIVE.call('/profile', { profile: { reply_to: $('#liveReply').value.trim() } }), 800); };
+  $('#liveReply').addEventListener('input', save);
 })();
 const _renderSettings = renderSettings;
 renderSettings = function () {
   _renderSettings();
   const s = LIVE.session; if (!s) return;
   loadBilling();
-  if ($('#liveAddrS') && document.activeElement !== host) { $('#liveAddrS').value = s.profile.mailing_address || ''; $('#liveReply').value = s.profile.reply_to || ''; }
+  if ($('#liveReply') && document.activeElement !== host) $('#liveReply').value = s.profile.reply_to || '';
 };
 
 const _geraldOk = $('#geraldOk').onclick;
@@ -402,7 +412,7 @@ function boxPayload(bx) {
   const b = { style: bx.style, sticker: bx.sticker, confetti: bx.confetti, tone: bx.tone, note: bx.note, sign: bx.sign, meeting: bx.meeting,
     pro_style: PRO_STYLES.includes(bx.style) || PRO_CONF.includes(bx.confetti) };
   /* Personal pizzas leave off the business name, logo, button and gift; the photo goes up before the send */
-  if (bx.kind === 'personal') { b.personal = true; if (isPro() && bx.photo && bx.photo.indexOf('http') === 0) b.photo_url = bx.photo; return b; }
+  if (bx.kind === 'personal') { b.personal = true; if ((bx.lidText || '').trim()) b.lid_text = bx.lidText.trim().slice(0, 40); if (isPro() && bx.photo && bx.photo.indexOf('http') === 0) b.photo_url = bx.photo; return b; }
   if (isPro() && bx.link) { b.cta_label = bx.linkLabel || 'Book a follow-up'; b.cta_url = bx.link; }
   if (isPro() && rw.code) b.gift = { text: rw.text || '', code: rw.code, url: rw.link || '', expires: rw.exp || '' };
   if (isPro() && profile.logo) b.logo_url = profile.logo;
@@ -824,7 +834,7 @@ renderSettings = function () { _renderSettingsP(); renderPresetCard(); };
   const s = await LIVE.call('/session');
   if (!s || !s.member_id) { account = null; refreshPlan(true); return; }
   applySession(s);
-  loadPeople(); loadPresets();
+  loadPeople(); loadPresets(); calStart(s);
   if (s.needs_terms) setTimeout(() => askTerms(() => {}), 600);
   const d = store.get('draft', null);
   if (d && d.pizza && Date.now() - (d.at || 0) < 7 * 864e5) {
@@ -835,23 +845,195 @@ renderSettings = function () { _renderSettingsP(); renderPresetCard(); };
   checkPurchases();
 })();
 
-/* --- Today without the sample calendar --- */
+/* --- Calendars: each member connects their own Calendly or TidyCal. Meetings show on Home > This week. ---
+   The Whole Pie and Pizza Party: a picked meeting gets the signature pizza sent when it ends.
+   A Slice: a picked meeting gets the signature pizza made and waiting on Home; the member sends it. */
+const CAL_NAMES = { calendly: 'Calendly', tidycal: 'TidyCal' };
+let cal = { integrations: [], meetings: [], loaded: false };
+function calAuto() { return !!(LIVE.session && LIVE.session.features && LIVE.session.features.automations); }
+function calOn() { return cal.integrations.some(i => i.status === 'connected'); }
+function meetingTime(m) {
+  const d = new Date(m.starts_at);
+  return d.toLocaleDateString('en-US', { weekday: 'short' }) + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+/* The prototype's meeting shape, so Make one (startFresh) fills in the guest */
+function calProto(m) { return { id: m.id, time: meetingTime(m), title: m.title || 'Meeting', who: m.name || m.email || 'Your guest', org: '', contact: m.email || '', status: m.state }; }
+async function loadCalendar(sync) {
+  if (!LIVE.TOKEN || !account) return;
+  let r; try { r = sync ? await LIVE.call('/calendar/sync', {}) : await LIVE.call('/calendar'); } catch (e) { return; }
+  if (!r || !r.ok) return;
+  cal = { integrations: r.integrations || [], meetings: r.meetings || [], loaded: true };
+  meetings = cal.meetings.map(calProto);
+  if (!views.today.hidden) renderToday();
+  renderCalendarCard();
+}
+function wantsPizza(m) { return m.want_pizza === null || m.want_pizza === undefined ? (calAuto() && settings.mode === 'auto') : !!m.want_pizza; }
+function mk(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+function meetingRow(m) {
+  const li = mk('li', 'meeting'), info = mk('div', 'info'), row = mk('div', 'row');
+  li.dataset.id = m.id;
+  info.append(mk('h3', '', m.title || 'Meeting'), mk('span', 'who', [m.name, m.email].filter(Boolean).join(' · ') || 'No guest details'));
+  const pill = mk('span', 'pill');
+  const btn = (label, fn, primary) => { const b = mk('button', 'btn small' + (primary ? ' primary' : ''), label); b.type = 'button'; b.onclick = () => fn(b); row.appendChild(b); return b; };
+  if (m.state === 'upcoming') {
+    pill.textContent = 'Upcoming'; row.appendChild(pill);
+    if (!m.email) row.appendChild(mk('small', 'muted', 'No guest email on this booking'));
+    else {
+      const lab = mk('label', 'check'), cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = wantsPizza(m); cb.className = 'meetWant';
+      lab.append(cb, document.createTextNode(calAuto() ? ' Send my signature pizza when it ends' : ' Have my signature pizza ready when it ends'));
+      cb.onchange = async () => {
+        m.want_pizza = cb.checked;
+        const r = await LIVE.call('/calendar/meeting', { id: m.id, want: cb.checked }).catch(() => ({}));
+        if (!r.ok) { cb.checked = !cb.checked; m.want_pizza = cb.checked; toast('That did not save. Try again.'); return; }
+        toast(cb.checked ? (calAuto() ? 'Your signature pizza goes to ' + first(m.name || 'them') + ' when it ends.' : 'Your signature pizza will be waiting here when it ends.') : 'No pizza for this one.');
+      };
+      row.appendChild(lab);
+    }
+  } else if (m.state === 'ready') {
+    pill.classList.add('wait'); pill.textContent = m.note === 'no_credits' ? 'Waiting · out of emails' : 'Pizza waiting'; row.appendChild(pill);
+    btn('Send signature pizza', b => sendMeetingSignature(m, b), true);
+    btn('Make a fresh one', () => startFresh(m.id));
+    btn('Skip', async () => { await LIVE.call('/calendar/skip', { id: m.id }).catch(() => null); loadCalendar(); });
+  } else if (m.state === 'sent') {
+    pill.classList.add('ok'); pill.textContent = 'Sent' + (m.opened ? ' · opened' : ''); row.appendChild(pill);
+  } else if (m.state === 'ended') {
+    pill.textContent = 'Ended'; row.appendChild(pill);
+    if (m.email) btn('Make one', () => startFresh(m.id));
+  } else {
+    pill.textContent = m.note === 'canceled' ? 'Canceled' : 'Skipped'; row.appendChild(pill);
+  }
+  info.appendChild(row);
+  li.append(mk('span', 'time', meetingTime(m)), info);
+  return li;
+}
+/* One tap from Home: the signature pizza goes to the guest */
+async function sendMeetingSignature(m, btn) {
+  const p = clonePizza(signature); p.baked = true; p.bake = Math.max(p.bake || 0, .6);
+  const b = Object.assign(boxFromProfile(calProto(m)), { kind: 'business' });
+  let img = ''; try { img = pizzaImage(p, false); } catch (e) { img = ''; }
+  const label = btn.textContent; btn.disabled = true; btn.textContent = 'Sending...';
+  let r;
+  try {
+    r = await LIVE.call('/send', { idem: 'meeting-' + m.id, source: 'kitchen', pizza: cleanPizza(p), box: boxPayload(b), meeting_id: m.id,
+      recipient: { name: m.name || '', email: m.email, locale: 'en' }, consent: { basis: 'one_to_one', method: 'Calendar meeting', note: m.title || '' },
+      send_type: 'one_to_one', label: 'After ' + (m.title || 'a meeting').toLowerCase(), image_data_url: img.length < 1900000 ? img : '' });
+  } catch (e) { r = { code: 'server_error' }; }
+  btn.disabled = false; btn.textContent = label;
+  if (r.ok) {
+    if (LIVE.session && r.bucket && LIVE.session.credits[r.bucket] !== undefined) LIVE.session.credits[r.bucket]--;
+    toast('Potato is on her way to ' + first(m.name || 'them') + '.'); burst('pizza'); loadCalendar(); loadPeople(); return;
+  }
+  sendProblem(r, () => sendMeetingSignature(m, btn));
+}
 const _renderToday = renderToday;
 renderToday = function () {
   _renderToday();
   const se = $('#simEnd'); if (se) se.hidden = true;
+  const pc = $('#promptCard'); if (pc) pc.hidden = true;
   SOTR.querySelectorAll('.tag').forEach(t => { if (t.textContent.trim() === 'Sample calendar') t.hidden = true; });
-  const ul = $('#meetings');
-  if (ul && !meetings.length) {
-    ul.innerHTML = '';
-    const li = document.createElement('li'); li.className = 'meeting'; li.style.gridTemplateColumns = '1fr';
-    const pro = LIVE.session && LIVE.session.plan !== 'free';
-    li.innerHTML = '<div class="info"><b>No meetings yet</b><span class="muted">Calendly and TidyCal connections arrive in the next update. Your meetings for the week will show here. ' +
-      (pro ? 'You choose which meetings get a pizza, and it is ready when each one ends.' : 'Pick the meetings you want a pizza for. When each one ends, your signature pizza is made for that person and we email you that it is waiting to be sent. Set your signature pizza in Settings.') +
-      ' Until then, use Make a new pizza above.</span></div>';
-    ul.appendChild(li);
+  const ul = $('#meetings'); if (!ul) return;
+  ul.innerHTML = '';
+  if (cal.meetings.length) { cal.meetings.forEach(m => ul.appendChild(meetingRow(m))); return; }
+  const li = mk('li', 'meeting'); li.style.gridTemplateColumns = '1fr';
+  const info = mk('div', 'info');
+  if (calOn()) {
+    info.append(mk('b', '', 'No meetings this week yet'), mk('span', 'muted', 'New bookings show up here within a few minutes. Until then, use Make a new pizza above.'));
+  } else {
+    info.append(mk('b', '', 'Connect your calendar'), mk('span', 'muted', 'Connect Calendly or TidyCal and your meetings for the week show here. ' +
+      (calAuto() ? 'Pick the ones that get a pizza, and it goes out when each one ends.' : 'Pick the ones you want a pizza for. When each one ends, your signature pizza is waiting here for you to send.')));
+    const b = mk('button', 'btn small primary', 'Connect a calendar'); b.type = 'button';
+    b.onclick = () => { show('settings'); const c = calCardEl(); if (c) c.scrollIntoView({ block: 'start' }); };
+    const r = mk('div', 'row'); r.appendChild(b); info.appendChild(r);
   }
+  li.appendChild(info); ul.appendChild(li);
 };
+/* After calendar sends, the Kitchen send for a meeting marks it done */
+const _buildPayload = buildPayload;
+buildPayload = function () {
+  const p = _buildPayload();
+  if (currentMeetingId && cal.meetings.some(x => x.id === currentMeetingId)) p.meeting_id = currentMeetingId;
+  return p;
+};
+/* Settings > Calendar */
+function calCardEl() {
+  let c = $('#calCard'); if (c) return c;
+  SOTR.querySelectorAll('#view-settings .card h2').forEach(h => { if (h.textContent.trim() === 'Calendar') c = h.closest('.card'); });
+  if (c) c.id = 'calCard';
+  return c;
+}
+function renderCalendarCard() {
+  const c = calCardEl(); if (!c) return;
+  c.innerHTML = '';
+  c.append(mk('h2', '', 'Calendar'), mk('p', 'muted', 'Connect the calendar you book meetings with. Your meetings for the week show on Home, and you pick which ones get a pizza. We only read your bookings.'));
+  ['calendly', 'tidycal'].forEach(p => {
+    const i = cal.integrations.find(x => x.provider === p);
+    const on = i && i.status === 'connected', again = i && i.status === 'needs_reconnect';
+    const row = mk('div', 'cal-row'); row.dataset.provider = p;
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:1px dashed var(--line, #d8c4a4)';
+    const t = mk('div'); t.append(mk('b', '', CAL_NAMES[p]), document.createElement('br'),
+      mk('small', 'muted', on ? 'Connected' + (i.label ? ' as ' + i.label : '') : again ? 'Connect it again to keep your meetings coming in' : 'Not connected'));
+    const b = mk('button', 'btn small' + (on ? ' ghost' : ' primary'), on ? 'Disconnect' : (again ? 'Connect again' : 'Connect ' + CAL_NAMES[p])); b.type = 'button';
+    b.onclick = () => on ? disconnectCal(p) : connectCal(p, b);
+    row.append(t, b); c.appendChild(row);
+  });
+  if (calOn()) {
+    const r = mk('div', 'btn-row'); const b = mk('button', 'btn small', 'Check for new meetings'); b.type = 'button';
+    b.onclick = async () => { b.disabled = true; b.textContent = 'Checking...'; await loadCalendar(true); toast('Your meetings are up to date.'); };
+    r.appendChild(b); c.appendChild(r);
+  }
+}
+async function connectCal(p, b) {
+  if (!account) { toast('Sign in first.'); return; }
+  b.disabled = true;
+  const r = await LIVE.call('/calendar/connect', { provider: p, return: location.pathname || '/' }).catch(() => ({}));
+  b.disabled = false;
+  if (r.url) { location.href = r.url; return; }
+  toast(CAL_NAMES[p] + ' is not ready yet. Try again soon.');
+}
+function disconnectCal(p) {
+  const body = mk('p', 'muted', 'Your meetings from ' + CAL_NAMES[p] + ' stop showing on Home and no more pizzas go out for them. You can connect again anytime.');
+  liveSheet('Disconnect ' + CAL_NAMES[p] + '?', body, [
+    { label: 'Disconnect', primary: true, run: async () => { await LIVE.call('/calendar/disconnect', { provider: p }).catch(() => null); closeLiveSheet(); toast(CAL_NAMES[p] + ' is disconnected.'); loadCalendar(); } },
+    { label: 'Keep it', run: closeLiveSheet }]);
+}
+/* After a meeting ends: Ask (picked meetings wait on Home), Auto (Pro: picked meetings send), Off. Saved on the account. */
+(function afterMeetingSetting() {
+  const txt = { ask: 'Pick meetings on Home. When one ends, your signature pizza waits there for you to send.', auto: 'Every meeting gets your signature pizza when it ends, unless you turn it off on Home.', off: 'No pizzas for meetings. Make pizzas only when you open the app.' };
+  ['ask', 'auto', 'off'].forEach(k => { const r = $('#mode-' + k); const sm = r && r.parentElement.querySelector('small'); if (sm) sm.textContent = txt[k]; });
+  const ask = $('#mode-ask'); const ab = ask && ask.parentElement.querySelector('b'); if (ab) ab.textContent = 'I pick the meetings';
+  const auto = $('#mode-auto'); const xb = auto && auto.parentElement.querySelector('b'); if (xb && xb.firstChild) xb.firstChild.textContent = 'Every meeting, automatically';
+  const ext = $('#extOnly'); if (ext) { const l = ext.closest('label'); if (l) l.hidden = true; }
+  SOTR.querySelectorAll('input[name=mode]').forEach(r => r.addEventListener('change', e => {
+    if (settings.mode !== e.target.value || !LIVE.TOKEN) return;
+    LIVE.call('/profile', { profile: { prefs: { after_meeting: settings.mode } } });
+    if (!views.today.hidden) renderToday();
+  }));
+})();
+/* The signature pizza is kept on the account too, so it can go out when a meeting ends */
+function syncSignature() {
+  if (!LIVE.TOKEN || !account) return;
+  let img = ''; try { img = pizzaImage(clonePizza(signature), false); } catch (e) { img = ''; }
+  LIVE.call('/signature', { pizza: cleanPizza(signature), box: boxPayload(Object.assign(boxFromProfile(null), { kind: 'business' })), image_data_url: img.length < 1900000 ? img : '' }).catch(() => null);
+}
+const _saveSig = $('#saveSig').onclick;
+$('#saveSig').onclick = function () { _saveSig.apply(this, arguments); syncSignature(); };
+function calStart(s) {
+  const prefs = s.prefs || {};
+  if (prefs.after_meeting && prefs.after_meeting !== settings.mode && (prefs.after_meeting !== 'auto' || calAuto())) { settings.mode = prefs.after_meeting; store.set('settings', settings); }
+  if (prefs.signature && prefs.signature.pizza && !store.get('signature', null)) { signature = prefs.signature.pizza; store.set('signature', signature); }
+  else if (!prefs.signature && store.get('signature', null)) syncSignature();
+  const q = new URLSearchParams(location.search).get('calendar');
+  if (q) {
+    const p = q.split('_')[0], ok = q.slice(-10) === '_connected';
+    try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
+    toast(ok ? (CAL_NAMES[p] || 'Your calendar') + ' is connected. Your meetings are on Home.' : 'That did not connect. Try again from Settings > Calendar.');
+    setTimeout(() => show(ok ? 'today' : 'settings'), 50);
+  }
+  renderCalendarCard();
+  loadCalendar();
+  setInterval(() => { if (!document.hidden && !views.today.hidden) loadCalendar(); }, 90000);
+}
+renderCalendarCard();
 
 /* Test hook, only when the widget sets data-debug */
 if (host_isDebug()) { window.__SOT_DEBUG = { goSend() { pizza = P_demo(); step = 5; saidStep = 5; show('make'); renderStep(); } }; }

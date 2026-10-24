@@ -42,7 +42,7 @@ Deno.test("recipient token is stable and hashes differ", async () => {
   assertEquals((await tokenHash(a)).length, 64);
 });
 Deno.test("email has legal footer, escapes, and Spanish", () => {
-  const e = buildEmail({ sender: { name: "Stacey <b>", business: "Mountain Studio", send_as: "business", mailing_address: "PO Box 1", show_made_with: true },
+  const e = buildEmail({ sender: { name: "Stacey <b>", business: "Mountain Studio", send_as: "business", platform_address: "PO Box 1", show_made_with: true },
     link: "https://www.sliceofthanks.app/p?t=x", unsubscribeSender: "u1", unsubscribeAll: "u2", recipientName: "Jordan" });
   assert(e.subject.startsWith("Mountain Studio"));
   assert(e.html.includes("PO Box 1") && e.html.includes("u1") && e.html.includes("u2") && e.html.includes("/privacy") && e.html.includes("/terms"));
@@ -52,10 +52,10 @@ Deno.test("email has legal footer, escapes, and Spanish", () => {
   assert(es.subject.includes("te envió"));
   assertEquals(senderLabel({ name: "Stacey", business: "Biz", send_as: "person" }), "Stacey");
 });
-Deno.test("footer uses the member's address, else Slice of Thanks's", () => {
+Deno.test("footer always uses Slice of Thanks's address", () => {
   const ours = "967 Kendall Dr, Ste A, #271, San Bernardino, CA 92407";
   const own = buildEmail({ sender: { name: "Stacey", mailing_address: "PO Box 1", platform_address: ours }, link: "l", unsubscribeSender: "a", unsubscribeAll: "b" });
-  assert(own.html.includes("PO Box 1") && !own.html.includes("Kendall"));
+  assert(!own.html.includes("PO Box 1") && own.html.includes("Sent through Slice of Thanks, 967 Kendall Dr"));
   const none = buildEmail({ sender: { name: "Stacey", mailing_address: "  ", platform_address: ours }, link: "l", unsubscribeSender: "a", unsubscribeAll: "b" });
   assert(none.html.includes("Sent through Slice of Thanks, 967 Kendall Dr") && none.text.includes("967 Kendall Dr"));
   const es = buildEmail({ locale: "es", sender: { name: "Stacey", platform_address: ours }, link: "l", unsubscribeSender: "a", unsubscribeAll: "b" });
@@ -154,4 +154,10 @@ Deno.test("invoice list for the Billing card: newest first, no old ones", () => 
     { id: "7", number: "INV-7", date: "2026-10-20T00:00:00.000Z", paidAt: null, status: "Unpaid", totalCents: 299, items: [{ description: "Special Delivery", amountCents: 299 }] },
     { id: "5", number: "5", date: "2026-09-01T00:00:00.000Z", paidAt: "2026-09-01T10:00:00.000Z", status: "Paid", totalCents: 900, items: [{ description: "The Whole Pie", amountCents: 900 }] },
   ]);
+});
+Deno.test("subject follows the occasion sticker", () => {
+  const base = { sender: { name: "Kevin & Stacey" }, link: "l", unsubscribeSender: "a", unsubscribeAll: "b" };
+  assertEquals(buildEmail({ ...base, occasion: "Thank You" }).subject, "Kevin & Stacey sent you a slice of thanks");
+  assertEquals(buildEmail({ ...base, occasion: "Happy Retirement" }).subject, "A special pizza delivery for you from Kevin & Stacey");
+  assertEquals(buildEmail({ ...base }).subject, "Kevin & Stacey sent you a slice of thanks");
 });

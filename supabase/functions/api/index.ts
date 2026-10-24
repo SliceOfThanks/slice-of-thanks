@@ -4,13 +4,14 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifyBdToken } from "./lib/auth.ts";
 import { recipientToken, tokenHash } from "./lib/crypto.ts";
-import { buildEmail, SITE } from "./lib/email.ts";
+import { buildEmail, buildWaitingEmail, SITE } from "./lib/email.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
 import { pickProvider } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
+import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.9.0";
+const VERSION = "api-0.10.2";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@08a8dc99a1c2fa71ebfbd7b8a9c1d0e5e7edae8a/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -76,7 +77,7 @@ async function deliver(sendId: string, pizzaImageUrl?: string) {
   const token = await recipientToken(env("LINK_SECRET"), sendId);
   const snap = job.snapshot ?? {};
   const mail = buildEmail({
-    locale: job.locale, recipientName: job.name, sender: snap.sender ?? {}, isTest: job.is_test,
+    locale: job.locale, recipientName: job.name, sender: snap.sender ?? {}, isTest: job.is_test, occasion: snap.box?.sticker,
     link: `${SITE}/p?t=${encodeURIComponent(token)}`,
     unsubscribeSender: `${SITE}/unsubscribe?t=${encodeURIComponent(token)}&s=sender`,
     unsubscribeAll: `${SITE}/unsubscribe?t=${encodeURIComponent(token)}&s=global`,
@@ -126,6 +127,72 @@ async function uploadPizza(dataUrl: unknown, title: string): Promise<string | un
   try { return await publitioUpload({ key: env("PUBLITIO_API_KEY"), secret: env("PUBLITIO_API_SECRET"), blob, folder: "slice-of-thanks", title }); } catch { return undefined; }
 }
 
+// ---- Calendars (Calendly, TidyCal) ----
+const calCfg = (p: Provider) => ({
+  clientId: env(CAL[p].idEnv), clientSecret: env(CAL[p].secretEnv),
+  redirectUri: `${env("SUPABASE_URL")}/functions/v1/api/oauth/${p}/callback`,
+});
+
+// Reads the member's meetings from a day ago to a week ahead and saves them. False when it could not.
+async function syncCalendar(memberId: string, p: Provider): Promise<boolean> {
+  const info = await rpc<Record<string, any> | null>("sot_integration_tokens", { p_member: memberId, p_provider: p });
+  let tokens = info?.tokens as Tokens | undefined;
+  if (!info || info.status === "disconnected" || !tokens?.access) return false;
+  try {
+    if (needsRefresh(tokens)) {
+      tokens = await refreshTokens(p, calCfg(p), tokens.refresh!);
+      await rpc("sot_integration_tokens_update", { p_member: memberId, p_provider: p, p_tokens: tokens });
+    }
+    const now = Date.now();
+    const items = await listMeetings(p, tokens.access, String(info.account ?? ""), new Date(now - 86_400_000), new Date(now + 8 * 86_400_000));
+    await rpc("sot_meetings_upsert", { p_member: memberId, p_provider: p, p_items: items });
+    await rpc("sot_integration_synced", { p_member: memberId, p_provider: p, p_ok: true });
+    return true;
+  } catch (e) {
+    console.error("calendar sync", p, String(e));
+    await rpc("sot_integration_synced", { p_member: memberId, p_provider: p, p_ok: !(e instanceof CalendarAuthError) }).catch(() => null);
+    return false;
+  }
+}
+
+// Tells a member their pizza is waiting, at their reply-to address. Uses no email credit.
+async function notifyWaiting(m: Record<string, any>, reason?: string) {
+  const to = String(m.reply_to ?? "").trim();
+  if (!to || to.indexOf("@") < 1) return;
+  const mail = buildWaitingEmail({ guest: m.name ?? "", meeting: m.title ?? "", link: SITE + (m.return_path || "/"), reason });
+  const provider = pickProvider(await rpc("sot_setting", { p_env: "live", p_key: "email_provider" }).catch(() => null));
+  const r = await provider.send({ from: { name: "Slice of Thanks", email: SENDER_EMAIL }, to: { email: to }, subject: mail.subject, html: mail.html, text: mail.text, tags: ["member_notice"] }, env(provider.secret));
+  if (!r.ok) console.error("waiting notice", r.error);
+}
+
+// A meeting just ended. Pro and Team send the signature pizza; A Slice gets it waiting on Home.
+async function meetingEnded(m: Record<string, any>) {
+  if (!m.want) return rpc("sot_meeting_result", { p_id: m.id, p_state: "ended", p_note: null, p_send: null });
+  if (!m.email) return rpc("sot_meeting_result", { p_id: m.id, p_state: "ended", p_note: "no_email", p_send: null });
+  const sig = m.signature ?? {};
+  if (!sig.pizza) {
+    await rpc("sot_meeting_result", { p_id: m.id, p_state: "ready", p_note: "no_signature", p_send: null });
+    return notifyWaiting(m, "no_signature");
+  }
+  if (!m.auto) {
+    await rpc("sot_meeting_result", { p_id: m.id, p_state: "ready", p_note: null, p_send: null });
+    return notifyWaiting(m);
+  }
+  const { sendId, r } = await createSend(m.member_id, "live", {
+    pizza: sig.pizza, box: { ...(sig.box ?? {}), meeting: m.title ?? "" }, recipient: { name: m.name ?? "", email: m.email },
+    consent: { basis: "one_to_one", method: "Calendar meeting", note: m.title ?? "" }, send_type: "one_to_one",
+    label: m.title ? `After ${String(m.title).toLowerCase()}` : "After a meeting",
+  }, "calendar", `meeting:${m.id}`);
+  if (!r.ok) {
+    await rpc("sot_meeting_result", { p_id: m.id, p_state: "ready", p_note: r.code ?? "not_sent", p_send: null });
+    return notifyWaiting(m, r.code);
+  }
+  const id = r.send_id ?? sendId;
+  if (sig.image_url && !r.duplicate) await rpc("sot_set_send_image", { p_send: id, p_url: sig.image_url }).catch(() => null);
+  await rpc("sot_meeting_result", { p_id: m.id, p_state: "sent", p_note: null, p_send: id });
+  if (r.due_now && !r.duplicate) await deliver(id, sig.image_url).catch((e) => console.error("meeting deliver", String(e)));
+}
+
 async function route(req: Request, path: string): Promise<Response> {
   const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
 
@@ -162,6 +229,26 @@ async function route(req: Request, path: string): Promise<Response> {
     return json(req, r);
   }
 
+  // Calendly or TidyCal sends the member back here after they approve. The state ties it to the member.
+  const cb = path.match(/^\/oauth\/(calendly|tidycal)\/callback$/);
+  if (cb && req.method === "GET") {
+    const p = cb[1] as Provider;
+    const q = new URL(req.url).searchParams;
+    const fin = await rpc<Record<string, any> | null>("sot_oauth_finish", { p_state: q.get("state") ?? "", p_provider: p });
+    const back = (ok: boolean) => Response.redirect(SITE + (fin?.return_path || "/") + `?calendar=${p}_${ok ? "connected" : "failed"}`, 302);
+    if (!fin || !q.get("code")) return back(false);
+    try {
+      const tokens = await exchangeCode(p, calCfg(p), q.get("code")!);
+      const me = await whoAmI(p, tokens.access);
+      await rpc("sot_integration_save", { p_member: fin.member_id, p_provider: p, p_account: me.account, p_label: me.label, p_tokens: tokens, p_return: fin.return_path ?? null });
+      await syncCalendar(fin.member_id, p);
+      return back(true);
+    } catch (e) {
+      console.error("oauth callback", p, String(e));
+      return back(false);
+    }
+  }
+
   // Send worker: pg_cron calls this every minute with the vault secret (migration send_worker.sql).
   // Delivers scheduled sends and provider retries that are due, and closes out sends stuck mid-send.
   if (path === "/worker" && req.method === "POST") {
@@ -180,8 +267,21 @@ async function route(req: Request, path: string): Promise<Response> {
         console.error("worker send", id, String(e));
       }
     }
-    if (stuck || delivered || failed) console.log("worker", JSON.stringify({ stuck, delivered, failed }));
-    return json(req, { ok: true, stuck, delivered, failed });
+    // Calendars: a few syncs a minute, then meetings that just ended
+    let synced = 0, ended = 0;
+    for (const it of (await rpc<{ member_id: string; provider: Provider }[]>("sot_integrations_due", { p_limit: 5 })) ?? []) {
+      if (Date.now() - started > 45_000) break;
+      if (await syncCalendar(it.member_id, it.provider)) synced++;
+    }
+    for (const mt of (await rpc<Record<string, any>[]>("sot_meetings_ended", { p_limit: 20 })) ?? []) {
+      if (Date.now() - started > 50_000) break;
+      try { await meetingEnded(mt); ended++; } catch (e) {
+        console.error("meeting ended", mt.id, String(e));
+        await rpc("sot_meeting_result", { p_id: mt.id, p_state: "ready", p_note: "server_error", p_send: null }).catch(() => null);
+      }
+    }
+    if (stuck || delivered || failed || synced || ended) console.log("worker", JSON.stringify({ stuck, delivered, failed, synced, ended }));
+    return json(req, { ok: true, stuck, delivered, failed, synced, ended });
   }
 
   // Member routes
@@ -234,6 +334,8 @@ async function route(req: Request, path: string): Promise<Response> {
   }
   if (path === "/send" && req.method === "POST") {
     const { sendId, r } = await createSend(memberId, m.session.env, body, body.source === "people" ? "people" : "kitchen", String(body.idem ?? "") || crypto.randomUUID());
+    // A pizza sent for a calendar meeting from Home marks that meeting done
+    if (r.ok && body.meeting_id) await rpc("sot_meeting_done", { p_member: memberId, p_id: String(body.meeting_id), p_send: r.send_id ?? sendId }).catch(() => null);
     if (!r.ok || r.duplicate) return json(req, r);
     // Upload the picture now and keep it with the pizza, so a send the worker delivers later has it too
     const imageUrl = await uploadPizza(body.image_data_url, `pizza-${sendId}`);
@@ -241,6 +343,45 @@ async function route(req: Request, path: string): Promise<Response> {
     if (!r.due_now) return json(req, r);
     const d = await deliver(sendId, imageUrl);
     return json(req, { ...r, ...d });
+  }
+  // Calendars: connect, this week's meetings, the pizza choice per meeting, disconnect
+  if (path === "/calendar/connect" && req.method === "POST") {
+    const p = body.provider;
+    if (!isProvider(p)) return json(req, { ok: false, code: "bad_provider" }, 400);
+    if (!env(CAL[p].idEnv) || !env(CAL[p].secretEnv)) return json(req, { ok: false, code: "not_ready" });
+    const state = await rpc<string>("sot_oauth_start", { p_member: memberId, p_provider: p, p_return: String(body.return ?? "") });
+    return json(req, { ok: true, url: authorizeUrl(p, calCfg(p), state) });
+  }
+  if (path === "/calendar" && req.method === "GET") {
+    let cal = await rpc<Record<string, any>>("sot_calendar", { p_member: memberId });
+    // Opening Home refreshes a calendar that has not synced in the last 3 minutes
+    const stale = (cal.integrations ?? []).filter((i: any) => i.status === "connected" && (!i.last_sync_at || Date.now() - Date.parse(i.last_sync_at) > 180_000));
+    if (stale.length) {
+      for (const i of stale) await syncCalendar(memberId, i.provider);
+      cal = await rpc<Record<string, any>>("sot_calendar", { p_member: memberId });
+    }
+    return json(req, { ok: true, ...cal });
+  }
+  if (path === "/calendar/sync" && req.method === "POST") {
+    const cal = await rpc<Record<string, any>>("sot_calendar", { p_member: memberId });
+    for (const i of cal.integrations ?? []) if (i.status !== "disconnected") await syncCalendar(memberId, i.provider);
+    return json(req, { ok: true, ...(await rpc<Record<string, any>>("sot_calendar", { p_member: memberId })) });
+  }
+  if (path === "/calendar/disconnect" && req.method === "POST") {
+    if (!isProvider(body.provider)) return json(req, { ok: false, code: "bad_provider" }, 400);
+    await rpc("sot_integration_disconnect", { p_member: memberId, p_provider: body.provider });
+    return json(req, { ok: true });
+  }
+  if (path === "/calendar/meeting" && req.method === "POST") {
+    return json(req, await rpc("sot_meeting_set", { p_member: memberId, p_id: String(body.id ?? ""), p_want: !!body.want }));
+  }
+  if (path === "/calendar/skip" && req.method === "POST") {
+    return json(req, await rpc("sot_meeting_done", { p_member: memberId, p_id: String(body.id ?? ""), p_send: null }));
+  }
+  // The signature pizza is kept on the account so it can go out when a meeting ends
+  if (path === "/signature" && req.method === "POST") {
+    const imageUrl = await uploadPizza(body.image_data_url, `signature-${memberId}-${Date.now()}`);
+    return json(req, await rpc("sot_save_signature", { p_member: memberId, p: { pizza: body.pizza ?? null, box: body.box ?? {}, image_url: imageUrl ?? body.image_url ?? null } }));
   }
   // People tab: contacts with their last pizzas, and add or edit a person
   if (path === "/people" && req.method === "GET") {

@@ -14,11 +14,13 @@ export type EmailInput = {
   pizzaImageUrl?: string;
   potatoImageUrl?: string;
   isTest?: boolean;
+  occasion?: string; // the box's occasion sticker; it picks the subject line
 };
 
 const T = {
   en: {
     subject: (s: string) => `${s} sent you a slice of thanks`,
+    special: (s: string) => `A special pizza delivery for you from ${s}`,
     hi: (n?: string) => { const f = (n ?? "").trim().split(" ")[0]; return f ? `Hi ${f},` : "Hi,"; },
     lead: (s: string) => `${s} sent you a pizza. Potato is on her way with it now.`,
     button: "Open your pizza",
@@ -36,6 +38,7 @@ const T = {
   },
   es: {
     subject: (s: string) => `${s} te envió una porción de agradecimiento`,
+    special: (s: string) => `Una entrega especial de pizza para ti de ${s}`,
     hi: (n?: string) => { const f = (n ?? "").trim().split(" ")[0]; return f ? `Hola ${f}:` : "Hola:"; },
     lead: (s: string) => `${s} te envió una pizza. Potato ya va en camino con ella.`,
     button: "Abre tu pizza",
@@ -74,12 +77,18 @@ export function senderHeadline(s: Sender, from = "from"): string {
   return name || biz || "Someone";
 }
 
-// The member's own address when they added one; otherwise Slice of Thanks's address as the designated sender
+// Always Slice of Thanks's own address: it is the designated sender for every email (Stacey, 2026-10-24)
 export function footerAddress(s: Sender, via: string): string {
-  const own = (s.mailing_address ?? "").trim();
-  if (own) return own;
   const ours = (s.platform_address ?? "").trim();
   return ours ? `${via}, ${ours}` : via;
+}
+
+// Thank-you and meeting stickers keep the thank-you subject; every other occasion (birthday, retirement...) gets the evergreen one.
+// Same rule as isThanksOccasion in the Kitchen, so the preview matches.
+const THANKS_STICKERS = ["Great Meeting", "Nice to Meet You", "Following Up", "Let's Do This"];
+export function isThanksOccasion(sticker?: string): boolean {
+  const st = String(sticker ?? "");
+  return !st || st.toLowerCase().includes("thank") || THANKS_STICKERS.includes(st);
 }
 
 export function buildEmail(i: EmailInput): { subject: string; html: string; text: string } {
@@ -88,7 +97,7 @@ export function buildEmail(i: EmailInput): { subject: string; html: string; text
   const headline = senderHeadline(i.sender, t.from);
   const fullFrom = [i.sender.name, i.sender.business].filter(Boolean).join(", ");
   const address = footerAddress(i.sender, t.via);
-  const subject = (i.isTest ? `[${t.test}] ` : "") + t.subject(headline);
+  const subject = (i.isTest ? `[${t.test}] ` : "") + (isThanksOccasion(i.occasion) ? t.subject(headline) : t.special(headline));
   const html = `<!doctype html><html><body style="margin:0;background:#FFF3E0;font-family:Arial,Helvetica,sans-serif;color:#3E2416">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF3E0"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fffaef;border:3px solid #3E2416;border-radius:18px">
@@ -115,4 +124,26 @@ ${i.sender.show_made_with ? `<br><a href="${SITE}" style="color:#6b4a3a">${esc(t
     `${t.privacy}: ${SITE}/privacy`, `${t.terms}: ${SITE}/terms`,
   ].join("\n");
   return { subject, html, text };
+}
+
+// To the member, not a guest: a meeting they picked ended and their signature pizza is waiting on Home.
+// Sent to their reply-to address. It uses no email credit.
+export function buildWaitingEmail(i: { guest: string; meeting: string; link: string; reason?: string }): { subject: string; html: string; text: string } {
+  const who = i.guest || "your guest";
+  const subject = `Your pizza for ${who} is ready to send`;
+  const lead = i.reason === "no_signature"
+    ? `Your ${i.meeting || "meeting"} with ${who} just ended. Set your signature pizza in Settings, then send them a pizza from Home.`
+    : i.reason === "no_credits"
+      ? `Your ${i.meeting || "meeting"} with ${who} just ended. Your pizza is waiting on Home, but you are out of emails this month. Add a pack to send it.`
+      : `Your ${i.meeting || "meeting"} with ${who} just ended. Your signature pizza is waiting on Home. Open Slice of Thanks to send it.`;
+  const html = `<!doctype html><html><body style="margin:0;background:#FFF3E0;font-family:Arial,Helvetica,sans-serif;color:#3E2416">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF3E0"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fffaef;border:3px solid #3E2416;border-radius:18px">
+<tr><td style="height:14px;background:#D62828;border-radius:14px 14px 0 0"></td></tr>
+<tr><td style="padding:24px;text-align:center">
+<p style="margin:0 0 18px;font-size:18px;font-weight:bold;line-height:1.4">${esc(lead)}</p>
+<a href="${esc(i.link)}" style="display:inline-block;background:#D62828;color:#FFF3E0;text-decoration:none;font-weight:bold;font-size:17px;padding:14px 28px;border-radius:999px;border:2px solid #3E2416">Open Slice of Thanks</a>
+<p style="margin:16px 0 0;font-size:12px;color:#6b4a3a">You get this because you picked this meeting for a pizza. Change it on Home or in Settings.</p>
+</td></tr></table></td></tr></table></body></html>`;
+  return { subject, html, text: `${lead}\n\nOpen Slice of Thanks: ${i.link}` };
 }

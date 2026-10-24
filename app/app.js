@@ -1794,7 +1794,9 @@ async function peopleSend(c, btn) {
   const card = $('#csvFile') && $('#csvFile').closest('.card');
   if (card) {
     const help = card.querySelector('small.muted');
-    if (help) help.textContent = 'Columns Slice of Thanks looks for: Name (or First and Last), Email, Company, Role, Country (like US or CA), Permission (one_to_one, relationship or permission) and Vegan (yes or no). Extra columns are ignored. Up to 500 people per list.';
+    if (help) help.innerHTML = '<b>Columns:</b> First, Last (or one Name column), Email, Company, Role, Country (two letters, like US or CA), Consent and Vegan (yes or no). Only a name and Email are required. Extra columns are ignored. Up to 500 people per list.<br>' +
+      '<b>Consent</b> is how you know each person: <b>yes</b> or <b>permission</b> (they agreed to get emails from you), <b>relationship</b> (current client or business contact) or <b>one_to_one</b> (you just met). Rows without it use your choice below. ' +
+      'First, Last, Role and Company fill the matching details in your note.';
     const f = document.createElement('div'); f.className = 'two';
     f.innerHTML = '<div class="field"><label for="bulkCountry">Country for rows without one</label><select id="bulkCountry"></select></div>' +
       '<div class="field"><label for="bulkBasis">How you know them, for rows without a Permission column</label><select id="bulkBasis">' + BASIS_OPTIONS.replace('We just met and this is a one-to-one thank-you', 'We met one to one and this is a thank-you') + '</select></div>';
@@ -1805,8 +1807,19 @@ async function peopleSend(c, btn) {
   SOTR.querySelectorAll('#view-bulk small.muted').forEach(sm => { if (sm.textContent.indexOf('Prototype only') === 0) sm.textContent = 'Each pizza uses one email from your plan. Up to 500 people per list. Potato delivers them over the next few minutes.'; });
   const d = $('#bulkDate');
   if (d) { d.type = 'datetime-local'; const t = new Date(Date.now() + 864e5); t.setHours(9, 0, 0, 0); d.value = new Date(t.getTime() - t.getTimezoneOffset() * 6e4).toISOString().slice(0, 16); }
+  /* A sample file with every column the list understands. Its example.com rows are always skipped, so it can never send by accident. */
   const ch = $('#copyHeader');
-  if (ch) ch.onclick = () => { const hdr = 'First,Last,Email,Company,Role,Country,Permission,Vegan'; try { navigator.clipboard.writeText(hdr).then(() => toast('Column headers copied. Paste them into row 1 of your spreadsheet.'), () => toast('Headers: ' + hdr)); } catch (e) { toast('Headers: ' + hdr); } };
+  if (ch) {
+    ch.textContent = 'Download a sample CSV';
+    ch.onclick = () => {
+      const csv = ['First,Last,Email,Company,Role,Country,Consent,Vegan',
+        'Jordan,Reyes,jordan@example.com,Brightline Legal,Managing Partner,US,relationship,no',
+        'Priya,Shah,priya@example.com,Shah & Ortiz LLP,Paralegal,CA,yes,yes'].join(String.fromCharCode(13, 10)) + String.fromCharCode(13, 10);
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'slice-of-thanks-list.csv';
+      SOTR.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      toast('Sample downloaded. Replace the two example rows with your people, keep row 1, and upload it here.');
+    };
+  }
 })();
 function prettyWhen(v) { const d = new Date(v); return isNaN(d) ? v : d.toLocaleString('en-US', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
 const _renderBulk = renderBulk;
@@ -1814,7 +1827,7 @@ renderBulk = function () {
   _renderBulk();
   const d = $('#bulkDate'), rv = $('#bulkReview');
   if (d && rv && d.value) rv.textContent = rv.textContent.replace(d.value, prettyWhen(d.value));
-  const ls = $('#listSummary'); if (ls) ls.textContent = ls.textContent.replace('missing an email or phone', 'missing an email');
+  const ls = $('#listSummary'); if (ls) ls.textContent = ls.textContent.replace('missing an email or phone', 'missing an email or still sample rows');
   SOTR.querySelectorAll('#listTable th').forEach(th => { if (th.textContent === 'Email or phone') th.textContent = 'Email'; });
 };
 const _loadList = loadList;
@@ -1828,11 +1841,13 @@ loadList = function (txt) {
     const row = data[i + 1] || [];
     r.country = iC >= 0 ? (row[iC] || '').trim().toUpperCase().slice(0, 2) : '';
     const pv = iP >= 0 ? (row[iP] || '').trim().toLowerCase().split(' ').join('_').split('-').join('_') : '';
-    r.basis = ['one_to_one', 'relationship', 'permission'].includes(pv) ? pv : '';
+    const alias = { yes: 'permission', y: 'permission', opted_in: 'permission', opt_in: 'permission', consent: 'permission', true: 'permission', client: 'relationship', just_met: 'one_to_one' };
+    r.basis = ['one_to_one', 'relationship', 'permission'].includes(pv) ? pv : (alias[pv] || '');
     r.role = iR >= 0 ? (row[iR] || '').trim() : '';
     if (iF >= 0) r.first = (row[iF] || '').trim();
     if (iL >= 0) r.last = (row[iL] || '').trim();
-    r.ok = !!r.name && r.contact.indexOf('@') > 0 && r.contact.indexOf('.', r.contact.indexOf('@')) > 0;
+    r.sample = r.contact.toLowerCase().indexOf('@example.') > 0;
+    r.ok = !!r.name && !r.sample && r.contact.indexOf('@') > 0 && r.contact.indexOf('.', r.contact.indexOf('@')) > 0;
   });
   if (bulk.rows.length > 500) { bulk.rows = bulk.rows.slice(0, 500); toast('Lists can have up to 500 people. The first 500 were loaded.'); }
   renderBulk();

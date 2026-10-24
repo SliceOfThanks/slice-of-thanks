@@ -1,9 +1,9 @@
 // Verifies the short-lived token signed by the SOT-Auth widget in Brilliant Directories.
 // Format: base64url(JSON payload) + "." + hex HMAC-SHA256 of the base64url part, keyed with BD_SHARED_SECRET.
-// Payload: { uid: number, sub: string, name?: string, adm?: 0|1, exp: unix seconds }
+// Payload: { uid: number, sub: string, name?: string, adm?: 0|1, lg?: 0|1 (ticked the legal box at BD sign up), jn?: sign up time, exp: unix seconds }
 import { b64urlDecode, hmacHex, safeEqual } from "./crypto.ts";
 
-export type BdClaims = { uid: number; sub: string; name?: string; adm?: number; exp: number };
+export type BdClaims = { uid: number; sub: string; name?: string; adm?: number; lg?: number; jn?: string; exp: number };
 
 export async function verifyBdToken(token: string | undefined, secret: string, now = Date.now()): Promise<BdClaims | null> {
   if (!token || typeof token !== "string" || token.length > 2000) return null;

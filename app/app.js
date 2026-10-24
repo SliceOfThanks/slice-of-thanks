@@ -1215,7 +1215,7 @@ $('#upSheet').addEventListener('click',e=>{if(e.target.id==='upSheet')closeUp()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#upSheet').hidden)closeUp()});
 refreshPlan(true);
 
-/* ===== Slice of Thanks live layer v0.3.1 =====
+/* ===== Slice of Thanks live layer v0.3.3 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent and real sends. */
 const LIVE = (function () {
@@ -1304,11 +1304,19 @@ function liveSheet(title, bodyEl, actions) {
 function closeLiveSheet() { const b = $('#liveSheet'); if (b) b.hidden = true; }
 
 function askTerms(then) {
+  const upd = !!(LIVE.session && LIVE.session.terms_updated);
+  const a = (path, label) => '<a href="' + LIVE.SITE + path + '" target="_blank" rel="noopener">' + label + '</a>';
   const p = document.createElement('div');
-  p.innerHTML = '<label class="check" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="liveTermsBox"> <span>I agree to the <a href="' + LIVE.SITE + '/terms" target="_blank" rel="noopener">Terms of Service</a>, <a href="' + LIVE.SITE + '/privacy" target="_blank" rel="noopener">Privacy Policy</a> and <a href="' + LIVE.SITE + '/acceptable-use" target="_blank" rel="noopener">Acceptable Use Policy</a>. I will only send pizzas to people I have permission to contact.</span></label>';
-  liveSheet('One quick thing', p, [{ label: 'Agree and continue', primary: true, run: async () => {
+  p.innerHTML = (upd ? '<p class="muted" style="margin:0 0 10px">We updated our legal documents. Please review and agree to keep sending.</p>' : '') +
+    '<label class="check" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="liveTermsBox"> <span>I agree to the ' +
+    a('/terms', 'Terms of Service') + ', ' + a('/privacy', 'Privacy Policy') + ', ' + a('/acceptable-use', 'Acceptable Use Policy') + ' and ' + a('/dpa', 'Data Processing Agreement') +
+    '. I will only send pizzas to people I have permission to contact.</span></label>';
+  liveSheet(upd ? 'We updated our terms' : 'One quick thing', p, [{ label: 'Agree and continue', primary: true, run: async () => {
     if (!$('#liveTermsBox').checked) { toast('Check the box to continue.'); return; }
-    await LIVE.call('/terms/accept', {}); closeLiveSheet(); then();
+    const r = await LIVE.call('/terms/accept', {});
+    if (!r || !r.ok) { toast(MSG.server_error); return; }
+    if (LIVE.session) { LIVE.session.needs_terms = false; LIVE.session.terms_updated = false; }
+    closeLiveSheet(); then();
   } }]);
 }
 function askAddress(then) {
@@ -1499,6 +1507,7 @@ $('#sendNow').onclick = () => {
   const s = await LIVE.call('/session');
   if (!s || !s.member_id) { account = null; refreshPlan(true); return; }
   applySession(s);
+  if (s.needs_terms) setTimeout(() => askTerms(() => {}), 600);
   const d = store.get('draft', null);
   if (d && d.pizza && Date.now() - (d.at || 0) < 7 * 864e5) {
     pizza = d.pizza; box = Object.assign(boxFromProfile(null), d.box); store.set('draft', null);

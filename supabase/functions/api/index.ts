@@ -7,7 +7,7 @@ import { recipientToken, tokenHash } from "./lib/crypto.ts";
 import { buildEmail, SITE } from "./lib/email.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 
-const VERSION = "api-0.2.0";
+const VERSION = "api-0.3.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@6ee4e204b57bdb3c50150e9a5fe275383e9b22e9/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -36,7 +36,7 @@ async function rpc<T = unknown>(fn: string, args: Record<string, unknown>): Prom
 async function member(req: Request) {
   const claims = await verifyBdToken(req.headers.get("x-sot-auth") ?? undefined, env("BD_SHARED_SECRET"));
   if (!claims) return null;
-  const s = await rpc<Record<string, any>>("sot_session", { p: { bd_user_id: claims.uid, bd_sub_id: claims.sub, name: claims.name ?? "" } });
+  const s = await rpc<Record<string, any>>("sot_session", { p: { bd_user_id: claims.uid, bd_sub_id: claims.sub, name: claims.name ?? "", legal_signup: claims.lg === 1, joined: typeof claims.jn === "string" ? claims.jn : "" } });
   return { claims, session: s };
 }
 
@@ -118,8 +118,9 @@ async function route(req: Request, path: string): Promise<Response> {
 
   if (path === "/session") return json(req, m.session);
   if (path === "/terms/accept" && req.method === "POST") {
-    await rpc("sot_accept_terms", { p_member: memberId });
-    return json(req, { ok: true });
+    const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || null;
+    const r = await rpc("sot_accept_terms", { p_member: memberId, p_method: "kitchen_checkbox", p_at: null, p_ip: ip, p_ua: (req.headers.get("user-agent") ?? "").slice(0, 300) || null });
+    return json(req, r);
   }
   if (path === "/profile" && req.method === "POST") {
     await rpc("sot_update_profile", { p_member: memberId, p: body.profile ?? {} });

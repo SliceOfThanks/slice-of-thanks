@@ -65,23 +65,23 @@ export function buildEmail(i: EmailInput): { subject: string; html: string; text
   const who = senderLabel(i.sender);
   const fullFrom = [i.sender.name, i.sender.business].filter(Boolean).join(", ");
   const subject = (i.isTest ? `[${t.test}] ` : "") + t.subject(who);
-  const html = `<!doctype html><html><body style="margin:0;background:#fbf0d9;font-family:Arial,Helvetica,sans-serif;color:#3a1d12">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fbf0d9"><tr><td align="center" style="padding:24px 12px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fffaef;border:3px solid #3a1d12;border-radius:18px">
-<tr><td style="height:14px;background:#c4122f;border-radius:14px 14px 0 0"></td></tr>
+  const html = `<!doctype html><html><body style="margin:0;background:#FFF3E0;font-family:Arial,Helvetica,sans-serif;color:#3E2416">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF3E0"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fffaef;border:3px solid #3E2416;border-radius:18px">
+<tr><td style="height:14px;background:#D62828;border-radius:14px 14px 0 0"></td></tr>
 <tr><td style="padding:24px 24px 8px;text-align:center">
 ${i.potatoImageUrl ? `<img src="${esc(i.potatoImageUrl)}" width="240" alt="Potato the bulldog on her delivery scooter" style="display:block;margin:0 auto 12px;max-width:100%;height:auto">` : ""}
 <p style="margin:0 0 6px;font-size:16px">${esc(t.hi(i.recipientName))}</p>
 <p style="margin:0 0 18px;font-size:20px;font-weight:bold;line-height:1.3">${esc(t.lead(who))}</p>
 ${i.pizzaImageUrl ? `<img src="${esc(i.pizzaImageUrl)}" width="200" alt="" style="display:block;margin:0 auto 18px;max-width:100%;height:auto">` : ""}
-<a href="${esc(i.link)}" style="display:inline-block;background:#c4122f;color:#fff6e3;text-decoration:none;font-weight:bold;font-size:17px;padding:14px 28px;border-radius:999px;border:2px solid #3a1d12">${esc(t.button)}</a>
+<a href="${esc(i.link)}" style="display:inline-block;background:#D62828;color:#FFF3E0;text-decoration:none;font-weight:bold;font-size:17px;padding:14px 28px;border-radius:999px;border:2px solid #3E2416">${esc(t.button)}</a>
 <p style="margin:16px 0 0;font-size:14px;color:#6b4a3a">${esc(t.note)}</p>
 </td></tr>
 <tr><td style="padding:18px 24px 22px;font-size:12px;line-height:1.6;color:#6b4a3a;text-align:center;border-top:1px dashed #d8c4a4">
 ${esc(fullFrom)}<br>${esc(i.sender.mailing_address)}<br>
 ${esc(t.why(who))}<br>
-<a href="${esc(i.unsubscribeSender)}" style="color:#a3102a">${esc(t.unsubSender(who))}</a> · <a href="${esc(i.unsubscribeAll)}" style="color:#a3102a">${esc(t.unsubAll)}</a><br>
-<a href="${SITE}/privacy" style="color:#a3102a">${esc(t.privacy)}</a> · <a href="${SITE}/terms" style="color:#a3102a">${esc(t.terms)}</a> · <a href="${SITE}/report" style="color:#a3102a">${esc(t.report)}</a>
+<a href="${esc(i.unsubscribeSender)}" style="color:#C21F1F">${esc(t.unsubSender(who))}</a> · <a href="${esc(i.unsubscribeAll)}" style="color:#C21F1F">${esc(t.unsubAll)}</a><br>
+<a href="${SITE}/privacy" style="color:#C21F1F">${esc(t.privacy)}</a> · <a href="${SITE}/terms" style="color:#C21F1F">${esc(t.terms)}</a> · <a href="${SITE}/report" style="color:#C21F1F">${esc(t.report)}</a>
 ${i.sender.show_made_with ? `<br><a href="${SITE}" style="color:#6b4a3a">${esc(t.made)}</a>` : ""}
 </td></tr></table></td></tr></table></body></html>`;
   const text = [

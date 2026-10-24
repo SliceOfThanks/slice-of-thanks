@@ -1,4 +1,4 @@
-<!-- SOT-Login: Slice of Thanks look for the BD /login page. Version 1.5.0
+<!-- SOT-Login: Slice of Thanks look for the BD /login page. Version 1.6.0
      Place it in the /login page content ABOVE the BD Member Login Page widget.
      BD still does the login, reCAPTCHA, password reset and redirect. This widget only styles it,
      moves BD's form into the Slice of Thanks card, and adds the links around it. -->
@@ -26,15 +26,17 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
   font:500 1rem "Work Sans",system-ui,sans-serif;color:var(--sot-ink);background:var(--sot-field);border:3px solid var(--sot-edge);border-radius:14px;padding:12px 14px;margin:0}
 .sot-login-card input::placeholder{color:var(--sot-muted)}
 .sot-login-card input:focus{outline:3px solid var(--sot-mustard);outline-offset:2px}
-.sot-login-card button,.sot-login-card input[type=submit],.sot-login-card .btn{display:block;width:100%;box-sizing:border-box;margin:18px 0 0;cursor:pointer;
+/* Only the main action gets the big button; BD's small helper buttons (like the password lock) stay small */
+.sot-login-card input[type=submit],.sot-login-card button[type=submit],.sot-login-card a.btn{display:block;width:100%;box-sizing:border-box;margin:18px 0 0;cursor:pointer;
   font:700 1.05rem "Work Sans",system-ui,sans-serif;color:var(--sot-tomato-ink);background:var(--sot-tomato);border:3px solid var(--sot-edge);border-radius:999px;
   padding:13px 20px;box-shadow:4px 4px 0 var(--sot-edge);text-align:center;text-decoration:none}
-.sot-login-card button:active,.sot-login-card input[type=submit]:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--sot-edge)}
+#sot-login-slot button:not([type=submit]){display:inline-block;width:auto;margin:0;padding:2px 6px;background:transparent;border:0;box-shadow:none;color:var(--sot-muted);cursor:pointer}
+.sot-login-card button[type=submit]:active,.sot-login-card input[type=submit]:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--sot-edge)}
 .sot-login-card a{color:var(--sot-tomato-text);font-weight:600}
 .sot-login-card form > a{display:inline-block;margin-top:12px}
 /* BD's own "Get Listed Today" link list; the footer below has the sign up link */
 .sot-login-card ul{display:none}
-.sot-login-card .sot-quiet{background:transparent;color:var(--sot-ink)}
+.sot-login-card a.btn.sot-quiet{background:transparent;color:var(--sot-ink)}
 .sot-login-card p{margin:0 0 4px;color:var(--sot-muted)}
 .sot-login-card .alert{border:2px solid var(--sot-edge);border-radius:14px;padding:10px 14px;margin:0 0 12px;background:var(--sot-line);color:var(--sot-ink)}
 .sot-login-card .g-recaptcha{margin-top:16px}
@@ -61,7 +63,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 </div>
 <script>
 (function () {
-  var VERSION = '1.5.0';
+  var VERSION = '1.6.0';
   var NL = String.fromCharCode(10);
   var tries = 0;
   function cookieNames() {

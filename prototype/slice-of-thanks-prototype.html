@@ -138,6 +138,14 @@ textarea{min-height:92px;resize:vertical}
 .box-pin{position:absolute;top:-4px;right:-6px;z-index:7;min-width:32px;height:32px;padding:0 10px;border-radius:999px;border:2.5px solid var(--edge);background:var(--surface);color:var(--ink);font:800 .8rem var(--body);cursor:pointer;box-shadow:2px 2px 0 var(--edge)}
 .box-float.pinned .box-pin{top:0;right:-4px}
 .tokens{margin-top:6px}
+/* Long Settings cards fold open and closed */
+.fold-head{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer}
+.fold-head h2{margin:0}.fold-head small{display:block;margin-top:2px}
+.fold-head:focus-visible{outline:3px solid var(--mustard);outline-offset:4px;border-radius:12px}
+.fold-ic{font-size:1.4rem;line-height:1;transition:transform .2s}
+.fold.open .fold-ic{transform:rotate(180deg)}
+.fold-body{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.fold-body[hidden]{display:none}
 .tokens .chip{font-size:.8rem;padding:5px 10px}
 @media (max-width:420px){.box-preview{grid-template-columns:1fr}}
 .lid{background:#c99b6b;color:#3a2616;border-radius:12px;min-height:150px;padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden;border:2.5px solid #3E2416;box-shadow:4px 4px 0 #3E2416}
@@ -782,8 +790,9 @@ body.is-free .pro-tag{display:inline-block}
       <h2>Your signature pizza</h2>
       <div class="sig"><canvas id="sigCanvas" aria-label="Your signature pizza"></canvas><div style="display:flex;flex-direction:column;gap:8px;min-width:0"><h3 id="sigName"></h3><p class="muted" style="font-size:.9rem">This is the one that goes out when you pick "Send my signature pizza" or turn on automatic sending.</p><div><button class="btn small" id="editSig">Edit signature pizza</button></div></div></div>
     </div>
-    <div class="card">
-      <h2>Your box</h2>
+    <div class="card fold" id="boxCard">
+      <button class="fold-head" type="button" id="boxCardHead" aria-expanded="false" aria-controls="boxCardBody"><span><h2>Your box</h2><small class="muted" id="boxCardSum"></small></span><span class="fold-ic" aria-hidden="true">▾</span></button>
+      <div class="fold-body" id="boxCardBody" hidden>
       <div class="field"><label for="pName">Your name</label><input type="text" id="pName" maxlength="40"></div>
       <div class="field"><label>Logo<span class="pro-tag">Pro</span></label><div class="upload"><span class="thumb" id="logoThumb2">None</span><label class="btn small" for="logoFile2">Upload logo</label><input type="file" id="logoFile2" accept="image/*"></div></div>
       <div class="field"><label>Brand colors<span class="pro-tag">Pro</span></label><div class="upload"><input type="color" id="brand1" value="#1f4e79" aria-label="Brand color 1"><input type="color" id="brand2" value="#f1ad2d" aria-label="Brand color 2"><small class="muted">Used for your box and brand color confetti.</small></div></div>
@@ -793,10 +802,12 @@ body.is-free .pro-tag{display:inline-block}
         <div class="field"><label for="pLinkLabel">Next-step button<span class="pro-tag">Pro</span></label><input type="text" id="pLinkLabel" maxlength="30"></div>
         <div class="field"><label for="pLink">Button link</label><input type="url" id="pLink"></div>
       </div>
+      </div>
     </div>
     <div class="card">
       <h2>Dietary needs</h2>
-      <p class="muted">You can mark a contact as vegan as a reminder. Vegan is never turned on for you. You choose it yourself on the Dough step, and Slice of Thanks shows a heads-up when the person you're sending to is marked vegan. In the sample calendar, Priya Shah is marked vegan.</p>
+      <label class="check"><input type="checkbox" id="veganDefault"> Make every new pizza vegan</label>
+      <p class="muted" id="veganDefaultHelp">When this is on, every new pizza starts vegan: vegan dough, vegan cheese, and plant versions of the meats. Turn vegan off for one pizza on the Dough step any time. People you mark as vegan always show a heads-up.</p>
     </div>
     <div class="card" id="adminCard" hidden>
       <h2>Admin</h2>
@@ -985,7 +996,7 @@ function refreshPlan(init){document.body.classList.toggle('is-free',!isPro());$(
  const vis=init?null:Object.keys(views).find(k=>!views[k].hidden);if(vis==='admin'&&!isAdmin())show('settings');else if(vis)show(vis);
  makeChips($('#viewAsChips'),[['free','Free member'],['pro','Pro member'],['admin','Admin']],()=>viewAs,v=>{viewAs=v;store.set('viewAs',v);refreshPlan();toast({free:'Viewing as a Free member.',pro:'Viewing as a Pro member.',admin:'Viewing as the admin. Only you would see the Admin section.'}[v])})}
 function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,3400)}
-function newPizza(){return{size:.58,seed:Math.random()*9+1,sauce:null,cheese:null,sauceDabs:[],cheeseDabs:[],tosses:0,_said:{},vegan:false,toppings:[],name:'',bake:0,baked:false}}
+function newPizza(){return{size:.58,seed:Math.random()*9+1,sauce:null,cheese:null,sauceDabs:[],cheeseDabs:[],tosses:0,_said:{},vegan:!!settings.veganDefault,toppings:[],name:'',bake:0,baked:false}}
 function labelText(p){if(p.sign&&p.sign.text)return p.sign.text;const ls=p.toppings.filter(t=>t.k==='label');if(!ls.length)return'';const g=ls[0].g;return ls.filter(t=>t.g===g).map(t=>t.label).join(' ')}
 function clonePizza(p){const c=JSON.parse(JSON.stringify(p));c._slap=0;c._sauceAt=0;c._signAt=0;c._baking=false;c.toppings=c.toppings.map(t=>{delete t.born;return t});return c}
 function defaultSignature(){
@@ -1344,11 +1355,13 @@ $('#clearTops').onclick=()=>{pizza.toppings=[];updateCount();kick()};
 let msgStyle='pep';
 function renderMsg2(){makeChips($('#msgStyle'),[['pep','One letter per pepperoni'],['shape','Letters made of toppings']],()=>msgStyle,v=>{msgStyle=v;renderMsg2()});
  $('#labelText').maxLength=msgStyle==='pep'?24:12;fillQuick($('#quickLabel'),box&&box.to,msgStyle==='pep'?24:12);
+ {const cur=pizza.sign&&pizza.sign.text||'',q=$('#quickLabel');if(cur){if(!$('#labelText').value)$('#labelText').value=cur;if([...q.options].some(o=>o.value===cur))q.value=cur}}
  $('#msgHelp').textContent=msgStyle==='pep'?'Each letter gets its own pepperoni, and words stay together on a line. Short messages look best.'+(pizza.vegan?' Your pizza is vegan, so these are plant-based pepperoni.':''):
   'Letters are built out of '+topName(selTop).toLowerCase()+', the topping picked above. Up to 12 characters.'}
 function addMessage(v){v=v.trim();if(!v)return;if(/potato/i.test(v))setTimeout(()=>awardEgg('spell'),900);if(msgStyle==='pep')addLabels(v);else spell(v.slice(0,12))}
-$('#addLabel').onclick=()=>{const v=$('#labelText').value.trim();if(!v){$('#labelText').focus();return}addMessage(v);$('#labelText').value=''};
-$('#removeSign').onclick=()=>{pizza.sign=null;pizza.toppings=pizza.toppings.filter(t=>t.k!=='label');kick();gSay('Message removed. The pizza speaks for itself.')};
+$('#addLabel').onclick=()=>{const v=$('#labelText').value.trim();if(!v){$('#labelText').focus();return}addMessage(v);const q=$('#quickLabel');q.value=[...q.options].some(o=>o.value===v)?v:''};
+$('#labelText').addEventListener('input',e=>{const q=$('#quickLabel');if(q.value&&q.value!==e.target.value.trim())q.value=''});
+$('#removeSign').onclick=()=>{$('#labelText').value='';$('#quickLabel').value='';pizza.sign=null;pizza.toppings=pizza.toppings.filter(t=>t.k!=='label');kick();gSay('Message removed. The pizza speaks for itself.')};
 $('#labelText').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#addLabel').click()}});
 
 let down=false,last=null;
@@ -1537,7 +1550,12 @@ $('#ovClose').onclick=closeOv;document.addEventListener('keydown',e=>{if(e.key==
 
 /* ---------- settings ---------- */
 function saveProfile(){store.set('profile',profile)}
-function renderSettings(){tokenChips();
+function renderBoxCard(){const open=store.get('boxCardOpen',false);$('#boxCard').classList.toggle('open',open);$('#boxCardBody').hidden=!open;$('#boxCardHead').setAttribute('aria-expanded',String(open));
+ $('#boxCardSum').textContent=open?'':[profile.name,profile.business].filter(Boolean).join(' · ')||'Your name, logo, business and default note'}
+$('#boxCardHead').onclick=()=>{store.set('boxCardOpen',!store.get('boxCardOpen',false));renderBoxCard()};
+$('#veganDefault').addEventListener('change',e=>{settings.veganDefault=e.target.checked;store.set('settings',settings);if(step<=1&&!pizza.toppings.length&&pizza.vegan!==settings.veganDefault){pizza.vegan=settings.veganDefault;pizza.cheese=swapCheese(cheeseKey(pizza),pizza.vegan);(pizza.cheeseDabs||[]).forEach(d=>d.k=swapCheese(d.k,pizza.vegan))}
+ toast(settings.veganDefault?'Every new pizza starts vegan now.':'New pizzas are no longer vegan by default.')});
+function renderSettings(){tokenChips();renderBoxCard();$('#veganDefault').checked=!!settings.veganDefault;
  $('#mode-'+settings.mode).checked=true;$('#extOnly').checked=settings.extOnly;
  drawPizza($('#sigCanvas'),signature,96);$('#sigName').textContent=signature.name||'Your signature pizza';
  $('#pName').value=profile.name;$('#pBiz').value=profile.business;$('#pNote').value=profile.note;$('#pLinkLabel').value=profile.linkLabel;$('#pLink').value=profile.link;renderThumbs();
@@ -1606,7 +1624,7 @@ function toggleHire(open){const w=$('#kxHireWrap');if(open===undefined)open=w.hi
 $('#kxHireBtn').onclick=()=>toggleHire();
 $('#homeNew').onclick=()=>{toggleHire(false);startFresh(null)};
 $('#homeHire').onclick=()=>{startFresh(null);toggleHire(true);setTimeout(()=>{const c=$('#kxHireWrap');if(c.scrollIntoView)c.scrollIntoView({behavior:'smooth',block:'start'})},50)};
-function syncHireVegan(){const m=meetings.find(x=>x.id===$('#hireFor').value);$('#hireVegan').checked=false;$('#hireVeganNote').textContent=m&&m.vegan?' ('+first(m.who)+' is marked vegan)':''}
+function syncHireVegan(){const m=meetings.find(x=>x.id===$('#hireFor').value);$('#hireVegan').checked=!!settings.veganDefault;$('#hireVeganNote').textContent=m&&m.vegan?' ('+first(m.who)+' is marked vegan)':''}
 $('#hireFor').addEventListener('change',syncHireVegan);
 function placeLabels(p,text){text=(text||'').trim().slice(0,30);if(!text)return 0;p.toppings=p.toppings.filter(t=>t.k!=='label');p.sign={text};return 1;const parts=[];
  const perRow=parts.length<=4?Math.min(parts.length,2):3,rows=Math.ceil(parts.length/perRow);
@@ -1665,8 +1683,8 @@ $('#bulkBack').onclick=()=>show('people');
 $('#feedMore').onclick=()=>show('news');$('#newsBack').onclick=()=>show('gerald');
 function merge(t,r){return fillNote(t,r)}
 function bulkBox(r){return{style:bulk.style,sticker:bulk.sticker,confetti:bulk.confetti,tone:'playful',note:merge(bulk.note,r),sign:bulk.sign,to:r.name,contact:r.contact,meeting:bulk.sticker,linkLabel:profile.linkLabel,link:profile.link,method:'email',reward:Object.assign({text:'',code:'',link:'',exp:''},profile.reward||{})}}
-function bulkPizza(r){if(bulk.mode==='signature'){const p=clonePizza(signature);if(r.vegan){veganize(p)}return p}
- return geraldPizza(['classic','fancy','fun'][Math.abs(r.name.length)%3],first(r.name),r.vegan)}
+function bulkPizza(r){const vg=r.vegan||!!settings.veganDefault;if(bulk.mode==='signature'){const p=clonePizza(signature);if(vg){veganize(p)}return p}
+ return geraldPizza(['classic','fancy','fun'][Math.abs(r.name.length)%3],first(r.name),vg)}
 function renderBulk(){tokenChips();
  if(!bulk.sign)bulk.sign=profile.sign;
  const good=bulk.rows.filter(r=>r.ok),bad=bulk.rows.length-good.length,veg=good.filter(r=>r.vegan).length;
@@ -1728,7 +1746,8 @@ function fillQuick(sel,name,maxLen){maxLen=maxLen||24;sel.innerHTML='';const o0=
  groups.forEach(([g,items])=>{const ok=items.filter(t=>t.length<=maxLen);if(!ok.length)return;const og=document.createElement('optgroup');og.label=g;
   ok.forEach(t=>{const o=document.createElement('option');o.value=t;o.textContent=t;og.appendChild(o)});sel.appendChild(og)})}
 fillQuick($('#quickLabel'));
-$('#quickLabel').addEventListener('change',e=>{const v=e.target.value;if(v){addMessage(v);e.target.value=''}});
+/* The picked message stays showing in the dropdown and in the box below, where it can be edited and added again */
+$('#quickLabel').addEventListener('change',e=>{const v=e.target.value;if(v){addMessage(v);$('#labelText').value=v}});
 $('#stickerSel').addEventListener('change',e=>{box.sticker=e.target.value;renderBoxPreview()});
 $('#bulkStickerSel').addEventListener('change',e=>{bulk.sticker=e.target.value;renderBulkBox()});
 
@@ -1791,7 +1810,7 @@ function cFrame(){cRaf=0;const c=cfx.getContext('2d'),W=innerWidth,H=innerHeight
  if(cparts.length)cRaf=requestAnimationFrame(cFrame)}
 
 /* ---------- people (mini CRM) ---------- */
-let contacts=[],selContact=null,qs={vegan:false,mode:'gerald',sticker:'Following Up',confetti:'classic',topic:'',note:'',built:null};
+let contacts=[],selContact=null,qs={vegan:!!settings.veganDefault,mode:'gerald',sticker:'Following Up',confetti:'classic',topic:'',note:'',built:null};
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function findContact(n){n=(n||'').trim().toLowerCase();return contacts.find(c=>c.name.toLowerCase()===n)}
 function addContact(o){const c={id:'c'+Math.random().toString(36).slice(2,8),name:o.name,company:o.company||'',contact:o.contact||'',vegan:!!o.vegan,notes:'',history:[]};contacts.push(c);return c}
@@ -1814,7 +1833,7 @@ function logSend(person,p,b,label){bumpSend();if(!person.who||!person.who.trim()
 })();
 function hintFor(c){const l=c.history[0];if(!l)return'No pizzas yet. Send a first one to start the conversation.';
  return l.opened?'They opened your last pizza. Good time for a follow-up pizza.':'Your last pizza has not been opened yet. A second pizza by text can give them a nudge.'}
-function resetQs(c){qs={vegan:false,mode:c&&c.history.length?'same':'gerald',sticker:'Following Up',confetti:'classic',topic:'',
+function resetQs(c){qs={vegan:!!settings.veganDefault,mode:c&&c.history.length?'same':'gerald',sticker:'Following Up',confetti:'classic',topic:'',
  note:c?'Hi '+first(c.name)+', following up on our conversation. One more slice of thanks from me.':'',built:null}}
 function renderPeople(){
  const q=$('#peopleSearch').value.trim().toLowerCase(),ul=$('#peopleList');ul.innerHTML='';
@@ -2103,7 +2122,7 @@ function premadePizza(pm){const p=newPizza();p.size=.92;p.tosses=TOSSES;p.vegan=
  pm.cheese.forEach(([k,n])=>{for(let i=0;i<n;i++){const a=rr()*6.283,d=Math.sqrt(rr())*.78;p.cheeseDabs.push({x:Math.cos(a)*d,y:Math.sin(a)*d,k,s:rr()*9,r:.6+rr()*.5})}});
  p.cheese=pm.cheese[0]?pm.cheese[0][0]:null;
  pm.tops.forEach(([k,n])=>{for(let i=0;i<n;i++){const a=rr()*6.283,d=.1+Math.sqrt(rr())*.66;p.toppings.push({k,x:Math.cos(a)*d,y:Math.sin(a)*d,rot:rr()*6.283})}});
- p.name=pm.name;return p}
+ p.name=pm.name;if(settings.veganDefault&&!pm.vegan)veganize(p);return p}
 function renderPremades(){const g=$('#premades');if(g.childElementCount&&g.dataset.plan===String(isPro()))return;g.innerHTML='';g.dataset.plan=String(isPro());
  PREMADES.forEach(pm=>{const b=document.createElement('button');b.type='button';b.className='pm';const lockPm=!isPro()&&!FREE_PREMADES.includes(pm.id);const c=document.createElement('canvas');c.width=64;c.height=64;c.setAttribute('aria-hidden','true');
   const t=document.createElement('span');t.innerHTML='<b>'+esc(pm.name)+'</b>'+esc(pm.desc);b.append(c,t);b.onclick=()=>usePremade(pm);if(lockPm){b.classList.add('locked');const pt=document.createElement('span');pt.className='pro';pt.textContent='Pro';t.appendChild(pt);b.setAttribute('aria-label',pm.name+', Pro');b.onclick=()=>upgrade('premade')}g.appendChild(b);drawPizza(c,premadePizza(pm),56)})}

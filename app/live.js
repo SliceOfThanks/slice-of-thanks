@@ -31,11 +31,18 @@ meetings = [];
 contacts.length = 0;
 ['name', 'business', 'link', 'note', 'sign'].forEach(k => { if (!store.get('profile', null)) profile[k] = ''; });
 profile.linkLabel = profile.linkLabel || 'Book a follow-up';
+$('#veganDefault').addEventListener('change', e => { if (LIVE.TOKEN) LIVE.call('/profile', { profile: { prefs: { vegan_default: e.target.checked } } }); });
 (function hideProtoBits() {
   const rg = $('#resetGuest'); if (rg) { const c = rg.closest('.card'); if (c) c.hidden = true; }
   const ac = $('#adminCard'); if (ac) ac.hidden = true;
   SOTR.querySelectorAll('.signboard .tag').forEach(t => { t.hidden = true; });
-  SOTR.querySelectorAll('p.muted').forEach(p => { if (p.textContent.indexOf('The link is a sample') === 0) p.hidden = true; });
+  SOTR.querySelectorAll('p.muted').forEach(p => {
+    if (p.textContent.indexOf('The link is a sample') === 0) p.hidden = true;
+    if (p.textContent.indexOf('The prototype uses a sample calendar') === 0) {
+      p.textContent = 'Calendly and TidyCal connections arrive in the next update. Your meetings will show on Home, and you choose which ones get a pizza.';
+      const row = p.nextElementSibling; if (row && row.classList.contains('btn-row')) row.hidden = true;
+    }
+  });
 })();
 
 /* --- Real sign in only: the prototype's demo sign in goes to the BD login page --- */
@@ -151,6 +158,8 @@ function applySession(s) {
   /* Gerald's intro shows once per member, on every device: the account remembers it */
   const prefs = s.prefs || {};
   if (prefs.met_gerald) store.set('metGerald', true);
+  /* Vegan by default lives on the account, so it follows the member to every device */
+  if (typeof prefs.vegan_default === 'boolean' && prefs.vegan_default !== !!settings.veganDefault) { settings.veganDefault = prefs.vegan_default; store.set('settings', settings); if (!pizza.toppings.length) { pizza.vegan = settings.veganDefault; pizza.cheese = swapCheese(cheeseKey(pizza), pizza.vegan); } }
   else if (store.get('metGerald', false)) LIVE.call('/profile', { profile: { prefs: { met_gerald: true } } });
   refreshPlan(true);
 }
@@ -722,10 +731,16 @@ function renderPresetPicker() {
       const pr = presets.find(x => x.id === e.target.value); if (!pr) return;
       applyPreset(pr); toast('Loaded "' + pr.name + '".'); e.target.value = '';
     });
-    row.querySelector('#presetSave').onclick = () => {
+    const saveNew = () => {
       if (presets.length >= presetLimit) { presetFull(); return; }
       askPresetName('Save these box choices', '', async name => { if (await savePreset(null, name, presetData(box))) toast('Saved "' + name + '". Load it any time from the top of this step.'); });
     };
+    row.querySelector('#presetSave').onclick = saveNew;
+    /* The same button at the bottom of the step, where people finish setting up the box */
+    const bottom = document.createElement('div'); bottom.className = 'btn-row'; bottom.id = 'presetSaveRow';
+    bottom.innerHTML = '<button class="btn small" type="button" id="presetSave2">Save these box choices as a preset</button>';
+    bottom.querySelector('button').onclick = saveNew;
+    panel.appendChild(bottom);
     const ban = document.createElement('div'); ban.id = 'presetBanner'; ban.className = 'card'; ban.hidden = true;
     ban.innerHTML = '<p class="eyebrow">Editing a preset</p><h3 id="presetBannerName"></h3><p class="muted" style="font-size:.9rem">Set the box the way you want it, then save. Your pizza and recipient are not part of a preset.</p>' +
       '<div class="btn-row"><button class="btn primary small" type="button" id="presetDone">Save preset</button><button class="btn ghost small" type="button" id="presetCancel">Cancel</button></div>';
@@ -741,6 +756,7 @@ function renderPresetPicker() {
   presets.forEach(pr => { const o = document.createElement('option'); o.value = pr.id; o.textContent = pr.name; sel.appendChild(o); });
   sel.disabled = !presets.length;
   row.hidden = !account || !!editingPreset;
+  $('#presetSaveRow').hidden = !account || !!editingPreset;
   $('#presetBanner').hidden = !editingPreset;
   if (editingPreset) $('#presetBannerName').textContent = editingPreset.name;
 }

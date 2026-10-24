@@ -53,6 +53,12 @@
       "commit": "c41cc0c7e31e75bdce7319268ba8a31abe63b99e",
       "date": "2026-10-24",
       "notes": "Login returns to the Kitchen. SOT-App 1.2.0 reports sign in problems."
+    },
+    {
+      "version": "v0.4.3",
+      "commit": "3fd4ca0d52b9961c3134a8fc8c8d2d34f9d56142",
+      "date": "2026-10-24",
+      "notes": "Softer dark mode text. What's new shows the five newest, with a page for all. BD API uses sliceofthanks.app."
     }
   ]
 }

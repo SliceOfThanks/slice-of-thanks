@@ -1,6 +1,6 @@
 # Build status (read this first in a new session)
 
-Last updated: 2026-10-24. Live code version: v0.4.2 (see releases.json and app_settings.code_version).
+Last updated: 2026-10-24. Live code version: v0.4.3 (see releases.json and app_settings.code_version).
 
 ## Done and live
 - Supabase project cmnclubiarmthibqibuj. Edge Function `api` (api-0.4.0, verify_jwt false, own auth). Tables have RLS with no policies.
@@ -15,6 +15,9 @@ Last updated: 2026-10-24. Live code version: v0.4.2 (see releases.json and app_s
 - v0.4.1: the prototype demo sign in is gone; "I already have an account" goes to /login.
 - First ChatGPT test (v0.4.0) was not signed in to BD, so it proved only that the Special Delivery link opens the BD product page. Needs a real signed-in test.
 - Sign in was never working: SOT-Auth line 12 still had no valid secret (SOT-App 1.2.0 report: secret_not_set), so every member looked logged out and the members table stayed empty. Fix: a new shared secret goes in SOT-Auth line 12 and in Supabase BD_SHARED_SECRET (same value). To diagnose sign in again, read function logs for auth_why (sent by SOT-App 1.2.0 with /bootstrap).
+- Sign in fixed 2026-10-24 (Stacey set a letters-and-numbers secret; symbols like quotes break SOT-Auth line 12). Never put secrets in chat; Stacey generates them.
+- BD API must be called on sliceofthanks.app (www redirects and the POST becomes a GET, 405). api-0.4.2.
+- Dark mode text softened to #E3D0B8 / muted #BBA088 (prototype and unbox.css). Crew What's new shows 5; See all updates opens view-news.
 - Test purchases are made as manual BD invoices marked Paid in BD admin (free). Never ask Stacey to pay real money for tests.
 - Test members: the Whole Pie one has a paid Special Delivery invoice; the A Slice one has a 100 Email Pack invoice that was refunded before any sync (should never be credited).
 - Not verified against a real BD invoice yet. When the first test purchase is made, check purchases and credit_ledger. If BD names the invoice line differently, add a match to app_settings bd_products (both envs).

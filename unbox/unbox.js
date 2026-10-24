@@ -17,7 +17,7 @@
 
   var T = {
     en: {
-      sent: function (s) { return s + ' sent you a pizza'; }, open: 'Open the box', see: 'See your pizza', tap: 'Tap a slice to eat it.',
+      sent: function (s) { return s + ' sent you a pizza'; }, from: 'from', open: 'Open the box', see: 'See your pizza', tap: 'Tap a slice to eat it.',
       togo: function (n) { return n + ' to go.'; }, lines: ['Mmm.', 'Gerald is watching. He approves.', 'Halfway there.', 'Potato is drooling.', 'One more slice.'],
       tease: function (s) { return s + ' hid something under this pizza. Eat all 6 slices to find out.'; },
       gone: 'All gone.', ate: 'You ate all 6 slices. Gerald is impressed. Potato is a little jealous.',
@@ -32,7 +32,7 @@
       unsubDone: 'Done. You will not get these pizzas anymore.', test: 'TEST PIZZA'
     },
     es: {
-      sent: function (s) { return s + ' te envió una pizza'; }, open: 'Abre la caja', see: 'Mira tu pizza', tap: 'Toca una porción para comerla.',
+      sent: function (s) { return s + ' te envió una pizza'; }, from: 'de', open: 'Abre la caja', see: 'Mira tu pizza', tap: 'Toca una porción para comerla.',
       togo: function (n) { return 'Faltan ' + n + '.'; }, lines: ['Mmm.', 'Gerald te está mirando. Lo aprueba.', 'Vas a la mitad.', 'A Potato se le hace agua la boca.', 'Una porción más.'],
       tease: function (s) { return s + ' escondió algo debajo de esta pizza. Come las 6 porciones para descubrirlo.'; },
       gone: 'Se acabó.', ate: 'Te comiste las 6 porciones. Gerald está impresionado. Potato tiene un poco de envidia.',
@@ -72,6 +72,8 @@
     try { fetch(API + '/p/event', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ t: TOKEN, type: type, slice: slice }), keepalive: true }); } catch (e) { /* tracking never blocks */ }
   }
   function senderLabel(s) { return (s.send_as === 'business' && s.business) ? s.business : (s.name || s.business || 'Someone'); }
+  /* "Name from Business", the same as the Kitchen preview and the email; the business alone when sending as the business */
+  function senderHeadline(s, from) { return (s.send_as !== 'business' && s.name && s.business) ? s.name + ' ' + from + ' ' + s.business : senderLabel(s); }
 
   if (!document.getElementById('sot-fonts')) {
     var fl = document.createElement('link'); fl.id = 'sot-fonts'; fl.rel = 'stylesheet';
@@ -121,7 +123,7 @@
     var pets = 0;
     pet.addEventListener('click', function () { pets++; pet.classList.remove('hop'); void pet.offsetWidth; pet.classList.add('hop'); bark.hidden = false; setTimeout(function () { bark.hidden = true; }, 900); if (pets === 5) P.burst('potato'); });
     s1.appendChild(scoot);
-    s1.appendChild(el('p', { class: 'u-from', text: t.sent(who) }));
+    s1.appendChild(el('p', { class: 'u-from', text: t.sent(senderHeadline(sender, t.from)) }));
     var lid = el('div', { class: 'lid', 'data-style': box.style || 'kraft' }, [
       sender.logo_url ? el('div', { class: 'lid-logo' }, [el('img', { src: sender.logo_url, alt: '' })]) : null,
       el('div', { class: 'lid-biz', text: sender.business || who }),

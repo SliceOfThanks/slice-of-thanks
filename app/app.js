@@ -1226,7 +1226,7 @@ $('#upSheet').addEventListener('click',e=>{if(e.target.id==='upSheet')closeUp()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#upSheet').hidden)closeUp()});
 refreshPlan(true);
 
-/* ===== Slice of Thanks live layer v0.5.1 =====
+/* ===== Slice of Thanks live layer v0.7.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -1285,22 +1285,24 @@ renderSend = function () {
   liveSendExtras();
 };
 
-/* Country and permission fields on the Send step */
+/* Country and permission fields on the Send step, in People and on CSV lists */
+const COUNTRIES = [['US', 'United States'], ['CA', 'Canada'], ['GB', 'United Kingdom'], ['AU', 'Australia'], ['MX', 'Mexico'], ['ES', 'Spain'], ['DE', 'Germany'], ['FR', 'France'], ['IE', 'Ireland'], ['NL', 'Netherlands'], ['OTHER', 'Another country']];
+const BASIS_OPTIONS = '<option value="one_to_one">We just met and this is a one-to-one thank-you</option>' +
+  '<option value="relationship">We have a current business relationship</option>' +
+  '<option value="permission">They gave me permission to send them messages</option>';
+function countryOptions(sel, value) {
+  COUNTRIES.forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; sel.appendChild(o); });
+  sel.value = COUNTRIES.some(x => x[0] === value) ? value : 'US';
+}
 function liveSendExtras() {
   if ($('#liveCountry')) return;
   const sf = $('#sendFields'); if (!sf) return;
   const wrap = document.createElement('div'); wrap.className = 'two';
-  const countries = [['US', 'United States'], ['CA', 'Canada'], ['GB', 'United Kingdom'], ['AU', 'Australia'], ['MX', 'Mexico'], ['ES', 'Spain'], ['DE', 'Germany'], ['FR', 'France'], ['IE', 'Ireland'], ['NL', 'Netherlands'], ['OTHER', 'Another country']];
   const c = document.createElement('div'); c.className = 'field';
   c.innerHTML = '<label for="liveCountry">Their country</label><select id="liveCountry"></select>';
-  const sel = c.querySelector('select');
-  countries.forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; sel.appendChild(o); });
-  sel.value = store.get('lastCountry', 'US');
+  countryOptions(c.querySelector('select'), store.get('lastCountry', 'US'));
   const b = document.createElement('div'); b.className = 'field';
-  b.innerHTML = '<label for="liveBasis">How you know them</label><select id="liveBasis">' +
-    '<option value="one_to_one">We just met and this is a one-to-one thank-you</option>' +
-    '<option value="relationship">We have a current business relationship</option>' +
-    '<option value="permission">They gave me permission to send them messages</option></select>';
+  b.innerHTML = '<label for="liveBasis">How you know them</label><select id="liveBasis">' + BASIS_OPTIONS + '</select>';
   wrap.append(c, b);
   const lang = document.createElement('div'); lang.className = 'field';
   lang.innerHTML = '<label for="liveLang">Their language</label><select id="liveLang"><option value="en">English</option><option value="es">Español</option></select>';
@@ -1598,17 +1600,20 @@ $('#geraldOk').onclick = function () {
 };
 
 /* --- Features not switched on yet --- */
-$('#openBulk').onclick = () => { if (!isPro()) { upgrade('bulk'); return; } toast('CSV sends arrive in the next update.'); };
 
 /* --- Sending for real --- */
 function cleanPizza(p) { const c = JSON.parse(JSON.stringify(p)); Object.keys(c).forEach(k => { if (k.charAt(0) === '_') delete c[k]; }); return c; }
-function buildPayload() {
-  const rw = box.reward || {};
-  const b = { style: box.style, sticker: box.sticker, confetti: box.confetti, tone: box.tone, note: box.note, sign: box.sign, meeting: box.meeting,
-    pro_style: PRO_STYLES.includes(box.style) || PRO_CONF.includes(box.confetti) };
-  if (isPro() && box.link) { b.cta_label = box.linkLabel || 'Book a follow-up'; b.cta_url = box.link; }
+function boxPayload(bx) {
+  const rw = bx.reward || {};
+  const b = { style: bx.style, sticker: bx.sticker, confetti: bx.confetti, tone: bx.tone, note: bx.note, sign: bx.sign, meeting: bx.meeting,
+    pro_style: PRO_STYLES.includes(bx.style) || PRO_CONF.includes(bx.confetti) };
+  if (isPro() && bx.link) { b.cta_label = bx.linkLabel || 'Book a follow-up'; b.cta_url = bx.link; }
   if (isPro() && rw.code) b.gift = { text: rw.text || '', code: rw.code, url: rw.link || '', expires: rw.exp || '' };
   if (isPro() && profile.logo) b.logo_url = profile.logo;
+  return b;
+}
+function buildPayload() {
+  const b = boxPayload(box);
   let img = '';
   try { img = pizzaImage(pizza, false); } catch (e) { img = ''; }
   return {
@@ -1616,7 +1621,8 @@ function buildPayload() {
     pizza: cleanPizza(pizza), box: b,
     recipient: { name: box.to.trim(), email: box.contact.trim(), country: $('#liveCountry') ? $('#liveCountry').value.replace('OTHER', '') : '', locale: $('#liveLang') ? $('#liveLang').value : 'en' },
     consent: { basis: $('#liveBasis') ? $('#liveBasis').value : 'one_to_one', method: 'Selected in the Kitchen at send', note: box.meeting || '' },
-    send_type: 'one_to_one', special_delivery: specialOn, image_data_url: img.length < 1900000 ? img : ''
+    send_type: 'one_to_one', special_delivery: specialOn, image_data_url: img.length < 1900000 ? img : '',
+    label: box.meeting ? 'After ' + box.meeting.toLowerCase() : 'Fresh pizza'
   };
 }
 const MSG = {
@@ -1644,10 +1650,14 @@ async function liveSend() {
     logSend({ who: box.to, org: '', contact: box.contact, vegan: pizza.vegan }, pizza, box, box.meeting ? 'After ' + box.meeting.toLowerCase() : 'Fresh pizza');
     if (LIVE.session && r.bucket && LIVE.session.credits[r.bucket] !== undefined) LIVE.session.credits[r.bucket]--;
     toast(r.delivered === false && r.reason !== 'not_due' ? 'Saved. Delivery is retrying and should arrive shortly.' : 'Potato is on her way to ' + first(box.to) + '.');
-    burst('pizza'); store.set('draft', null); endSpecial(); show('today'); return;
+    burst('pizza'); store.set('draft', null); endSpecial(); show('today'); loadPeople(); return;
   }
-  if (r.code === 'needs_terms') return askTerms(liveSend);
-  if (r.code === 'needs_address') return askAddress(liveSend);
+  sendProblem(r, liveSend);
+}
+/* What to tell the member when a send is refused; retry runs the same send again after a fix */
+function sendProblem(r, retry) {
+  if (r.code === 'needs_terms') return askTerms(retry);
+  if (r.code === 'needs_address') return askAddress(retry);
   if (r.code === 'needs_upgrade') { const f = (r.features || [])[0]; upgrade({ cta_button: 'button', gift: 'reward', logo: 'logo', pro_styles: 'style', scheduling: 'general' }[f] || 'general'); return; }
   if (r.code === 'needs_permission') {
     const p = document.createElement('p'); p.className = 'muted';
@@ -1673,12 +1683,175 @@ $('#sendNow').onclick = () => {
   liveSend();
 };
 
+/* --- People on real data: everyone the member has sent a pizza to, from Supabase --- */
+function personFromServer(x) {
+  return { id: x.id, name: x.name || x.email || 'No name', company: x.company || '', contact: x.email || '', vegan: !!x.vegan, notes: x.notes || '',
+    country: x.country || '', hasConsent: !!x.has_consent,
+    history: (x.history || []).filter(h => h.pizza).map(h => ({ date: shortDate(h.status === 'queued' && h.scheduled_for ? h.scheduled_for : h.at),
+      label: h.status === 'queued' ? 'Scheduled' + (h.label ? ': ' + h.label : '') : (h.status === 'failed' ? 'Not delivered' : (h.label || 'Pizza')),
+      pizza: h.pizza, box: h.box || {}, opened: !!h.opened, status: h.status })) };
+}
+async function loadPeople() {
+  if (!account || !LIVE.TOKEN) return;
+  const r = await LIVE.call('/people').catch(() => null);
+  if (!r || !r.ok) return;
+  contacts.length = 0;
+  r.people.forEach(x => contacts.push(personFromServer(x)));
+  if (!$('#view-people').hidden) renderPeople();
+}
+hintFor = function (c) {
+  const l = c.history[0];
+  if (!l) return 'No pizzas yet. Send a first one to start the conversation.';
+  if (l.status === 'queued') return 'Your last pizza is scheduled and has not gone out yet.';
+  if (l.status === 'failed') return 'Your last pizza could not be delivered. Check their email address and try again.';
+  return l.opened ? 'They opened your last pizza. Good time for a follow-up pizza.' : 'Your last pizza has not been opened yet. Give it a few days before sending another.';
+};
+const _detailEl = detailEl;
+detailEl = function (c) {
+  const d = _detailEl(c);
+  const q = sel => d.querySelector(sel);
+  /* People added by hand have no permission on file yet: ask once, at their first pizza */
+  if (!c.hasConsent) {
+    const f = document.createElement('div'); f.className = 'two';
+    f.innerHTML = '<div class="field"><label for="qsCountry">Their country</label><select id="qsCountry"></select></div>' +
+      '<div class="field"><label for="qsBasis">How you know them</label><select id="qsBasis">' + BASIS_OPTIONS + '</select></div>';
+    countryOptions(f.querySelector('#qsCountry'), c.country || store.get('lastCountry', 'US'));
+    const row = q('#qsSend').closest('.btn-row'); row.parentNode.insertBefore(f, row);
+  }
+  q('#qsSend').onclick = () => peopleSend(c, q('#qsSend'));
+  const notes = q('#pNotes'); let t = 0;
+  notes.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => LIVE.call('/people/save', { person: { id: c.id, notes: notes.value } }), 800); });
+  return d;
+};
+async function peopleSend(c, btn) {
+  if (!c.contact || c.contact.indexOf('@') < 1) { toast('Add an email address for ' + first(c.name) + ' first.'); return; }
+  const { p, b } = qsBuild(c);
+  const consent = $('#qsBasis') ? { basis: $('#qsBasis').value, method: 'Selected in People at send' } : null;
+  const country = $('#qsCountry') ? $('#qsCountry').value.replace('OTHER', '') : c.country;
+  let img = ''; try { img = pizzaImage(p, false); } catch (e) { img = ''; }
+  const label = btn.textContent; btn.disabled = true; btn.textContent = 'Sending...';
+  let r;
+  try {
+    r = await LIVE.call('/send', { idem: 'people-' + c.id + '-' + Date.now(), source: 'people', pizza: cleanPizza(p), box: boxPayload(b),
+      recipient: { name: c.name, email: c.contact, company: c.company, vegan: c.vegan, country, locale: 'en' }, consent, send_type: 'one_to_one',
+      label: qs.topic ? 'Follow-up: ' + qs.topic : 'Follow-up pizza', image_data_url: img.length < 1900000 ? img : '' });
+  } catch (e) { r = { code: 'server_error' }; }
+  btn.disabled = false; btn.textContent = label;
+  if (r.ok && r.delivered === false && r.reason === 'provider_error') { toast('Potato could not deliver this one, and it did not use an email. Try again in a few minutes.'); return; }
+  if (r.ok) {
+    if (LIVE.session && r.bucket && LIVE.session.credits[r.bucket] !== undefined) LIVE.session.credits[r.bucket]--;
+    toast('Potato is on her way to ' + first(c.name) + '.'); burst('pizza'); resetQs(c); loadPeople(); return;
+  }
+  sendProblem(r, () => peopleSend(c, btn));
+}
+(function peopleForm() {
+  const lab = SOTR.querySelector('label[for="npContact"]'); if (lab) lab.textContent = 'Email';
+  $('#savePerson').onclick = async () => {
+    const n = $('#npName').value.trim(), em = $('#npContact').value.trim();
+    if (!n) { $('#npName').focus(); toast('Add a name first.'); return; }
+    if (em.indexOf('@') < 1) { $('#npContact').focus(); toast('Add their email address.'); return; }
+    const r = await LIVE.call('/people/save', { person: { name: n, email: em, company: $('#npCompany').value.trim(), vegan: $('#npVegan').checked } }).catch(() => null);
+    if (!r || !r.ok) { toast(r && r.code === 'bad_email' ? MSG.bad_email : MSG.server_error); return; }
+    ['#npName', '#npContact', '#npCompany'].forEach(sel => { $(sel).value = ''; }); $('#npVegan').checked = false; $('#addPerson').hidden = true;
+    await loadPeople();
+    const c = contacts.find(x => x.id === r.id); selContact = r.id; resetQs(c); renderPeople(); toast(n + ' added.');
+  };
+})();
+
+/* --- Send to a list (CSV): Pro and Team. Rows go up 50 at a time; the send worker delivers them. --- */
+(function bulkExtras() {
+  const sample = $('#sampleCsv'); if (sample) sample.hidden = true; /* sample addresses are not real inboxes */
+  const card = $('#csvFile') && $('#csvFile').closest('.card');
+  if (card) {
+    const help = card.querySelector('small.muted');
+    if (help) help.textContent = 'Columns Slice of Thanks looks for: Name, Email, Company, Country (like US or CA), Permission (one_to_one, relationship or permission) and Vegan (yes or no). Extra columns are ignored. Up to 500 people per list.';
+    const f = document.createElement('div'); f.className = 'two';
+    f.innerHTML = '<div class="field"><label for="bulkCountry">Country for rows without one</label><select id="bulkCountry"></select></div>' +
+      '<div class="field"><label for="bulkBasis">How you know them, for rows without a Permission column</label><select id="bulkBasis">' + BASIS_OPTIONS.replace('We just met and this is a one-to-one thank-you', 'We met one to one and this is a thank-you') + '</select></div>';
+    countryOptions(f.querySelector('#bulkCountry'), store.get('lastCountry', 'US'));
+    f.querySelector('#bulkBasis').value = 'relationship';
+    card.insertBefore(f, $('#listSummary'));
+  }
+  SOTR.querySelectorAll('#view-bulk small.muted').forEach(sm => { if (sm.textContent.indexOf('Prototype only') === 0) sm.textContent = 'Each pizza uses one email from your plan. Up to 500 people per list. Potato delivers them over the next few minutes.'; });
+  const d = $('#bulkDate');
+  if (d) { d.type = 'datetime-local'; const t = new Date(Date.now() + 864e5); t.setHours(9, 0, 0, 0); d.value = new Date(t.getTime() - t.getTimezoneOffset() * 6e4).toISOString().slice(0, 16); }
+  const ch = $('#copyHeader');
+  if (ch) ch.onclick = () => { const hdr = 'Name,Email,Company,Country,Permission,Vegan'; try { navigator.clipboard.writeText(hdr).then(() => toast('Column headers copied. Paste them into row 1 of your spreadsheet.'), () => toast('Headers: ' + hdr)); } catch (e) { toast('Headers: ' + hdr); } };
+})();
+function prettyWhen(v) { const d = new Date(v); return isNaN(d) ? v : d.toLocaleString('en-US', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+const _renderBulk = renderBulk;
+renderBulk = function () {
+  _renderBulk();
+  const d = $('#bulkDate'), rv = $('#bulkReview');
+  if (d && rv && d.value) rv.textContent = rv.textContent.replace(d.value, prettyWhen(d.value));
+  const ls = $('#listSummary'); if (ls) ls.textContent = ls.textContent.replace('missing an email or phone', 'missing an email');
+  SOTR.querySelectorAll('#listTable th').forEach(th => { if (th.textContent === 'Email or phone') th.textContent = 'Email'; });
+};
+const _loadList = loadList;
+loadList = function (txt) {
+  _loadList(txt);
+  const data = parseCSV(txt); if (data.length < 2) return;
+  const h = data[0].map(x => x.trim().toLowerCase());
+  const iC = h.findIndex(x => x.includes('country')), iP = h.findIndex(x => x.includes('permission') || x.includes('consent') || x === 'basis');
+  bulk.rows.forEach((r, i) => {
+    const row = data[i + 1] || [];
+    r.country = iC >= 0 ? (row[iC] || '').trim().toUpperCase().slice(0, 2) : '';
+    const pv = iP >= 0 ? (row[iP] || '').trim().toLowerCase().split(' ').join('_').split('-').join('_') : '';
+    r.basis = ['one_to_one', 'relationship', 'permission'].includes(pv) ? pv : '';
+    r.ok = !!r.name && r.contact.indexOf('@') > 0 && r.contact.indexOf('.', r.contact.indexOf('@')) > 0;
+  });
+  if (bulk.rows.length > 500) { bulk.rows = bulk.rows.slice(0, 500); toast('Lists can have up to 500 people. The first 500 were loaded.'); }
+  renderBulk();
+};
+$('#openBulk').onclick = () => { if (!isPro()) { upgrade('bulk'); return; } show('bulk'); };
+$('#bulkSend').onclick = async () => {
+  const good = bulk.rows.filter(r => r.ok); if (!good.length || bulk.sending) return;
+  let when = null;
+  if (bulk.when === 'later') {
+    const v = $('#bulkDate').value, d = v ? new Date(v) : null;
+    if (!d || isNaN(d) || d.getTime() < Date.now() + 60000) { toast('Pick a date and time in the future.'); return; }
+    when = d.toISOString();
+  }
+  bulk.sending = true; $('#bulkSend').disabled = true; $('#bulkProgress').hidden = false; $('#bulkResult').hidden = true; $('#bulkBar').style.width = '4%';
+  const batch = 'b' + Date.now().toString(36);
+  const country = $('#bulkCountry').value.replace('OTHER', ''), basis = $('#bulkBasis').value;
+  store.set('lastCountry', $('#bulkCountry').value);
+  /* One picture for a signature pizza list. Vegan rows and Gerald's one-off pizzas go without a picture in the email. */
+  let img = '';
+  if (bulk.mode === 'signature') { try { img = pizzaImage(clonePizza(signature), false); } catch (e) { img = ''; } }
+  const tally = { ok: 0 }; let stop = '';
+  for (let i = 0; i < good.length && !stop; i += 50) {
+    const rows = good.slice(i, i + 50).map((r, k) => ({ i: i + k, pizza: cleanPizza(bulkPizza(r)), box: boxPayload(bulkBox(r)),
+      recipient: { name: r.name, email: r.contact, company: r.company, vegan: r.vegan, country: r.country || country, locale: 'en' },
+      consent: { basis: r.basis || basis, method: 'CSV list upload' }, send_type: 'one_to_one', image: !!img && !r.vegan }));
+    let res;
+    try { res = await LIVE.call('/send/bulk', { batch, rows, scheduled_for: when, label: bulk.sticker + ' list', image_data_url: img.length < 1900000 ? img : '' }); } catch (e) { res = { code: 'server_error' }; }
+    if (!res || !res.ok) { stop = (res && res.code) || 'server_error'; break; }
+    res.results.forEach(x => { if (x.ok) tally.ok++; else tally[x.code] = (tally[x.code] || 0) + 1; });
+    if (res.results.some(x => x.code === 'needs_terms')) stop = 'needs_terms';
+    $('#bulkBar').style.width = Math.min(100, (i + 50) / good.length * 100) + '%';
+  }
+  bulk.sending = false; $('#bulkSend').disabled = false;
+  const why = { no_credits: 'out of emails', needs_permission: 'need a different permission for their country', suppressed: 'asked not to get pizzas', bad_email: 'email does not look right', needs_upgrade: 'needs a Pro feature', test_inbox_only: 'not a test inbox', server_error: 'error on our side' };
+  const skipped = Object.keys(tally).filter(k => k !== 'ok').map(k => tally[k] + ' ' + (why[k] || k)).join(', ');
+  $('#bulkResult').hidden = false;
+  $('#bulkResult').textContent = (when ? 'Scheduled ' : 'Sent ') + tally.ok + ' pizza' + (tally.ok === 1 ? '' : 's') +
+    (when ? ' for ' + prettyWhen(when) : '. Potato delivers them over the next few minutes') + '.' + (skipped ? ' Skipped: ' + skipped + '.' : '');
+  if (stop === 'needs_terms') askTerms(() => {}); else if (stop === 'needs_upgrade') upgrade('bulk'); else if (stop) toast(MSG[stop] || MSG.server_error);
+  if (tally.ok) {
+    burst('pizza'); toast(when ? 'Your list is scheduled.' : 'Your pizzas are in the oven.');
+    const s = await LIVE.call('/session').catch(() => null); if (s && s.credits && LIVE.session) { LIVE.session.credits = s.credits; renderPlanCard(); }
+    loadPeople();
+  }
+};
+
 /* --- Start: sign in with the BD pass, restore a guest draft --- */
 (async function liveStart() {
   if (!LIVE.TOKEN) { account = null; refreshPlan(true); return; }
   const s = await LIVE.call('/session');
   if (!s || !s.member_id) { account = null; refreshPlan(true); return; }
   applySession(s);
+  loadPeople();
   if (s.needs_terms) setTimeout(() => askTerms(() => {}), 600);
   const d = store.get('draft', null);
   if (d && d.pizza && Date.now() - (d.at || 0) < 7 * 864e5) {

@@ -1,10 +1,11 @@
-<!-- SOT-Login: Slice of Thanks look for the BD /login page. Version 1.6.0
+<!-- SOT-Login: Slice of Thanks look for the BD /login page. Version 1.6.1
      Place it in the /login page content ABOVE the BD Member Login Page widget.
      BD still does the login, reCAPTCHA, password reset and redirect. This widget only styles it,
      moves BD's form into the Slice of Thanks card, and adds the links around it. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Yellowtail&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
+/* Sizes are in px because BD sets the page root font size to 10px, which shrinks rem sizes */
 :root{--sot-bg:#FFF3E0;--sot-surface:#FFFAF2;--sot-ink:#3E2416;--sot-muted:#7A5641;--sot-line:#EBCFA8;--sot-edge:#3E2416;
   --sot-tomato:#D62828;--sot-tomato-ink:#FFF3E0;--sot-tomato-text:#C21F1F;--sot-mustard:#F5C04E;--sot-field:#FFFFFF}
 @media (prefers-color-scheme: dark){:root{--sot-bg:#24160F;--sot-surface:#3E2416;--sot-ink:#E3D0B8;--sot-muted:#BBA088;--sot-line:#634433;
@@ -14,21 +15,21 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 .sot-login{max-width:460px;margin:0 auto;padding:28px 0 56px;display:flex;flex-direction:column;gap:18px}
 .sot-login-head{background:var(--sot-tomato);color:var(--sot-tomato-ink);border:3px solid var(--sot-edge);border-radius:24px;
   box-shadow:6px 6px 0 var(--sot-edge);padding:18px 22px 16px;text-decoration:none;display:block}
-.sot-login-head .sot-slice{font:400 1.6rem "Yellowtail",cursive;color:var(--sot-mustard);display:block;line-height:1}
-.sot-login-head .sot-thanks{font:400 2.4rem "Shrikhand",Georgia,serif;display:block;line-height:1.05;text-shadow:3px 3px 0 var(--sot-edge)}
-.sot-login-head .sot-tag{font-weight:600;font-size:.95rem;display:block;margin-top:6px}
+.sot-login-head .sot-slice{font:400 26px "Yellowtail",cursive;color:var(--sot-mustard);display:block;line-height:1}
+.sot-login-head .sot-thanks{font:400 38px "Shrikhand",Georgia,serif;display:block;line-height:1.05;text-shadow:3px 3px 0 var(--sot-edge)}
+.sot-login-head .sot-tag{font-weight:600;font-size:15px;display:block;margin-top:6px}
 .sot-login-card{background:var(--sot-surface);border:3px solid var(--sot-edge);border-radius:22px;box-shadow:6px 6px 0 var(--sot-edge);padding:22px}
-.sot-login-card h1,.sot-login-card h2,.sot-login-card h3{font:400 1.7rem "Shrikhand",Georgia,serif;margin:0 0 14px;color:var(--sot-ink)}
+.sot-login-card h1,.sot-login-card h2,.sot-login-card h3{font:400 27px "Shrikhand",Georgia,serif;margin:0 0 14px;color:var(--sot-ink)}
 .sot-login-card hr{display:none}
 .sot-login-card label{display:block;font-weight:700;margin:14px 0 6px;color:var(--sot-ink)}
 .sot-login-card .text-danger,.sot-login-card .required,.sot-login-card label span{color:var(--sot-tomato-text)}
 .sot-login-card input[type=text],.sot-login-card input[type=email],.sot-login-card input[type=password]{display:block;width:100%;box-sizing:border-box;
-  font:500 1rem "Work Sans",system-ui,sans-serif;color:var(--sot-ink);background:var(--sot-field);border:3px solid var(--sot-edge);border-radius:14px;padding:12px 14px;margin:0}
+  font:500 16px "Work Sans",system-ui,sans-serif;color:var(--sot-ink);background:var(--sot-field);border:3px solid var(--sot-edge);border-radius:14px;padding:12px 14px;margin:0}
 .sot-login-card input::placeholder{color:var(--sot-muted)}
 .sot-login-card input:focus{outline:3px solid var(--sot-mustard);outline-offset:2px}
 /* Only the main action gets the big button; BD's small helper buttons (like the password lock) stay small */
 .sot-login-card input[type=submit],.sot-login-card button[type=submit],.sot-login-card a.btn{display:block;width:100%;box-sizing:border-box;margin:18px 0 0;cursor:pointer;
-  font:700 1.05rem "Work Sans",system-ui,sans-serif;color:var(--sot-tomato-ink);background:var(--sot-tomato);border:3px solid var(--sot-edge);border-radius:999px;
+  font:700 17px "Work Sans",system-ui,sans-serif;color:var(--sot-tomato-ink);background:var(--sot-tomato);border:3px solid var(--sot-edge);border-radius:999px;
   padding:13px 20px;box-shadow:4px 4px 0 var(--sot-edge);text-align:center;text-decoration:none}
 #sot-login-slot button:not([type=submit]){display:inline-block;width:auto;margin:0;padding:2px 6px;background:transparent;border:0;box-shadow:none;color:var(--sot-muted);cursor:pointer}
 .sot-login-card button[type=submit]:active,.sot-login-card input[type=submit]:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--sot-edge)}
@@ -41,7 +42,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 .sot-login-card .alert{border:2px solid var(--sot-edge);border-radius:14px;padding:10px 14px;margin:0 0 12px;background:var(--sot-line);color:var(--sot-ink)}
 .sot-login-card .g-recaptcha{margin-top:16px}
 /* BD's field notes, such as Required Field */
-.sot-login-card .help-block,.sot-login-card .error,.sot-login-card .text-muted{display:block;font-size:.88rem;margin-top:6px;color:var(--sot-tomato-text)}
+.sot-login-card .help-block,.sot-login-card .error,.sot-login-card .text-muted{display:block;font-size:14px;margin-top:6px;color:var(--sot-tomato-text)}
 /* BD's login CSS sets the container colors with !important on a strong selector; the id here outranks it */
 #sot-login-slot .module,#sot-login-slot .row,#sot-login-slot .fpad-lg,#sot-login-slot .member-login-container,#sot-login-slot form,#sot-login-slot .form-group,#sot-login-slot fieldset{
   width:auto!important;max-width:none!important;margin-left:0!important;margin-right:0!important;padding:0!important;
@@ -63,7 +64,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 </div>
 <script>
 (function () {
-  var VERSION = '1.6.0';
+  var VERSION = '1.6.1';
   var NL = String.fromCharCode(10);
   var tries = 0;
   function cookieNames() {

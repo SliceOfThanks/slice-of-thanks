@@ -9,7 +9,7 @@ import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
 import { pickProvider } from "./lib/mail/index.ts";
 
-const VERSION = "api-0.6.2";
+const VERSION = "api-0.7.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@01ed0f0dd9a2749c966019b9d93740b7c228959c/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -79,7 +79,7 @@ async function deliver(sendId: string, pizzaImageUrl?: string) {
     link: `${SITE}/p?t=${encodeURIComponent(token)}`,
     unsubscribeSender: `${SITE}/unsubscribe?t=${encodeURIComponent(token)}&s=sender`,
     unsubscribeAll: `${SITE}/unsubscribe?t=${encodeURIComponent(token)}&s=global`,
-    pizzaImageUrl: pizzaImageUrl ?? snap.image_url ?? undefined, potatoImageUrl: `${ASSETS}/characters/potato-delivery-side.png`,
+    pizzaImageUrl: pizzaImageUrl ?? snap.image_url ?? undefined, potatoImageUrl: `${ASSETS}/characters/potato-delivery-side-email.png`,
   });
   const fromName = (snap.sender?.send_as === "business" && snap.sender?.business) ? snap.sender.business : (snap.sender?.name || "Slice of Thanks");
   // Which service sends is a setting (app_settings email_provider); everything above is ours
@@ -98,6 +98,27 @@ async function deliver(sendId: string, pizzaImageUrl?: string) {
   }
   await rpc("sot_mark_sent_via", { p_send: sendId, p_provider_id: r.messageId, p_provider: provider.key });
   return { delivered: true };
+}
+
+// One send from a member: the Kitchen, the People tab, or a row of a CSV list
+async function createSend(memberId: string, envName: string, body: any, source: string, idem: string) {
+  const sendId = crypto.randomUUID();
+  const token = await recipientToken(env("LINK_SECRET"), sendId);
+  const payload = {
+    pizza: body.pizza ?? {}, box: body.box ?? {}, recipient: body.recipient ?? {}, consent: body.consent ?? null,
+    send_type: body.send_type, special_delivery: !!body.special_delivery, scheduled_for: body.scheduled_for ?? null,
+    is_test: !!body.is_test, source, label: typeof body.label === "string" ? body.label.slice(0, 120) : null,
+  };
+  const r = await rpc<Record<string, any>>("sot_create_send", {
+    p_member: memberId, p_env: envName, p_send_id: sendId, p_token_hash: await tokenHash(token), p_idem: `${memberId}:${idem.slice(0, 140)}`, p: payload,
+  });
+  return { sendId, r };
+}
+
+async function uploadPizza(dataUrl: unknown, title: string): Promise<string | undefined> {
+  const blob = dataUrl ? dataUrlToBlob(String(dataUrl), 1_500_000) : null;
+  if (!blob) return undefined;
+  try { return await publitioUpload({ key: env("PUBLITIO_API_KEY"), secret: env("PUBLITIO_API_SECRET"), blob, folder: "slice-of-thanks", title }); } catch { return undefined; }
 }
 
 async function route(req: Request, path: string): Promise<Response> {
@@ -144,7 +165,7 @@ async function route(req: Request, path: string): Promise<Response> {
     const stuck = await rpc<number>("sot_recover_stuck", {});
     const started = Date.now();
     let delivered = 0, failed = 0;
-    for (const id of (await rpc<string[]>("sot_due_sends", { p_limit: 25 })) ?? []) {
+    for (const id of (await rpc<string[]>("sot_due_sends", { p_limit: 50 })) ?? []) {
       if (Date.now() - started > 40_000) break; // the rest go next minute
       try {
         const d = await deliver(id);
@@ -200,30 +221,42 @@ async function route(req: Request, path: string): Promise<Response> {
     return json(req, { ok: true, logo_url: url });
   }
   if (path === "/send" && req.method === "POST") {
-    const sendId = crypto.randomUUID();
-    const token = await recipientToken(env("LINK_SECRET"), sendId);
-    const idem = String(body.idem ?? "").slice(0, 100) || sendId;
-    const payload = {
-      pizza: body.pizza ?? {}, box: body.box ?? {}, recipient: body.recipient ?? {}, consent: body.consent ?? null,
-      send_type: body.send_type, special_delivery: !!body.special_delivery, scheduled_for: body.scheduled_for ?? null,
-      is_test: !!body.is_test, source: "kitchen",
-    };
-    const r = await rpc<Record<string, any>>("sot_create_send", {
-      p_member: memberId, p_env: m.session.env, p_send_id: sendId, p_token_hash: await tokenHash(token), p_idem: `${memberId}:${idem}`, p: payload,
-    });
+    const { sendId, r } = await createSend(memberId, m.session.env, body, body.source === "people" ? "people" : "kitchen", String(body.idem ?? "") || crypto.randomUUID());
     if (!r.ok || r.duplicate) return json(req, r);
     // Upload the picture now and keep it with the pizza, so a send the worker delivers later has it too
-    let imageUrl: string | undefined;
-    const blob = body.image_data_url ? dataUrlToBlob(String(body.image_data_url), 1_500_000) : null;
-    if (blob) {
-      try {
-        imageUrl = await publitioUpload({ key: env("PUBLITIO_API_KEY"), secret: env("PUBLITIO_API_SECRET"), blob, folder: "slice-of-thanks", title: `pizza-${sendId}` });
-        await rpc("sot_set_send_image", { p_send: sendId, p_url: imageUrl });
-      } catch { /* email still goes without the picture */ }
-    }
+    const imageUrl = await uploadPizza(body.image_data_url, `pizza-${sendId}`);
+    if (imageUrl) await rpc("sot_set_send_image", { p_send: sendId, p_url: imageUrl }).catch(() => null);
     if (!r.due_now) return json(req, r);
     const d = await deliver(sendId, imageUrl);
     return json(req, { ...r, ...d });
+  }
+  // People tab: contacts with their last pizzas, and add or edit a person
+  if (path === "/people" && req.method === "GET") {
+    return json(req, { ok: true, people: (await rpc("sot_people", { p_member: memberId })) ?? [] });
+  }
+  if (path === "/people/save" && req.method === "POST") {
+    return json(req, await rpc("sot_save_contact", { p_member: memberId, p: body.person ?? {} }));
+  }
+  // CSV list send: up to 50 rows per call. Each row becomes a queued send; the worker delivers them.
+  if (path === "/send/bulk" && req.method === "POST") {
+    if (!m.session.features?.csv_import) return json(req, { ok: false, code: "needs_upgrade", features: ["csv_import"] });
+    const rows = Array.isArray(body.rows) ? body.rows.slice(0, 50) : [];
+    const batch = String(body.batch ?? "").slice(0, 60) || crypto.randomUUID();
+    const imageUrl = await uploadPizza(body.image_data_url, `pizza-list-${batch}`);
+    const results: { i: number; ok: boolean; code?: string }[] = [];
+    for (const row of rows) {
+      const i = Number(row?.i ?? results.length);
+      try {
+        const { sendId, r } = await createSend(memberId, m.session.env, { ...row, scheduled_for: body.scheduled_for ?? null, label: body.label }, "csv", `list:${batch}:${i}`);
+        if (r.ok && !r.duplicate && imageUrl && row.image !== false) await rpc("sot_set_send_image", { p_send: sendId, p_url: imageUrl }).catch(() => null);
+        results.push({ i, ok: !!r.ok, code: r.ok ? undefined : r.code });
+        if (r.code === "needs_terms" || r.code === "sending_paused" || r.code === "account_inactive") break;
+      } catch (e) {
+        console.error("bulk row", String(e));
+        results.push({ i, ok: false, code: "server_error" });
+      }
+    }
+    return json(req, { ok: true, results });
   }
   return json(req, { error: "not_found" }, 404);
 }

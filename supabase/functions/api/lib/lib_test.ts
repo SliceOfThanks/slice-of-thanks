@@ -1,7 +1,7 @@
 import { ok as assert, deepStrictEqual as assertEquals } from "node:assert";
 import { verifyBdToken } from "./auth.ts";
 import { b64url, hmacHex, recipientToken, tokenHash } from "./crypto.ts";
-import { buildEmail, senderLabel } from "./email.ts";
+import { buildEmail, senderHeadline, senderLabel } from "./email.ts";
 import { dataUrlToBlob, publitioSignature } from "./publitio.ts";
 import { billingLines, invoiceList, matchProduct } from "./billing.ts";
 
@@ -59,6 +59,14 @@ Deno.test("footer uses the member's address, else Slice of Thanks's", () => {
   assert(none.html.includes("Sent through Slice of Thanks, 967 Kendall Dr") && none.text.includes("967 Kendall Dr"));
   const es = buildEmail({ locale: "es", sender: { name: "Stacey", platform_address: ours }, link: "l", unsubscribeSender: "a", unsubscribeAll: "b" });
   assert(es.html.includes("Enviado a través de Slice of Thanks, 967 Kendall Dr"));
+});
+Deno.test("sender headline matches the Kitchen preview", () => {
+  assertEquals(senderHeadline({ name: "John Doe", business: "Lawfecta" }), "John Doe from Lawfecta");
+  assertEquals(senderHeadline({ name: "John Doe", business: "Lawfecta", send_as: "business" }), "Lawfecta");
+  assertEquals(senderHeadline({ name: "John Doe" }), "John Doe");
+  assertEquals(senderHeadline({ name: "Ana", business: "Taller" }, "de"), "Ana de Taller");
+  const e = buildEmail({ sender: { name: "John Doe", business: "Lawfecta" }, link: "l", unsubscribeSender: "a", unsubscribeAll: "b" });
+  assert(e.subject.startsWith("John Doe from Lawfecta sent you") && e.html.includes("John Doe from Lawfecta sent you a pizza"));
 });
 Deno.test("publitio signature and image parsing", async () => {
   assertEquals((await publitioSignature("s", "1", "2")).length, 40);

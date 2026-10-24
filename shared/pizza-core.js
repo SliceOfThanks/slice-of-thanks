@@ -184,7 +184,8 @@ function pizzaImage(p,bitten){const cv=document.createElement('canvas');const pc
  try{return cv.toDataURL('image/png')}catch(e){return''}}
 
 function review(p,b){
- const n=p.toppings.length,has=k=>p.toppings.some(t=>t.k===k),lab=labelText(p),pers=b.kind==='personal'||b.personal===true;
+ const n=p.toppings.length,has=k=>p.toppings.some(t=>t.k===k),lab=labelText(p),occ=String(b.sticker||'').toLowerCase(),
+  pers=b.kind==='personal'||b.personal===true||!!(occ&&occ.indexOf('thank')<0&&!['great meeting','nice to meet you','following up',"let's do this"].includes(occ));
  const lines=[];
  if(b.tone==='polished'){
   lines.push(lab?'A thoughtful touch with the "'+lab+'" spelled in pepperoni. '+(pers?'Someone is very loved.':'Clearly a productive meeting.'):'Balanced, well dressed, and delivered on time.');
@@ -207,10 +208,11 @@ function review(p,b){
  if(p.bake<.6)lines.push('A little doughy. Brave choice.');
  if(!lines.length)lines.push('Solid crust, honest sauce, a pizza made by someone who cares.');
  const bl=BAKE_LINES[p.bakeLevel];if(bl)lines.unshift(bl);
- return{text:lines.slice(0,3).join(' '),stars:p.bakeLevel===3?5:p.bake<.6?4:5}}
+ if(p.byGerald)lines.unshift('I made this one myself, so I am not allowed to say it is perfect. It is perfect.');
+ return{text:lines.slice(0,3).join(' '),stars:p.byGerald||p.bakeLevel===3?5:p.bake<.6?4:5}}
 const BAKE_LINES=['Quick bake. Somebody has a meeting to get to.','','Stone-fired. Look at those char spots on the crust.',"Five full minutes in the oven. Crispy edge, perfect char, a little oregano. Chef's kiss."];
 /* ---------- confetti ---------- */
-const CONFETTI=[['none','None'],['classic','Classic confetti'],['fireworks','Fireworks'],['paws','Paw prints'],['shamrocks','Shamrocks'],['petals','Flower petals'],['leaves','Falling leaves'],['bats','Bats'],['caps','Grad caps'],['suns','Suns'],['pizza','Pizza slices'],['hearts','Hearts'],['stars','Stars'],['gold','Gold sparkles'],['brand','Brand color confetti'],['logo','Logo confetti'],['snow','Snowflakes']];
+const CONFETTI=[['none','None'],['classic','Classic confetti'],['fireworks','Fireworks'],['paws','Paw prints'],['shamrocks','Shamrocks'],['petals','Flower petals'],['leaves','Falling leaves'],['bats','Bats'],['caps','Grad caps'],['suns','Suns'],['pizza','Pizza slices'],['hearts','Hearts'],['stars','Stars'],['gold','Gold sparkles'],['brand','Brand color confetti'],['logo','Logo confetti'],['snow','Snowflakes'],['gerald',"Gerald's chef hats"]];
 const PRO_CONF=['gold','brand','logo'];
 const SEASONAL={shamrocks:[3],bats:[10],snow:[12,1],leaves:[10,11],petals:[4,5],caps:[5,6],paws:[8],fireworks:[7],suns:[6,7,8,9]};
 function inSeason(k,m){const s=SEASONAL[k];return !s||s.includes(m||viewMonth())}
@@ -219,7 +221,7 @@ function okConf(k){return k&&inSeason(k)?k:'classic'}
 let rCurrentBox=null,cparts=[],cRaf=0;
 const cfx=(()=>{let c=document.getElementById('sot-confetti');if(!c){c=document.createElement('canvas');c.id='sot-confetti';c.setAttribute('aria-hidden','true');c.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:9999';(document.body||document.documentElement).appendChild(c)}return c})();
 let logoImg=null;
-const CPAL={crumbs:['#d9a35e','#c98a52','#b07a3a','#c23a28'],classic:['#c4122f','#f1ad2d','#4c6b28','#2b6cb0','#e86a92','#7d3c98'],hearts:['#c4122f','#e86a92','#ff8fab','#a10e27'],stars:['#f1ad2d','#ffd166','#fff1b8'],
+const CPAL={gerald:['#ffffff','#c4122f'],crumbs:['#d9a35e','#c98a52','#b07a3a','#c23a28'],classic:['#c4122f','#f1ad2d','#4c6b28','#2b6cb0','#e86a92','#7d3c98'],hearts:['#c4122f','#e86a92','#ff8fab','#a10e27'],stars:['#f1ad2d','#ffd166','#fff1b8'],
  gold:['#f6d365','#e0b04a','#fff4c2','#c9962c'],snow:['#ffffff','#e6f0ff','#cfe3ff'],pizza:['#f1ad2d'],potato:['#eab983'],shamrocks:['#2e8b3e','#4caf50','#1f6b2c'],
  petals:['#f7a8c4','#f6d365','#ff8a8a','#c9a0f0'],caps:['#2b2b2b','#1f2a5a'],fireworks:['#c4122f','#2b5fb8','#f1ad2d','#ffffff'],paws:['#8a6656','#c98a52','#5a3a2a'],
  suns:['#f1ad2d','#ffcf4a','#f08a24'],bats:['#2b2523','#4a3b55'],leaves:['#d9661f','#b5481c','#e3a33a','#8a5a2b']};
@@ -231,7 +233,7 @@ function burst(kind){if(!kind||kind==='none')return;try{if(matchMedia('(prefers-
  if(kind==='fireworks'){for(let k=0;k<5;k++){setTimeout(()=>{const ox=W*(.15+.7*Math.random()),oy=H*(.15+.3*Math.random()),col=pal[k%pal.length];
    for(let i=0;i<70;i++){const a=i/70*6.283,sp=2+Math.random()*4.5;cparts.push({kind,col:Math.random()<.25?'#ffffff':col,x:ox,y:oy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,g:.05,s:2.6,rot:0,vr:0,life:80+Math.random()*30,ph:0})}
    if(!cRaf)cRaf=requestAnimationFrame(cFrame)},k*320)}return}
- const fall=FALLING.includes(kind),big=['pizza','potato','caps','bats','paws','logo'].includes(kind);
+ const fall=FALLING.includes(kind),big=['pizza','potato','caps','bats','paws','logo','gerald'].includes(kind);
  const n=fall?(kind==='snow'?110:90):big?60:150;
  for(let i=0;i<n;i++){cparts.push({kind,col:pal[i%pal.length],
   x:fall?Math.random()*W:W/2+(Math.random()-.5)*80,y:fall?-Math.random()*H*.6:H*.5,
@@ -239,6 +241,11 @@ function burst(kind){if(!kind||kind==='none')return;try{if(matchMedia('(prefers-
   g:fall?.01:.33,s:kind==='logo'?14+Math.random()*8:kind==='crumbs'?2+Math.random()*3:kind==='pizza'?14+Math.random()*8:kind==='gold'?2+Math.random()*3:big?10+Math.random()*6:fall&&kind!=='snow'?8+Math.random()*5:5+Math.random()*6,
   rot:Math.random()*6.28,vr:(Math.random()-.5)*(fall?.08:.3),life:fall?420:200+Math.random()*60,ph:Math.random()*6.28})}
  if(!cRaf)cRaf=requestAnimationFrame(cFrame)}
+/* Gerald's own confetti, only on pizzas he makes: chef hats and his red bow tie */
+function chefHatC(c,s){c.strokeStyle='#3a1d12';c.lineWidth=Math.max(1,s*.1);c.fillStyle='#ffffff';c.beginPath();c.arc(-s*.42,-s*.3,s*.38,0,6.28);c.arc(s*.42,-s*.3,s*.38,0,6.28);c.fill();c.stroke();
+ c.beginPath();c.arc(0,-s*.5,s*.46,0,6.28);c.fill();c.stroke();c.fillRect(-s*.55,-s*.25,s*1.1,s*.7);c.strokeRect(-s*.55,-s*.05,s*1.1,s*.5)}
+function bowTieC(c,s){c.strokeStyle='#3a1d12';c.lineWidth=Math.max(1,s*.1);c.beginPath();c.moveTo(0,0);c.lineTo(-s,-s*.55);c.lineTo(-s,s*.55);c.closePath();c.moveTo(0,0);c.lineTo(s,-s*.55);c.lineTo(s,s*.55);c.closePath();c.fill();c.stroke();
+ c.beginPath();c.arc(0,0,s*.24,0,6.28);c.fill();c.stroke()}
 function heart(c,s){c.beginPath();c.moveTo(0,s*.35);c.bezierCurveTo(-s,-s*.3,-s*.4,-s,0,-s*.35);c.bezierCurveTo(s*.4,-s,s,-s*.3,0,s*.35);c.fill()}
 function star(c,s){c.beginPath();for(let i=0;i<10;i++){const r=i%2?s*.45:s,a=i*Math.PI/5-Math.PI/2;c.lineTo(Math.cos(a)*r,Math.sin(a)*r)}c.closePath();c.fill()}
 function slice(c,s){c.fillStyle='#f6cf6a';c.beginPath();c.moveTo(0,s);c.lineTo(-s*.6,-s*.6);c.lineTo(s*.6,-s*.6);c.closePath();c.fill();
@@ -263,6 +270,7 @@ function cFrame(){cRaf=0;const c=cfx.getContext('2d'),W=innerWidth,H=innerHeight
   else if(p.kind==='hearts')heart(c,p.s);else if(p.kind==='stars')star(c,p.s);else if(p.kind==='pizza')slice(c,p.s);else if(p.kind==='potato')potHead(c,p.s);else if(p.kind==='shamrocks')shamrockC(c,p.s);else if(p.kind==='petals'){c.beginPath();c.ellipse(0,0,p.s*.5,p.s*.28,0,0,6.28);c.fill()}
   else if(p.kind==='caps')capC(c,p.s);else if(p.kind==='paws')pawC(c,p.s);else if(p.kind==='suns')sunC(c,p.s);else if(p.kind==='bats')batC(c,p.s,p.life);else if(p.kind==='leaves')leafC(c,p.s);
   else if(p.kind==='fireworks'){c.beginPath();c.arc(0,0,p.s,0,6.28);c.fill()}
+  else if(p.kind==='gerald'){if(p.col==='#ffffff')chefHatC(c,p.s);else bowTieC(c,p.s*.8)}
   else if(p.kind==='gold'){c.globalAlpha*=.6+.4*Math.sin(p.life/4+p.ph);c.beginPath();c.arc(0,0,p.s,0,6.28);c.fill()}
   else{c.beginPath();c.arc(0,0,p.s*.5,0,6.28);c.fill()}
   c.restore()}

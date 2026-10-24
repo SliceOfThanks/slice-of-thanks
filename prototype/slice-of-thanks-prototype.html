@@ -473,9 +473,13 @@ body.is-free .pro-tag{display:inline-block}
         <div class="card hire">
           <div class="section-head" style="border:0;padding:0"><p class="eyebrow">Short on time?</p><span class="tag">Pro feature</span></div>
           <h2>Hire Gerald to make it</h2>
-          <p class="muted">Tell him who it's for and the vibe. He builds, bakes, and names the pizza, then hands you the box to sign and send.</p>
+          <p class="muted">Tell him who it's for, the message and the vibe. He builds, bakes, and names the pizza, reviews it with five slices, and sends it with his own chef hat confetti. You just sign the box.</p>
           <div class="field"><label for="hireFor">Who it's for</label><select id="hireFor"></select></div>
-          <div class="field"><label for="hireTopic">What did you talk about?</label><input type="text" id="hireTopic" maxlength="30" placeholder="Q1 launch"><small>Gerald spells it out in pepperoni, one letter per slice.</small></div>
+          <div class="two" id="hireNew" hidden>
+            <div class="field"><label for="hireNewName">Their name</label><input type="text" id="hireNewName" maxlength="120" autocomplete="off"></div>
+            <div class="field"><label for="hireNewEmail">Their email</label><input type="text" id="hireNewEmail" maxlength="200" inputmode="email" autocomplete="off"></div>
+          </div>
+          <div class="field"><label for="hireTopic">What message do you want on the pizza?</label><input type="text" id="hireTopic" maxlength="16" placeholder="Thank you!"><small><span id="hireCount">0 of 16 letters.</span> Gerald spells it in pepperoni.</small></div>
           <div class="field"><label>The vibe</label><div class="chips" id="hireVibe"></div></div>
           <label class="check"><input type="checkbox" id="hireVegan"> Make it vegan<span class="muted" id="hireVeganNote"></span></label>
           <div class="btn-row"><button class="btn primary" id="hireBtn">Hire Gerald</button></div>
@@ -1178,6 +1182,8 @@ const GERALD_SVG='<svg viewBox="0 0 64 64" role="img" aria-label="Gerald the rac
  '<path d="M13 24 L16 8 L28 17 Z" fill="#7d7470" stroke="#3a1d12" stroke-width="2" stroke-linejoin="round"/><path d="M51 24 L48 8 L36 17 Z" fill="#7d7470" stroke="#3a1d12" stroke-width="2" stroke-linejoin="round"/>'+
  '<path d="M17 21 L18 13 L24 18 Z M47 21 L46 13 L40 18 Z" fill="#2b2523"/>'+
  '<ellipse cx="32" cy="35" rx="22" ry="18" fill="#9a918c" stroke="#3a1d12" stroke-width="2"/>'+
+ '<g class="g-hat"><circle cx="25" cy="10" r="6" fill="#fff" stroke="#3a1d12" stroke-width="2"/><circle cx="39" cy="10" r="6" fill="#fff" stroke="#3a1d12" stroke-width="2"/><circle cx="32" cy="7.5" r="6.5" fill="#fff" stroke="#3a1d12" stroke-width="2"/>'+
+ '<path d="M22.5 11 Q32 15 41.5 11" fill="#fff"/><rect x="21" y="12.5" width="22" height="8" rx="2" fill="#fff" stroke="#3a1d12" stroke-width="2"/><path d="M27 14v5M32 14v5M37 14v5" stroke="#d8cfc4" stroke-width="1.4" stroke-linecap="round"/></g>'+
  '<path d="M15 27 Q23 22 29 27 M49 27 Q41 22 35 27" stroke="#f2ece6" stroke-width="2.6" fill="none" stroke-linecap="round"/>'+
  '<path d="M11 33 Q20 26 30 31 Q32 32 34 31 Q44 26 53 33 Q46 42 36 38 Q32 37 28 38 Q18 42 11 33 Z" fill="#2b2523"/>'+
  '<circle cx="23" cy="33" r="3.4" fill="#fff"/><circle cx="41" cy="33" r="3.4" fill="#fff"/><circle cx="23.8" cy="33.6" r="1.7" fill="#2b2523"/><circle cx="41.8" cy="33.6" r="1.7" fill="#2b2523"/>'+
@@ -1466,7 +1472,7 @@ function renderBox(){
  if(!isPro()&&PRO_STYLES.includes(box.style))box.style='kraft';if(!isPro()&&PRO_CONF.includes(box.confetti))box.confetti='classic';
  makeChips($('#styleChips'),Object.entries(STYLES),()=>box.style,v=>{box.style=v;profile.boxStyle=v;saveProfile();renderBoxPreview()},{locked:v=>!isPro()&&PRO_STYLES.includes(v),onLocked:()=>upgrade('style')});
  fillOccasions($('#stickerSel'),box.sticker);
- box.confetti=okConf(box.confetti);makeChips($('#confettiChips'),seasonConfetti(),()=>box.confetti,v=>{box.confetti=v;burst(v)},{locked:v=>!isPro()&&PRO_CONF.includes(v),onLocked:v=>{burst(v);upgrade('confetti')}});
+ box.confetti=okConf(box.confetti);if(box.confetti==='gerald'&&!pizza.byGerald)box.confetti='classic';makeChips($('#confettiChips'),seasonConfetti(!!pizza.byGerald),()=>box.confetti,v=>{box.confetti=v;burst(v)},{locked:v=>!isPro()&&PRO_CONF.includes(v),onLocked:v=>{burst(v);upgrade('confetti')}});
  makeChips($('#toneChips'),[['playful','Playful'],['polished','Polished']],()=>box.tone,v=>box.tone=v);
  if(!box.kind)box.kind='business';makeChips($('#kindChips'),[['business','Business'],['personal','Personal']],()=>box.kind,v=>{box.kind=v;store.set('sendKind',v);renderBox()});
  const pers=isPersonal(box);$('#kindHelp').textContent=pers?'For birthdays, congrats and friends. Your business details stay off this box.':'Your logo, business name, button and gift go on this box.';
@@ -1544,7 +1550,8 @@ $('#saveSig').onclick=()=>{signature=clonePizza(pizza);signature.baked=true;sign
 
 /* ---------- recipient preview ---------- */
 function review(p,b){
- const n=p.toppings.length,has=k=>p.toppings.some(t=>t.k===k),lab=labelText(p),pers=b.kind==='personal'||b.personal===true;
+ const n=p.toppings.length,has=k=>p.toppings.some(t=>t.k===k),lab=labelText(p),occ=String(b.sticker||'').toLowerCase(),
+  pers=b.kind==='personal'||b.personal===true||!!(occ&&occ.indexOf('thank')<0&&!['great meeting','nice to meet you','following up',"let's do this"].includes(occ));
  const lines=[];
  if(b.tone==='polished'){
   lines.push(lab?'A thoughtful touch with the "'+lab+'" spelled in pepperoni. '+(pers?'Someone is very loved.':'Clearly a productive meeting.'):'Balanced, well dressed, and delivered on time.');
@@ -1567,7 +1574,8 @@ function review(p,b){
  if(p.bake<.6)lines.push('A little doughy. Brave choice.');
  if(!lines.length)lines.push('Solid crust, honest sauce, a pizza made by someone who cares.');
  const bl=BAKE_LINES[p.bakeLevel];if(bl)lines.unshift(bl);
- return{text:lines.slice(0,3).join(' '),stars:p.bakeLevel===3?5:p.bake<.6?4:5}}
+ if(p.byGerald)lines.unshift('I made this one myself, so I am not allowed to say it is perfect. It is perfect.');
+ return{text:lines.slice(0,3).join(' '),stars:p.byGerald||p.bakeLevel===3?5:p.bake<.6?4:5}}
 const BAKE_LINES=['Quick bake. Somebody has a meeting to get to.','','Stone-fired. Look at those char spots on the crust.',"Five full minutes in the oven. Crispy edge, perfect char, a little oregano. Chef's kiss."];
 function openRecipient(p,b){
  const pers=isPersonal(b);if(pers)b=Object.assign({},b,{link:'',reward:null});
@@ -1686,19 +1694,32 @@ function fillFeed(ul,items){let seen=store.get('seenNews',[]);ul.innerHTML='';
 function renderTip(){$('#tipText').textContent=TIPS[tipIdx];$('#tipCount').textContent='Tip '+(tipIdx+1)+' of '+TIPS.length}
 $('#nextTip').onclick=()=>{tipIdx=(tipIdx+1)%TIPS.length;renderTip()};
 function renderGerald(){renderTip();renderFeed();renderTreats()}
+/* Who it's for: this week's meetings, everyone in People, or someone new */
+function hirePeople(){const seen=new Set(),out=[];
+ meetings.filter(m=>!m.internal&&m.contact).forEach(m=>{const k=(m.contact||m.who).toLowerCase();if(seen.has(k))return;seen.add(k);out.push({id:'m:'+m.id,label:m.who+' \u00b7 '+m.title,who:m.who,contact:m.contact,title:m.title,vegan:!!m.vegan,meeting:m.id})});
+ contacts.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach((c,i)=>{const k=(c.contact||c.name).toLowerCase();if(seen.has(k))return;seen.add(k);out.push({id:'c:'+(c.id||i),label:c.name+(c.company?' \u00b7 '+c.company:''),who:c.name,contact:c.contact,title:'',vegan:!!c.vegan,org:c.company||''})});
+ return out}
 function renderHire(){
- const sel=$('#hireFor');const prev=sel.value;sel.innerHTML='';
- meetings.filter(m=>!m.internal).forEach(m=>{const o=document.createElement('option');o.value=m.id;o.textContent=m.who+' · '+m.title;sel.appendChild(o)});
- const o=document.createElement('option');o.value='';o.textContent='Someone else';sel.appendChild(o);
- const pm=meetings.find(m=>m.status==='prompt');sel.value=prev||(pm?pm.id:sel.options[0].value);syncHireVegan();
+ const sel=$('#hireFor');const prev=sel.value;sel.innerHTML='';const list=hirePeople();
+ const add=(v,t,parent)=>{const o=document.createElement('option');o.value=v;o.textContent=t;(parent||sel).appendChild(o)};
+ add('','Pick someone');
+ const mt=list.filter(x=>x.meeting),pp=list.filter(x=>!x.meeting);
+ [['This week',mt],['People',pp]].forEach(([g,items])=>{if(!items.length)return;const og=document.createElement('optgroup');og.label=g;items.forEach(x=>add(x.id,x.label,og));sel.appendChild(og)});
+ add('new','+ Add someone new');
+ const pm=meetings.find(m=>m.status==='prompt'||m.status==='ready');
+ sel.value=[...sel.options].some(o=>o.value===prev)?prev:(pm&&list.some(x=>x.meeting===pm.id)?'m:'+pm.id:'');
+ syncHireVegan();hireCount();
  makeChips($('#hireVibe'),VIBES,()=>hireVibe,v=>hireVibe=v)}
+function hirePick(){const v=$('#hireFor').value;return v==='new'?{who:$('#hireNewName').value.trim(),contact:$('#hireNewEmail').value.trim(),title:'',isNew:true}:hirePeople().find(x=>x.id===v)||null}
+function hireCount(){const n=$('#hireTopic').value.length;$('#hireCount').textContent=n+' of 16 letters.'}
+$('#hireTopic').addEventListener('input',hireCount);
 /* Kitchen shortcuts show while starting a pizza (the dough step) and open one card at a time */
 function renderKitchenExtras(){const kx=$('#kitchenExtras');kx.hidden=step!==0||editingSignature;if(kx.hidden)return;renderHire()}
 function toggleHire(open){const w=$('#kxHireWrap');if(open===undefined)open=w.hidden;w.hidden=!open;$('#kxHireBtn').setAttribute('aria-expanded',open?'true':'false')}
 $('#kxHireBtn').onclick=()=>toggleHire();
 $('#homeNew').onclick=()=>{toggleHire(false);startFresh(null)};
 $('#homeHire').onclick=()=>{startFresh(null);toggleHire(true);setTimeout(()=>{const c=$('#kxHireWrap');if(c.scrollIntoView)c.scrollIntoView({behavior:'smooth',block:'start'})},50)};
-function syncHireVegan(){const m=meetings.find(x=>x.id===$('#hireFor').value);$('#hireVegan').checked=!!settings.veganDefault;$('#hireVeganNote').textContent=m&&m.vegan?' ('+first(m.who)+' is marked vegan)':''}
+function syncHireVegan(){const m=hirePick();$('#hireNew').hidden=$('#hireFor').value!=='new';$('#hireVegan').checked=!!settings.veganDefault||!!(m&&m.vegan);$('#hireVeganNote').textContent=m&&m.vegan?' ('+first(m.who)+' is marked vegan)':''}
 $('#hireFor').addEventListener('change',syncHireVegan);
 function placeLabels(p,text){text=(text||'').trim().slice(0,30);if(!text)return 0;p.toppings=p.toppings.filter(t=>t.k!=='label');p.sign={text};return 1;const parts=[];
  const perRow=parts.length<=4?Math.min(parts.length,2):3,rows=Math.ceil(parts.length/perRow);
@@ -1716,14 +1737,18 @@ function geraldPizza(vibe,topic,vegan){
  recipe.forEach(([k,n])=>{for(let i=0;i<n;i++){const a=Math.random()*6.283,d=lim[0]+Math.sqrt(Math.random())*(lim[1]-lim[0]);p.toppings.push({k,x:Math.cos(a)*d,y:Math.sin(a)*d,rot:Math.random()*6.283})}});
  if(topic)placeLabels(p,topic);
  const nouns={classic:'Classic',fancy:'Reserve',fun:'Special',over:'Supreme'};
+ p.byGerald=true;p.bakeLevel=3;
  p.name=topic&&topic.length<=22?'The '+topic+' '+nouns[vibe]:{classic:'The Gerald Classic',fancy:"The Critic's Choice",fun:'The Happy Accident',over:'The Whole Pantry'}[vibe];
  return p}
 $('#hireBtn').onclick=()=>{
- const m=meetings.find(x=>x.id===$('#hireFor').value)||null;const topic=$('#hireTopic').value.trim();
- currentMeetingId=m?m.id:null;editingSignature=false;
- pizza=geraldPizza(hireVibe,topic,$('#hireVegan').checked);box=boxFromProfile(m);
- step=4;saidStep=4;show('make');gSay('Done. I made '+pizza.name+'. Sign the box and it is ready to go.');
- toast('Gerald made your pizza. Add your note and send it.')};
+ const m=hirePick();const topic=$('#hireTopic').value.trim().slice(0,16);
+ if(!m){$('#hireFor').focus();toast('Pick who the pizza is for, or add someone new.');return}
+ if(m.isNew&&!m.who){$('#hireNewName').focus();toast('Add their name.');return}
+ if(m.isNew&&m.contact&&m.contact.indexOf('@')<1){$('#hireNewEmail').focus();toast('That email address does not look right.');return}
+ currentMeetingId=m.meeting||null;editingSignature=false;
+ pizza=geraldPizza(hireVibe,topic,$('#hireVegan').checked);box=boxFromProfile(m);box.confetti='gerald';box.kind='business';
+ step=4;saidStep=4;show('make');gSay('Done. I made '+pizza.name+' and gave it five slices. My chef hats go with it. Sign the box and send.');
+ burst('gerald');toast('Gerald made your pizza. Add your note and send it.')};
 
 /* ---------- bulk send ---------- */
 const SAMPLE_CSV='Name,Email,Company,Vegan\nJordan Reyes,jordan@brightlinelegal.example,Brightline Legal,no\nPriya Shah,priya@shahortiz.example,Shah & Ortiz LLP,yes\n'+
@@ -1826,15 +1851,16 @@ $('#stickerSel').addEventListener('change',e=>{box.sticker=e.target.value;render
 $('#bulkStickerSel').addEventListener('change',e=>{bulk.sticker=e.target.value;renderBulkBox()});
 
 /* ---------- confetti ---------- */
-const CONFETTI=[['none','None'],['classic','Classic confetti'],['fireworks','Fireworks'],['paws','Paw prints'],['shamrocks','Shamrocks'],['petals','Flower petals'],['leaves','Falling leaves'],['bats','Bats'],['caps','Grad caps'],['suns','Suns'],['pizza','Pizza slices'],['hearts','Hearts'],['stars','Stars'],['gold','Gold sparkles'],['brand','Brand color confetti'],['logo','Logo confetti'],['snow','Snowflakes']];
+const CONFETTI=[['none','None'],['classic','Classic confetti'],['fireworks','Fireworks'],['paws','Paw prints'],['shamrocks','Shamrocks'],['petals','Flower petals'],['leaves','Falling leaves'],['bats','Bats'],['caps','Grad caps'],['suns','Suns'],['pizza','Pizza slices'],['hearts','Hearts'],['stars','Stars'],['gold','Gold sparkles'],['brand','Brand color confetti'],['logo','Logo confetti'],['snow','Snowflakes'],['gerald',"Gerald's chef hats"]];
 const PRO_CONF=['gold','brand','logo'];
 const SEASONAL={shamrocks:[3],bats:[10],snow:[12,1],leaves:[10,11],petals:[4,5],caps:[5,6],paws:[8],fireworks:[7],suns:[6,7,8,9]};
 function inSeason(k,m){const s=SEASONAL[k];return !s||s.includes(m||viewMonth())}
-function seasonConfetti(){return CONFETTI.filter(c=>inSeason(c[0])).map(([v,l])=>[v,SEASONAL[v]?l+' (this month only)':l])}
+/* Gerald's chef hats only show for pizzas Gerald made */
+function seasonConfetti(withGerald){return CONFETTI.filter(c=>inSeason(c[0])&&(c[0]!=='gerald'||withGerald)).map(([v,l])=>[v,SEASONAL[v]?l+' (this month only)':l])}
 function okConf(k){return k&&inSeason(k)?k:'classic'}
 let rCurrentBox=null,cparts=[],cRaf=0;const cfx=$('#confetti');
 let logoImg=null;
-const CPAL={crumbs:['#d9a35e','#c98a52','#b07a3a','#c23a28'],classic:['#c4122f','#f1ad2d','#4c6b28','#2b6cb0','#e86a92','#7d3c98'],hearts:['#c4122f','#e86a92','#ff8fab','#a10e27'],stars:['#f1ad2d','#ffd166','#fff1b8'],
+const CPAL={gerald:['#ffffff','#c4122f'],crumbs:['#d9a35e','#c98a52','#b07a3a','#c23a28'],classic:['#c4122f','#f1ad2d','#4c6b28','#2b6cb0','#e86a92','#7d3c98'],hearts:['#c4122f','#e86a92','#ff8fab','#a10e27'],stars:['#f1ad2d','#ffd166','#fff1b8'],
  gold:['#f6d365','#e0b04a','#fff4c2','#c9962c'],snow:['#ffffff','#e6f0ff','#cfe3ff'],pizza:['#f1ad2d'],potato:['#eab983'],shamrocks:['#2e8b3e','#4caf50','#1f6b2c'],
  petals:['#f7a8c4','#f6d365','#ff8a8a','#c9a0f0'],caps:['#2b2b2b','#1f2a5a'],fireworks:['#c4122f','#2b5fb8','#f1ad2d','#ffffff'],paws:['#8a6656','#c98a52','#5a3a2a'],
  suns:['#f1ad2d','#ffcf4a','#f08a24'],bats:['#2b2523','#4a3b55'],leaves:['#d9661f','#b5481c','#e3a33a','#8a5a2b']};
@@ -1846,7 +1872,7 @@ function burst(kind){if(!kind||kind==='none')return;try{if(matchMedia('(prefers-
  if(kind==='fireworks'){for(let k=0;k<5;k++){setTimeout(()=>{const ox=W*(.15+.7*Math.random()),oy=H*(.15+.3*Math.random()),col=pal[k%pal.length];
    for(let i=0;i<70;i++){const a=i/70*6.283,sp=2+Math.random()*4.5;cparts.push({kind,col:Math.random()<.25?'#ffffff':col,x:ox,y:oy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,g:.05,s:2.6,rot:0,vr:0,life:80+Math.random()*30,ph:0})}
    if(!cRaf)cRaf=requestAnimationFrame(cFrame)},k*320)}return}
- const fall=FALLING.includes(kind),big=['pizza','potato','caps','bats','paws','logo'].includes(kind);
+ const fall=FALLING.includes(kind),big=['pizza','potato','caps','bats','paws','logo','gerald'].includes(kind);
  const n=fall?(kind==='snow'?110:90):big?60:150;
  for(let i=0;i<n;i++){cparts.push({kind,col:pal[i%pal.length],
   x:fall?Math.random()*W:W/2+(Math.random()-.5)*80,y:fall?-Math.random()*H*.6:H*.5,
@@ -1854,6 +1880,11 @@ function burst(kind){if(!kind||kind==='none')return;try{if(matchMedia('(prefers-
   g:fall?.01:.33,s:kind==='logo'?14+Math.random()*8:kind==='crumbs'?2+Math.random()*3:kind==='pizza'?14+Math.random()*8:kind==='gold'?2+Math.random()*3:big?10+Math.random()*6:fall&&kind!=='snow'?8+Math.random()*5:5+Math.random()*6,
   rot:Math.random()*6.28,vr:(Math.random()-.5)*(fall?.08:.3),life:fall?420:200+Math.random()*60,ph:Math.random()*6.28})}
  if(!cRaf)cRaf=requestAnimationFrame(cFrame)}
+/* Gerald's own confetti, only on pizzas he makes: chef hats and his red bow tie */
+function chefHatC(c,s){c.strokeStyle='#3a1d12';c.lineWidth=Math.max(1,s*.1);c.fillStyle='#ffffff';c.beginPath();c.arc(-s*.42,-s*.3,s*.38,0,6.28);c.arc(s*.42,-s*.3,s*.38,0,6.28);c.fill();c.stroke();
+ c.beginPath();c.arc(0,-s*.5,s*.46,0,6.28);c.fill();c.stroke();c.fillRect(-s*.55,-s*.25,s*1.1,s*.7);c.strokeRect(-s*.55,-s*.05,s*1.1,s*.5)}
+function bowTieC(c,s){c.strokeStyle='#3a1d12';c.lineWidth=Math.max(1,s*.1);c.beginPath();c.moveTo(0,0);c.lineTo(-s,-s*.55);c.lineTo(-s,s*.55);c.closePath();c.moveTo(0,0);c.lineTo(s,-s*.55);c.lineTo(s,s*.55);c.closePath();c.fill();c.stroke();
+ c.beginPath();c.arc(0,0,s*.24,0,6.28);c.fill();c.stroke()}
 function heart(c,s){c.beginPath();c.moveTo(0,s*.35);c.bezierCurveTo(-s,-s*.3,-s*.4,-s,0,-s*.35);c.bezierCurveTo(s*.4,-s,s,-s*.3,0,s*.35);c.fill()}
 function star(c,s){c.beginPath();for(let i=0;i<10;i++){const r=i%2?s*.45:s,a=i*Math.PI/5-Math.PI/2;c.lineTo(Math.cos(a)*r,Math.sin(a)*r)}c.closePath();c.fill()}
 function slice(c,s){c.fillStyle='#f6cf6a';c.beginPath();c.moveTo(0,s);c.lineTo(-s*.6,-s*.6);c.lineTo(s*.6,-s*.6);c.closePath();c.fill();
@@ -1878,6 +1909,7 @@ function cFrame(){cRaf=0;const c=cfx.getContext('2d'),W=innerWidth,H=innerHeight
   else if(p.kind==='hearts')heart(c,p.s);else if(p.kind==='stars')star(c,p.s);else if(p.kind==='pizza')slice(c,p.s);else if(p.kind==='potato')potHead(c,p.s);else if(p.kind==='shamrocks')shamrockC(c,p.s);else if(p.kind==='petals'){c.beginPath();c.ellipse(0,0,p.s*.5,p.s*.28,0,0,6.28);c.fill()}
   else if(p.kind==='caps')capC(c,p.s);else if(p.kind==='paws')pawC(c,p.s);else if(p.kind==='suns')sunC(c,p.s);else if(p.kind==='bats')batC(c,p.s,p.life);else if(p.kind==='leaves')leafC(c,p.s);
   else if(p.kind==='fireworks'){c.beginPath();c.arc(0,0,p.s,0,6.28);c.fill()}
+  else if(p.kind==='gerald'){if(p.col==='#ffffff')chefHatC(c,p.s);else bowTieC(c,p.s*.8)}
   else if(p.kind==='gold'){c.globalAlpha*=.6+.4*Math.sin(p.life/4+p.ph);c.beginPath();c.arc(0,0,p.s,0,6.28);c.fill()}
   else{c.beginPath();c.arc(0,0,p.s*.5,0,6.28);c.fill()}
   c.restore()}
@@ -1942,7 +1974,7 @@ function detailEl(c){
  q('#qsVegan').checked=qs.vegan;q('#qsVegan').addEventListener('change',e=>{qs.vegan=e.target.checked;qs.built=null});
  makeChips(q('#qsMode'),modes,()=>qs.mode,v=>{qs.mode=v;qs.built=null});
  fillOccasions(q('#qsSticker'),qs.sticker);q('#qsSticker').addEventListener('change',e=>{qs.sticker=e.target.value;qs.built=null});
- qs.confetti=okConf(qs.confetti);if(!isPro()&&PRO_CONF.includes(qs.confetti))qs.confetti='classic';const cs=q('#qsConfetti');seasonConfetti().forEach(([v,l])=>{const o=document.createElement('option');o.value=v;o.textContent=l+(!isPro()&&PRO_CONF.includes(v)?' (Pro)':'');cs.appendChild(o)});cs.value=qs.confetti;
+ qs.confetti=okConf(qs.confetti);if(!isPro()&&PRO_CONF.includes(qs.confetti))qs.confetti='classic';const cs=q('#qsConfetti');seasonConfetti(qs.mode==='gerald').forEach(([v,l])=>{const o=document.createElement('option');o.value=v;o.textContent=l+(!isPro()&&PRO_CONF.includes(v)?' (Pro)':'');cs.appendChild(o)});cs.value=qs.confetti;
  cs.addEventListener('change',e=>{if(!isPro()&&PRO_CONF.includes(e.target.value)){burst(e.target.value);e.target.value=qs.confetti;upgrade('confetti');return}qs.confetti=e.target.value;qs.built=null;burst(qs.confetti)});
  q('#qsPreview').onclick=()=>{const{p,b}=qsBuild(c);openRecipient(p,b)};
  q('#qsSend').onclick=()=>{const{p,b}=qsBuild(c);
@@ -1959,7 +1991,7 @@ function qsBuild(c){if(qs.built)return qs.built;const topic=(qs.topic||'').trim(
  else p=geraldPizza(['classic','fancy','fun'][Math.floor(Math.random()*3)],topic,qs.vegan);
  if(qs.mode!=='gerald'){if(qs.vegan){veganize(p)}
   if(topic)placeLabels(p,topic)}
- const b=boxFromProfile({who:c.name,contact:c.contact,title:qs.sticker});b.note=qs.note;b.sticker=qs.sticker;b.confetti=qs.confetti;
+ const b=boxFromProfile({who:c.name,contact:c.contact,title:qs.sticker});b.note=qs.note;b.sticker=qs.sticker;b.confetti=qs.confetti==='gerald'&&!p.byGerald?'classic':qs.confetti;
  qs.built={p,b};return qs.built}
 $('#peopleSearch').addEventListener('input',renderPeople);
 $('#addPersonBtn').onclick=()=>{$('#addPerson').hidden=false;$('#npName').focus()};

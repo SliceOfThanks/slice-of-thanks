@@ -29,6 +29,12 @@
       "commit": "6d8834462f3358cac1fa9bea6b4c18c06ea18a8d",
       "date": "2026-10-23",
       "notes": "Plan IDs mapped, mid-month upgrade top-up, 14-day trial and yearly prices."
+    },
+    {
+      "version": "v0.3.3",
+      "commit": "68c9c0030cb1a8645b95ecea350b3c74cabc721b",
+      "date": "2026-10-23",
+      "notes": "Legal acceptance at sign up and in the Kitchen, recorded with versions. Brand colors in emails."
     }
   ]
 }

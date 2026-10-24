@@ -77,6 +77,12 @@
       "commit": "02b8b044a1754265d2abf8111de53a91cad5f91d",
       "date": "2026-10-24",
       "notes": "Home tab (was Today) with quick starts, Pizza of the Month and This week. Gerald intro once per member. Email provider layer live (api-0.5.0)."
+    },
+    {
+      "version": "v0.4.7",
+      "commit": "c6db887366ca419d0ede42a8889919730d44d74d",
+      "date": "2026-10-24",
+      "notes": "Home: free plan wording uses the signature pizza for picked meetings."
     }
   ]
 }

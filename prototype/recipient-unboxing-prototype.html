@@ -1,0 +1,314 @@
+<title>Slice of Thanks Unboxing</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Yellowtail&family=Work+Sans:wght@400;500;600;700&family=Caveat:wght@500;700&family=Courier+Prime:wght@400;700&display=swap">
+<style>
+/* Layout: a phone-sized stage centered on the page (full width on phones). One screen at a time: inbox, email, delivery and unboxing, pizza reveal. A small demo bar sits above the phone. Deliberately single-theme retro pizzeria look. */
+:root{
+  --cream:#fbf0d9; --paper:#fffaef; --ink:#3a1d12; --muted:#7a5641; --cherry:#c4122f; --mustard:#f1ad2d; --olive:#4c6b28; --kraft:#c99b6b; --kraft-in:#ecd5b0;
+  --display:"Shrikhand","Cooper Black",Georgia,serif; --script:"Yellowtail","Brush Script MT",cursive;
+  --body:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --hand:"Caveat","Comic Sans MS",cursive; --mono:"Courier Prime","Courier New",monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:#2a160e;color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.page{max-width:430px;margin:0 auto;padding-block:16px 32px;display:flex;flex-direction:column;gap:12px}
+.demo{background:#3d2418;color:#f3dcc0;border:1.5px dashed #7a5641;border-radius:12px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:.85rem}
+.demo b{color:#f1ad2d;font-weight:700}
+.demo select,.demo button{font:600 .85rem var(--body);padding:6px 10px;border-radius:8px;border:1.5px solid #7a5641;background:#2a160e;color:#f3dcc0;cursor:pointer}
+.phone{background:var(--cream);border:3px solid var(--ink);border-radius:34px;overflow:hidden;min-height:760px;display:flex;flex-direction:column;position:relative;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+@media (max-width:460px){.phone{border-radius:22px;min-height:calc(100vh - 140px)}}
+.screen{flex:1;display:flex;flex-direction:column}
+.screen[hidden]{display:none!important}
+h1,h2,p{margin:0}
+.btn{font:700 1rem var(--body);min-height:52px;padding:0 22px;border-radius:999px;border:2.5px solid var(--ink);background:var(--paper);color:var(--ink);cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;box-shadow:3px 3px 0 var(--ink);text-decoration:none;transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn.primary{background:var(--cherry);color:#fff6e3}
+.btn.wide{width:100%}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--mustard);outline-offset:2px}
+.checker{height:18px;flex:none;background:repeating-conic-gradient(var(--cherry) 0 25%,#fff6e3 0 50%) 0 0/18px 18px;border-bottom:3px solid var(--ink)}
+.brand{display:flex;justify-content:center;align-items:baseline;gap:6px;padding:14px 0 0;line-height:1}
+.brand .s{font-family:var(--script);font-size:1.25rem;color:var(--cherry)}
+.brand .t{font-family:var(--display);font-size:1.35rem}
+
+/* inbox + email (a generic mail app, plain white) */
+.mail{background:#fff;color:#1f1f1f;flex:1;display:flex;flex-direction:column}
+.mail-h{padding:26px 20px 12px;display:flex;flex-direction:column;gap:12px}
+.mail-h h1{font:700 1.8rem var(--body)}
+.search{background:#f1f1f3;border-radius:12px;padding:10px 14px;color:#666;font-size:.95rem}
+.row{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;padding:14px 20px;border-bottom:1px solid #ececec;text-align:left;background:none;border-left:0;border-right:0;border-top:0;font:inherit;color:inherit;width:100%}
+.row.new{background:#fdf0e3;cursor:pointer;border-top:1px solid #ececec;animation:slidein .6s cubic-bezier(.2,.8,.3,1) both}
+@keyframes slidein{from{transform:translateY(-30px);opacity:0}to{transform:none;opacity:1}}
+.row .top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.row .who{font-weight:700}
+.row .time{font-size:.75rem;color:#777}
+.row.new .time{color:var(--cherry);font-weight:700}
+.row .sub{font-size:.9rem}
+.row .prev{font-size:.82rem;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row.old .who,.row.old .sub{font-weight:500;color:#444}
+.av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:.9rem}
+.back{background:none;border:0;color:#2b5fb8;font:600 .95rem var(--body);padding:0;min-height:44px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;align-self:flex-start}
+.em{padding:12px 20px 0;display:flex;flex-direction:column;gap:12px}
+.em h1{font:700 1.3rem var(--body);line-height:1.25}
+.from{display:flex;gap:10px;align-items:center;font-size:.88rem}
+.from small{display:block;color:#777;font-size:.8rem}
+.emcard{margin:16px;background:var(--cream);border:2.5px solid var(--ink);border-radius:18px;overflow:hidden;color:var(--ink)}
+.emcard .in{padding:20px;display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center}
+.foot{text-align:center;font-size:.75rem;color:#888;padding:0 20px 20px}
+
+/* the box */
+.lid,.inside{border:3px solid var(--ink);border-radius:14px}
+.lid{background:var(--kraft);color:#3a2616;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;position:relative;overflow:hidden}
+.lid::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 2px,transparent 2px 7px);pointer-events:none}
+.lid .biz{font-family:var(--display);font-size:1.9rem;position:relative}
+.sticker{position:relative;background:var(--cherry);color:#fff6e3;font:400 1.25rem var(--script);padding:2px 16px 4px;border-radius:999px;border:2px solid var(--ink);transform:rotate(-5deg)}
+.vegan{position:relative;background:var(--olive);color:#fff;font:700 .72rem var(--body);padding:3px 10px;border-radius:999px;border:1.5px solid var(--ink)}
+.small-lid{width:230px;height:150px;box-shadow:5px 5px 0 var(--ink)}
+.small-lid .biz{font-size:1.5rem}
+
+.deliver{flex:1;display:flex;flex-direction:column;align-items:center;padding:20px 20px 28px;gap:14px;text-align:center}
+.deliver .kicker{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.deliver h1{font:400 1.75rem/1.12 var(--display);text-wrap:balance}
+.scooter{width:240px;max-width:100%;animation:drive 1.3s cubic-bezier(.2,.8,.3,1) both}
+@keyframes drive{0%{transform:translateX(140%)}80%{transform:translateX(-4%)}100%{transform:none}}
+.potato{transform-box:fill-box;transform-origin:50% 100%;outline:none}
+.potato.hop,.p-av.hop{animation:hop .7s ease}
+@keyframes hop{0%{transform:none}30%{transform:translateY(-12px) rotate(-5deg)}60%{transform:translateY(0) rotate(4deg)}80%{transform:translateY(-4px)}100%{transform:none}}
+.scoot-wrap{position:relative}
+.bark{position:absolute;left:50%;top:-6px;transform:translateX(-50%);background:#fffaef;color:#3a1d12;border:2.5px solid #4c6b28;border-radius:14px;padding:6px 12px;font-weight:700;font-size:.9rem;max-width:260px;text-align:center;box-shadow:2px 2px 0 #3a1d12;z-index:5;animation:pop .25s ease-out}
+.bark[hidden]{display:none}
+
+.wheel{animation:spin .4s linear 3}
+@keyframes spin{to{transform:rotate(-360deg)}}
+.boxwrap{position:relative;width:min(300px,100%);height:230px;perspective:1000px;margin-top:4px;animation:drop .5s .9s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes drop{from{transform:translateY(-30px) scale(.9);opacity:0}to{transform:none;opacity:1}}
+.boxwrap .inside{position:absolute;inset:0;background:var(--kraft-in);padding:18px 20px;display:flex;flex-direction:column;justify-content:center;gap:6px;text-align:left;color:#2c1d12}
+.hand{font-family:var(--hand);font-size:1.45rem;line-height:1.12}
+.hand.sig{text-align:right;font-weight:700}
+.boxwrap .lid{position:absolute;inset:0;cursor:pointer;box-shadow:6px 6px 0 var(--ink);transform-origin:50% 0;transition:transform 1s cubic-bezier(.3,.7,.2,1),opacity .35s .7s;font:inherit;width:100%}
+.boxwrap .lid:hover{transform:rotateX(-8deg)}
+.boxwrap.open .lid{transform:rotateX(-110deg);opacity:0;pointer-events:none}
+.boxwrap.wiggle{animation:wiggle .6s ease-in-out 2s 2}
+@keyframes wiggle{0%,100%{transform:none}25%{transform:rotate(-2deg)}75%{transform:rotate(2deg)}}
+.tap{font-size:.85rem;color:var(--muted)}
+
+/* reveal */
+.reveal{flex:1;display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 22px 26px;text-align:center}
+.pizza{width:min(250px,80%);height:auto;animation:popspin .9s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes popspin{from{transform:scale(.3) rotate(-120deg);opacity:0}to{transform:none;opacity:1}}
+.reveal h2{font:400 1.6rem/1.1 var(--display)}
+.vb{background:#e0eacb;color:#3c581b;font-size:.82rem;font-weight:700;padding:4px 12px;border-radius:999px}
+.receipt{width:100%;background:#fffdf5;color:#2c2420;font-family:var(--mono);font-size:.86rem;text-align:left;padding:14px 16px 18px;box-shadow:0 4px 14px rgba(58,29,18,.18);display:flex;flex-direction:column;gap:6px;transform:rotate(-1.2deg);
+  -webkit-mask:radial-gradient(circle 5px at 50% 100%,transparent 98%,#000) 0 0/14px 100% repeat-x;animation:print .7s .5s ease-out both}
+@keyframes print{from{clip-path:inset(0 0 100% 0)}to{clip-path:inset(0 0 0 0)}}
+.receipt .rh{font-weight:700;letter-spacing:.14em;color:var(--cherry)}
+.receipt hr{border:0;border-top:1px dashed #b9aea3;margin:2px 0}
+.critic{display:flex;gap:10px;align-items:center;line-height:1.3}
+.gav{width:42px;height:42px;flex:none}
+.slices{display:inline-flex;gap:3px;vertical-align:middle}
+.slices svg{opacity:0;animation:pop .3s ease-out both}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:none;opacity:1}}
+details{width:100%;text-align:left;background:var(--paper);border:2px solid #e2c693;border-radius:12px;padding:10px 14px;font-size:.9rem}
+summary{font-weight:700;color:var(--cherry);cursor:pointer}
+details p{margin-top:8px}
+.actions{width:100%;display:flex;flex-direction:column;gap:12px;margin-top:4px}
+.restart{background:none;border:0;color:var(--muted);font:600 .85rem var(--body);text-decoration:underline;cursor:pointer;min-height:40px}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--cream);padding:12px 16px;border-radius:12px;font-weight:600;font-size:.9rem;max-width:min(92vw,400px);text-align:center;box-shadow:4px 4px 0 var(--cherry)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="page">
+  <div class="demo" role="group" aria-label="Demo controls">
+    <span><b>Demo controls.</b> The recipient doesn't see this bar.</span>
+    <label>Confetti
+      <select id="kind">
+        <option value="classic">Classic confetti</option>
+        <option value="pizza">Pizza slices</option>
+        <option value="hearts">Hearts</option>
+        <option value="stars">Stars</option>
+        <option value="gold">Gold sparkles</option>
+        <option value="snow">Snowflakes</option>
+      </select>
+    </label>
+    <button id="restartTop" type="button">Start over</button>
+  </div>
+
+  <div class="phone">
+    <!-- 1. inbox -->
+    <div class="screen" id="s1">
+      <div class="mail">
+        <div class="mail-h"><h1>Inbox</h1><div class="search">Search mail</div></div>
+        <button class="row new" id="openEmail" type="button">
+          <svg class="av" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="21" fill="#d9a35e"/><circle cx="22" cy="22" r="17" fill="#c23a28"/><circle cx="22" cy="22" r="14.5" fill="#fbe7b0"/><circle cx="16" cy="17" r="3.4" fill="#c65a3a"/><circle cx="27" cy="15" r="3.4" fill="#c65a3a"/><circle cx="25" cy="27" r="3.4" fill="#c65a3a"/><ellipse cx="15" cy="27" rx="3.6" ry="1.8" fill="#3d8f3f"/></svg>
+          <span style="min-width:0;display:flex;flex-direction:column;gap:1px">
+            <span class="top"><span class="who">Stacey Lake</span><span class="time">Just now</span></span>
+            <span class="sub" style="font-weight:700">A thank-you pizza from Stacey Lake</span>
+            <span class="prev">Hi Priya, thanks for the intro call today. I made you a little thank-you pizza.</span>
+          </span>
+        </button>
+        <div class="row old"><span class="av" style="background:#dfe7f3;color:#2c4a72">BL</span><span style="min-width:0;display:flex;flex-direction:column;gap:1px"><span class="top"><span class="who">Brightline Legal</span><span class="time">10:15 AM</span></span><span class="sub">Re: Partnership next steps</span><span class="prev">Sounds good. I will send the draft agreement by Friday.</span></span></div>
+        <div class="row old"><span class="av" style="background:#e6efe0;color:#3c581b">CC</span><span style="min-width:0;display:flex;flex-direction:column;gap:1px"><span class="top"><span class="who">County Court Clerk</span><span class="time">9:02 AM</span></span><span class="sub">Filing received</span><span class="prev">Your submission has been received and is pending review.</span></span></div>
+        <div class="row old"><span class="av" style="background:#f3e6f3;color:#6b2c6b">PA</span><span style="min-width:0;display:flex;flex-direction:column;gap:1px"><span class="top"><span class="who">Paralegal Association</span><span class="time">Yesterday</span></span><span class="sub">November meetup details</span><span class="prev">Join us for networking and a short CLE session.</span></span></div>
+        <p class="foot" style="padding-top:18px">Tap the pizza email to open it.</p>
+      </div>
+    </div>
+
+    <!-- 2. email -->
+    <div class="screen" id="s2" hidden>
+      <div class="mail">
+        <div class="em">
+          <button class="back" id="toInbox" type="button"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Inbox</button>
+          <h1>A thank-you pizza from Stacey Lake</h1>
+          <div class="from"><span class="av" style="width:38px;height:38px;background:var(--cherry);color:#fff6e3">SL</span><span><b>Stacey Lake</b> <span style="color:#777">via Slice of Thanks</span><small>to Priya · Just now</small></span></div>
+        </div>
+        <div class="emcard">
+          <div class="checker"></div>
+          <div class="in">
+            <div class="brand" style="padding:0"><span class="s">Slice of</span><span class="t">Thanks</span></div>
+            <div class="lid small-lid"><span class="biz">Lawfecta</span><span class="sticker">Thank You</span><span class="vegan">🌱 Vegan</span></div>
+            <p style="font-weight:700">Hi Priya,</p>
+            <p style="font-size:.95rem;max-width:280px">Thanks for the intro call today. I made you a little thank-you pizza. Open the box to see what's inside.</p>
+            <button class="btn primary" id="openPizza" type="button">Open your pizza</button>
+            <span style="font-size:.75rem;color:var(--muted)">Opens in your browser. Takes about 20 seconds.</span>
+          </div>
+        </div>
+        <p class="foot">Stacey Lake · Lawfecta<br>Sent with Slice of Thanks</p>
+      </div>
+    </div>
+
+    <!-- 3. delivery + unboxing -->
+    <div class="screen" id="s3" hidden>
+      <div class="checker"></div>
+      <div class="brand"><span class="s">Slice of</span><span class="t">Thanks</span></div>
+      <div class="deliver">
+        <span class="kicker">A delivery for Priya</span>
+        <h1 id="dTitle">Stacey from Lawfecta sent you a pizza</h1>
+        <p class="tap" style="margin-top:-6px">Potato is on the way with your delivery. Try tapping her.</p>
+        <div class="scoot-wrap"><p class="bark" id="bark" hidden></p><svg class="scooter" id="scooter" viewBox="0 8 300 182" role="img" aria-label="Potato the dog driving a delivery scooter, wearing a helmet and goggles, with a pizza box on the back"><path d="M266 112 H300 M262 130 H294 M268 148 H300" stroke="#f1ad2d" stroke-width="6" stroke-linecap="round"/><rect x="180" y="88" width="78" height="50" rx="5" fill="#c99b6b" stroke="#3a1d12" stroke-width="3.5"/><text x="218" y="117" text-anchor="middle" font-family="Shrikhand, Georgia, serif" font-size="15" fill="#3a2616">Lawfecta</text><path d="M84 160 L106 100 L124 96" stroke="#3a1d12" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><g class="potato" role="button" tabindex="0" aria-label="Pet Potato"><path d="M134 144 C128 120 134 98 154 95 C172 93 182 110 180 144 Z" fill="#eab983" stroke="#3a1d12" stroke-width="3"/><ellipse cx="156" cy="122" rx="9" ry="15" fill="#f6dcb6"/><g transform="translate(115,22) scale(.8)"><path d="M26 28 C11 26 4 41 7 56 C9 65 18 67 23 59 C26 51 28 41 32 32 Z" fill="#c98a52" stroke="#3a1d12" stroke-width="2.4" stroke-linejoin="round"/><path d="M74 28 C89 26 96 41 93 56 C91 65 82 67 77 59 C74 51 72 41 68 32 Z" fill="#c98a52" stroke="#3a1d12" stroke-width="2.4" stroke-linejoin="round"/><path d="M50 16 C70 16 82 28 83 45 C84 57 88 65 85 74 C79 84 65 88 50 88 C35 88 21 84 15 74 C12 65 16 57 17 45 C18 28 30 16 50 16 Z" fill="#eab983" stroke="#3a1d12" stroke-width="2.4"/><ellipse cx="34" cy="36" rx="8" ry="4.2" fill="#f4cf9e"/><ellipse cx="66" cy="36" rx="8" ry="4.2" fill="#f4cf9e"/><path d="M41 27 Q50 23.5 59 27 M44 31 Q50 29 56 31" stroke="#d29a62" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M27 33.5 Q32 30.5 38.5 31.5 M73 33.5 Q68 30.5 61.5 31.5" stroke="#b07a48" stroke-width="1.7" fill="none" stroke-linecap="round"/><circle cx="34" cy="46" r="8.6" fill="#1c1310"/><circle cx="66" cy="46" r="8.6" fill="#1c1310"/><circle cx="37" cy="42.8" r="3" fill="#fff"/><circle cx="69" cy="42.8" r="3" fill="#fff"/><circle cx="31.6" cy="49.4" r="1.3" fill="#fff"/><circle cx="63.6" cy="49.4" r="1.3" fill="#fff"/><path d="M31 63 C31 54.5 39 52 50 52 C61 52 69 54.5 69 63 C69 75 61 81 50 81 C39 81 31 75 31 63 Z" fill="#8a6656"/><ellipse cx="27" cy="62" rx="4.5" ry="2.8" fill="#f29e8a" opacity=".5"/><ellipse cx="73" cy="62" rx="4.5" ry="2.8" fill="#f29e8a" opacity=".5"/><path d="M43 52.5 Q50 50 57 52.5" stroke="#6e4e40" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M42 57 Q50 52 58 57 Q58 63 50 64 Q42 63 42 57 Z" fill="#2a1f1c"/><ellipse cx="46.5" cy="56.4" rx="2" ry="1.1" fill="#fff" opacity=".6"/><path d="M50 64 V69.5" stroke="#2a1f1c" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="50" cy="76.5" rx="7.5" ry="3.4" fill="#a37e6c"/><path d="M40 75 Q45 70.8 50 71.6 Q55 70.8 60 75" stroke="#2a1f1c" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M53.8 72.2 L55.8 67.2 L57.8 72.2 Z" fill="#ffffff" stroke="#2a1f1c" stroke-width=".8" stroke-linejoin="round"/><path d="M29 82 Q50 92 71 82 L71 87.5 Q50 97.5 29 87.5 Z" fill="#e3a58a" stroke="#3a1d12" stroke-width="1.6"/><circle cx="50" cy="93" r="3.2" fill="#f6cdb4" stroke="#3a1d12" stroke-width="1"/><path d="M16 33 C16 8 32 -5 50 -5 C68 -5 84 8 84 33 Q50 24 16 33 Z" fill="#c4122f" stroke="#3a1d12" stroke-width="2.6" stroke-linejoin="round"/><path d="M50 -4 Q49 10 50 26" stroke="#fff6e3" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M16 32 Q50 21 84 32" stroke="#5a3a2a" stroke-width="4.5" fill="none" stroke-linecap="round"/><circle cx="37" cy="24" r="7.5" fill="#bfe3ee" stroke="#f1ad2d" stroke-width="3"/><circle cx="37" cy="24" r="7.5" fill="none" stroke="#3a1d12" stroke-width="1.4"/><circle cx="63" cy="24" r="7.5" fill="#bfe3ee" stroke="#f1ad2d" stroke-width="3"/><circle cx="63" cy="24" r="7.5" fill="none" stroke="#3a1d12" stroke-width="1.4"/><path d="M33 21.5 Q35 19.5 38 20 M59 21.5 Q61 19.5 64 20" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M18 34 Q20 60 30 75" stroke="#3a1d12" stroke-width="1.6" fill="none" stroke-linecap="round"/></g><path d="M150 110 Q138 104 127 99" stroke="#3a1d12" stroke-width="15" fill="none" stroke-linecap="round"/><path d="M150 110 Q138 104 127 99" stroke="#eab983" stroke-width="10" fill="none" stroke-linecap="round"/><circle cx="125" cy="98" r="6.5" fill="#eab983" stroke="#3a1d12" stroke-width="2.4"/></g><path d="M98 162 H236 Q260 162 262 140 H160 Q146 140 140 162 Z" fill="#c4122f" stroke="#3a1d12" stroke-width="3.5" stroke-linejoin="round"/><path d="M154 140 L168 134 H248 L262 140" fill="#c4122f" stroke="#3a1d12" stroke-width="3.5" stroke-linejoin="round"/><g class="wheel" style="transform-origin:96px 164px"><circle cx="96" cy="164" r="22" fill="#3a1d12"/><circle cx="96" cy="164" r="8" fill="#f1ad2d"/><path d="M96 144 V184 M76 164 H116" stroke="#5a3a2a" stroke-width="3"/></g><g class="wheel" style="transform-origin:238px 164px"><circle cx="238" cy="164" r="22" fill="#3a1d12"/><circle cx="238" cy="164" r="8" fill="#f1ad2d"/><path d="M238 144 V184 M218 164 H258" stroke="#5a3a2a" stroke-width="3"/></g></svg></div>
+        <div class="boxwrap wiggle" id="box">
+          <div class="inside">
+            <p class="hand">Hi Priya,</p>
+            <p class="hand" style="font-size:1.32rem">Thank you for making time to meet today. I loved hearing about your plans and I am excited about what comes next.</p>
+            <p class="hand sig">Warmly, Stacey</p>
+          </div>
+          <button class="lid" id="lid" type="button" aria-label="Open the pizza box"><span class="biz">Lawfecta</span><span class="sticker">Thank You</span><span class="vegan">🌱 Vegan</span></button>
+        </div>
+        <p class="tap" id="tapHint">Tap the box to lift the lid</p>
+        <div style="flex:1"></div>
+        <button class="btn primary wide" id="mainBtn" type="button">Open the box</button>
+      </div>
+    </div>
+
+    <!-- 4. pizza reveal -->
+    <div class="screen" id="s4" hidden>
+      <div class="checker"></div>
+      <div class="reveal">
+        <svg class="pizza" viewBox="0 0 240 240" role="img" aria-label="A vegan pizza with plant pepperoni, basil, and THANK YOU spelled in plant pepperoni, one letter per slice">
+          <circle cx="120" cy="124" r="116" fill="#3a1d12" opacity=".18"/>
+          <circle cx="120" cy="120" r="116" fill="#d9a35e"/><circle cx="120" cy="120" r="98" fill="#c23a28"/>
+          <ellipse cx="86" cy="80" rx="30" ry="22" fill="#fcf1d2"/><ellipse cx="150" cy="70" rx="28" ry="24" fill="#fcf1d2"/><ellipse cx="120" cy="120" rx="40" ry="28" fill="#fcf1d2"/>
+          <ellipse cx="70" cy="140" rx="26" ry="22" fill="#fcf1d2"/><ellipse cx="170" cy="134" rx="26" ry="22" fill="#fcf1d2"/><ellipse cx="112" cy="174" rx="30" ry="20" fill="#fcf1d2"/>
+          <g fill="#c65a3a"><circle cx="72" cy="80" r="13"/><circle cx="160" cy="52" r="13"/><circle cx="188" cy="104" r="13"/><circle cx="96" cy="46" r="13"/><circle cx="58" cy="146" r="13"/><circle cx="168" cy="166" r="13"/><circle cx="108" cy="190" r="13"/></g>
+          <g fill="#3d8f3f"><ellipse cx="124" cy="66" rx="11" ry="5" transform="rotate(-25 124 66)"/><ellipse cx="60" cy="112" rx="11" ry="5" transform="rotate(30 60 112)"/><ellipse cx="172" cy="82" rx="11" ry="5" transform="rotate(60 172 82)"/><ellipse cx="146" cy="186" rx="11" ry="5" transform="rotate(-40 146 186)"/><ellipse cx="190" cy="140" rx="11" ry="5" transform="rotate(15 190 140)"/></g>
+          <g transform="rotate(-6 50.4 102)"><circle cx="50.4" cy="102" r="17" fill="#c96a3c"/><circle cx="50.4" cy="102" r="15.4" fill="none" stroke="#6b2a12" stroke-opacity=".35" stroke-width="2"/><ellipse cx="61.2" cy="104.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="53.9" cy="112.4" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="43.1" cy="110.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="39.6" cy="99.7" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="47.0" cy="91.5" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="57.8" cy="93.9" rx="2" ry="1" fill="#46782a" opacity=".75"/><text x="50.4" y="109" text-anchor="middle" font-family="Work Sans, sans-serif" font-weight="800" font-size="20" fill="#fff6ea">T</text></g>
+          <g transform="rotate(5 85.2 102)"><circle cx="85.2" cy="102" r="17" fill="#c96a3c"/><circle cx="85.2" cy="102" r="15.4" fill="none" stroke="#6b2a12" stroke-opacity=".35" stroke-width="2"/><ellipse cx="96.0" cy="104.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="88.7" cy="112.4" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="77.9" cy="110.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="74.4" cy="99.7" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="81.8" cy="91.5" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="92.6" cy="93.9" rx="2" ry="1" fill="#46782a" opacity=".75"/><text x="85.2" y="109" text-anchor="middle" font-family="Work Sans, sans-serif" font-weight="800" font-size="20" fill="#fff6ea">H</text></g>
+          <g transform="rotate(-3 120.0 102)"><circle cx="120.0" cy="102" r="17" fill="#c96a3c"/><circle cx="120.0" cy="102" r="15.4" fill="none" stroke="#6b2a12" stroke-opacity=".35" stroke-width="2"/><ellipse cx="130.8" cy="104.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="123.5" cy="112.4" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="112.7" cy="110.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="109.2" cy="99.7" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="116.6" cy="91.5" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="127.4" cy="93.9" rx="2" ry="1" fill="#46782a" opacity=".75"/><text x="120.0" y="109" text-anchor="middle" font-family="Work Sans, sans-serif" font-weight="800" font-size="20" fill="#fff6ea">A</text></g>
+          <g transform="rotate(7 154.8 102)"><circle cx="154.8" cy="102" r="17" fill="#c96a3c"/><circle cx="154.8" cy="102" r="15.4" fill="none" stroke="#6b2a12" stroke-opacity=".35" stroke-width="2"/><ellipse cx="165.6" cy="104.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="158.3" cy="112.4" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="147.5" cy="110.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="144.0" cy="99.7" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="151.4" cy="91.5" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="162.2" cy="93.9" rx="2" ry="1" fill="#46782a" opacity=".75"/><text x="154.8" y="109" text-anchor="middle" font-family="Work Sans, sans-serif" font-weight="800" font-size="20" fill="#fff6ea">N</text></g>
+          <g transform="rotate(-5 189.6 102)"><circle cx="189.6" cy="102" r="17" fill="#c96a3c"/><circle cx="189.6" cy="102" r="15.4" fill="none" stroke="#6b2a12" stroke-opacity=".35" stroke-width="2"/><ellipse cx="200.4" cy="104.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="193.1" cy="112.4" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="182.3" cy="110.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="178.8" cy="99.7" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="186.2" cy="91.5" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="197.0" cy="93.9" rx="2" ry="1" fill="#46782a" opacity=".75"/><text x="189.6" y="109" text-anchor="middle" font-family="Work Sans, sans-serif" font-weight="800" font-size="20" fill="#fff6ea">K</text></g>
+          <g transform="rotate(-3 85.2 139)"><circle cx="85.2" cy="139" r="17" fill="#c96a3c"/><circle cx="85.2" cy="139" r="15.4" fill="none" stroke="#6b2a12" stroke-opacity=".35" stroke-width="2"/><ellipse cx="96.0" cy="141.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="88.7" cy="149.4" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="77.9" cy="147.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="74.4" cy="136.7" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="81.8" cy="128.5" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="92.6" cy="130.9" rx="2" ry="1" fill="#46782a" opacity=".75"/><text x="85.2" y="146" text-anchor="middle" font-family="Work Sans, sans-serif" font-weight="800" font-size="20" fill="#fff6ea">Y</text></g>
+          <g transform="rotate(7 120.0 139)"><circle cx="120.0" cy="139" r="17" fill="#c96a3c"/><circle cx="120.0" cy="139" r="15.4" fill="none" stroke="#6b2a12" stroke-opacity=".35" stroke-width="2"/><ellipse cx="130.8" cy="141.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="123.5" cy="149.4" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="112.7" cy="147.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="109.2" cy="136.7" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="116.6" cy="128.5" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="127.4" cy="130.9" rx="2" ry="1" fill="#46782a" opacity=".75"/><text x="120.0" y="146" text-anchor="middle" font-family="Work Sans, sans-serif" font-weight="800" font-size="20" fill="#fff6ea">O</text></g>
+          <g transform="rotate(-5 154.8 139)"><circle cx="154.8" cy="139" r="17" fill="#c96a3c"/><circle cx="154.8" cy="139" r="15.4" fill="none" stroke="#6b2a12" stroke-opacity=".35" stroke-width="2"/><ellipse cx="165.6" cy="141.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="158.3" cy="149.4" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="147.5" cy="147.2" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="144.0" cy="136.7" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="151.4" cy="128.5" rx="2" ry="1" fill="#46782a" opacity=".75"/><ellipse cx="162.2" cy="130.9" rx="2" ry="1" fill="#46782a" opacity=".75"/><text x="154.8" y="146" text-anchor="middle" font-family="Work Sans, sans-serif" font-weight="800" font-size="20" fill="#fff6ea">U</text></g>
+        </svg>
+        <h2>The Thank-You Special</h2>
+        <span class="vb">🌱 100% vegan, from the dough up</span>
+        <div class="receipt">
+          <span class="rh">GERALD'S REVIEW</span>
+          <span class="critic">
+            <svg class="gav" viewBox="0 0 64 64" role="img" aria-label="Gerald the raccoon"><circle cx="32" cy="32" r="31" fill="#f1ad2d" stroke="#3a1d12" stroke-width="2"/><path d="M13 24 L16 8 L28 17 Z" fill="#7d7470" stroke="#3a1d12" stroke-width="2" stroke-linejoin="round"/><path d="M51 24 L48 8 L36 17 Z" fill="#7d7470" stroke="#3a1d12" stroke-width="2" stroke-linejoin="round"/><path d="M17 21 L18 13 L24 18 Z M47 21 L46 13 L40 18 Z" fill="#2b2523"/><ellipse cx="32" cy="35" rx="22" ry="18" fill="#9a918c" stroke="#3a1d12" stroke-width="2"/><path d="M15 27 Q23 22 29 27 M49 27 Q41 22 35 27" stroke="#f2ece6" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M11 33 Q20 26 30 31 Q32 32 34 31 Q44 26 53 33 Q46 42 36 38 Q32 37 28 38 Q18 42 11 33 Z" fill="#2b2523"/><circle cx="23" cy="33" r="3.4" fill="#fff"/><circle cx="41" cy="33" r="3.4" fill="#fff"/><circle cx="23.8" cy="33.6" r="1.7" fill="#2b2523"/><circle cx="41.8" cy="33.6" r="1.7" fill="#2b2523"/><ellipse cx="32" cy="45" rx="10" ry="7" fill="#f2ece6"/><ellipse cx="32" cy="42" rx="3.4" ry="2.4" fill="#2b2523"/><path d="M28.5 47 Q32 49.5 35.5 47" stroke="#2b2523" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M23 53 L31 56.5 L23 60 Z M41 53 L33 56.5 L41 60 Z" fill="#c4122f" stroke="#3a1d12" stroke-width="1.5" stroke-linejoin="round"/><circle cx="32" cy="56.5" r="2.4" fill="#c4122f" stroke="#3a1d12" stroke-width="1.5"/></svg>
+            <span>Gerald<br>Head critic, Slice of Thanks</span>
+          </span>
+          <hr>
+          <span>Spelling "Thank you" in pepperoni? This meeting went well. Plant-based and still bold. I approve.</span>
+          <span>Rating: <span class="slices" id="slices" aria-label="5 of 5 slices"></span> 5 of 5</span>
+          <hr>
+          <span>Intro call · Oct 23, 2026</span>
+          <hr>
+          <span class="critic"><span class="pav"><svg class="gav" viewBox="0 0 100 100" role="img" aria-label="Potato the dog"><circle cx="50" cy="50" r="48" fill="#4c6b28" stroke="#3a1d12" stroke-width="3"/><g transform="translate(0,-3)"><path d="M26 28 C11 26 4 41 7 56 C9 65 18 67 23 59 C26 51 28 41 32 32 Z" fill="#c98a52" stroke="#3a1d12" stroke-width="2.4" stroke-linejoin="round"/><path d="M74 28 C89 26 96 41 93 56 C91 65 82 67 77 59 C74 51 72 41 68 32 Z" fill="#c98a52" stroke="#3a1d12" stroke-width="2.4" stroke-linejoin="round"/><path d="M50 16 C70 16 82 28 83 45 C84 57 88 65 85 74 C79 84 65 88 50 88 C35 88 21 84 15 74 C12 65 16 57 17 45 C18 28 30 16 50 16 Z" fill="#eab983" stroke="#3a1d12" stroke-width="2.4"/><ellipse cx="34" cy="36" rx="8" ry="4.2" fill="#f4cf9e"/><ellipse cx="66" cy="36" rx="8" ry="4.2" fill="#f4cf9e"/><path d="M41 27 Q50 23.5 59 27 M44 31 Q50 29 56 31" stroke="#d29a62" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M27 33.5 Q32 30.5 38.5 31.5 M73 33.5 Q68 30.5 61.5 31.5" stroke="#b07a48" stroke-width="1.7" fill="none" stroke-linecap="round"/><circle cx="34" cy="46" r="8.6" fill="#1c1310"/><circle cx="66" cy="46" r="8.6" fill="#1c1310"/><circle cx="37" cy="42.8" r="3" fill="#fff"/><circle cx="69" cy="42.8" r="3" fill="#fff"/><circle cx="31.6" cy="49.4" r="1.3" fill="#fff"/><circle cx="63.6" cy="49.4" r="1.3" fill="#fff"/><path d="M31 63 C31 54.5 39 52 50 52 C61 52 69 54.5 69 63 C69 75 61 81 50 81 C39 81 31 75 31 63 Z" fill="#8a6656"/><ellipse cx="27" cy="62" rx="4.5" ry="2.8" fill="#f29e8a" opacity=".5"/><ellipse cx="73" cy="62" rx="4.5" ry="2.8" fill="#f29e8a" opacity=".5"/><path d="M43 52.5 Q50 50 57 52.5" stroke="#6e4e40" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M42 57 Q50 52 58 57 Q58 63 50 64 Q42 63 42 57 Z" fill="#2a1f1c"/><ellipse cx="46.5" cy="56.4" rx="2" ry="1.1" fill="#fff" opacity=".6"/><path d="M50 64 V69.5" stroke="#2a1f1c" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="50" cy="76.5" rx="7.5" ry="3.4" fill="#a37e6c"/><path d="M40 75 Q45 70.8 50 71.6 Q55 70.8 60 75" stroke="#2a1f1c" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M53.8 72.2 L55.8 67.2 L57.8 72.2 Z" fill="#ffffff" stroke="#2a1f1c" stroke-width=".8" stroke-linejoin="round"/><path d="M29 82 Q50 92 71 82 L71 87.5 Q50 97.5 29 87.5 Z" fill="#e3a58a" stroke="#3a1d12" stroke-width="1.6"/><circle cx="50" cy="93" r="3.2" fill="#f6cdb4" stroke="#3a1d12" stroke-width="1"/></g></svg></span><span>Delivered by Potato, Head of Delivery. She attempted to eat one slice in transit. She was stopped. Mostly.</span></span>
+        </div>
+        <details><summary>Who are Gerald and Potato?</summary><p>Gerald is the raccoon who reviews every pizza made on Slice of Thanks before it's delivered. He spent ten years eating leftover crusts behind a family pizzeria, so he knows what he's talking about. Mostly. Potato is the real dog behind Slice of Thanks and the one who brings every pizza to the door. She tries to eat a slice on every delivery.</p></details>
+        <div class="actions">
+          <a class="btn primary" href="https://www.lawfecta.com" target="_blank" rel="noopener">Book a follow-up with Stacey</a>
+          <button class="btn" id="makeBack" type="button">Make a pizza back</button>
+        </div>
+        <button class="restart" id="restart" type="button">Start the demo over</button>
+      </div>
+    </div>
+  </div>
+</div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const screens=['s1','s2','s3','s4'];
+function go(id){screens.forEach(s=>$('#'+s).hidden=s!==id);
+  const el=$('#'+id);el.querySelectorAll('[style*="animation"],.scooter,.boxwrap,.pizza,.receipt,.row.new').forEach(n=>{n.style.animation='none';void n.offsetWidth;n.style.animation=''});
+  if(id==='s4')fillSlices();try{$('.phone').scrollIntoView({block:'start',behavior:'smooth'})}catch(e){}}
+let opened=false;
+function openBox(){if(opened){go('s4');return}opened=true;$('#box').classList.remove('wiggle');$('#box').classList.add('open');
+  $('#tapHint').textContent='Your note is inside the lid. Potato says woof.';$('#mainBtn').textContent='See your pizza';setTimeout(()=>burst($('#kind').value),450)}
+function reset(){opened=false;$('#box').classList.remove('open');$('#box').classList.add('wiggle');$('#tapHint').textContent='Tap the box to lift the lid';$('#mainBtn').textContent='Open the box';go('s1')}
+$('#openEmail').onclick=()=>go('s2');
+$('#toInbox').onclick=()=>go('s1');
+$('#openPizza').onclick=()=>{reset();go('s3')};
+$('#lid').onclick=openBox;
+$('#mainBtn').onclick=openBox;
+$('#restart').onclick=reset;$('#restartTop').onclick=reset;
+$('#kind').addEventListener('change',e=>burst(e.target.value));
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,3200)}
+$('#makeBack').onclick=()=>toast('This opens the pizza kitchen so Priya can make one back for Stacey.');
+function fillSlices(){const s=$('#slices');s.innerHTML='';for(let i=0;i<5;i++){s.insertAdjacentHTML('beforeend','<svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" style="animation-delay:'+(1.1+i*.15)+'s"><path d="M1 2 L15 2 L8 15 Z" fill="#f1ad2d" stroke="#c4122f" stroke-width="1.5" stroke-linejoin="round"/></svg>')}}
+
+
+/* Potato easter egg: tap her for a bark, tap five times for a secret */
+const BARKS=['Woof!','Is that pizza for me?','I did not eat a slice. Probably.','Woof woof!','Gerald says I am not allowed to have any.','Pet me again.','Vroom vroom. Woof.'];
+let pTaps=0;
+function petPotato(el,bark){pTaps++;el.classList.remove('hop');requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('hop')));
+ const secret=pTaps%5===0;const t=secret?"You found Potato's secret. She shares her pizza with no one, except you.":BARKS[(pTaps-1)%BARKS.length];
+ if(bark){bark.textContent=t;bark.hidden=false;clearTimeout(bark._t);bark._t=setTimeout(()=>bark.hidden=true,secret?3200:1800)}else toast(t);
+ if(secret)burst('pizza')}
+function wirePotato(el,bark){el.style.cursor='pointer';el.addEventListener('click',e=>{e.stopPropagation();petPotato(el,bark)});
+ el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();petPotato(el,bark)}})}
+wirePotato(document.querySelector('#scooter .potato'),$('#bark'));
+document.querySelectorAll('.critic .gav[aria-label="Potato the dog"]').forEach(el=>wirePotato(el,null));
+/* confetti */
+const cfx=$('#confetti');let parts=[],raf=0;
+function burst(kind){try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return}catch(e){}
+  const W=innerWidth,H=innerHeight,dpr=Math.min(2,devicePixelRatio||1);cfx.width=W*dpr;cfx.height=H*dpr;cfx.getContext('2d').setTransform(dpr,0,0,dpr,0,0);
+  const pal={classic:['#c4122f','#f1ad2d','#4c6b28','#2b6cb0','#e86a92','#7d3c98'],hearts:['#c4122f','#e86a92','#ff8fab','#a10e27'],stars:['#f1ad2d','#ffd166','#fff1b8'],
+    gold:['#f6d365','#e0b04a','#fff4c2','#c9962c'],snow:['#ffffff','#e6f0ff','#cfe3ff'],pizza:['#f1ad2d']}[kind]||['#c4122f'];
+  const n=kind==='snow'?120:kind==='pizza'?70:170;
+  for(let i=0;i<n;i++){const snow=kind==='snow',side=i%2?1:-1;
+    parts.push({kind,col:pal[i%pal.length],x:snow?Math.random()*W:W/2+side*Math.random()*60,y:snow?-Math.random()*H*.7:H*.55,
+      vx:snow?(Math.random()-.5)*.8:side*(2+Math.random()*9)+(Math.random()-.5)*4,vy:snow?1+Math.random()*1.6:-(8+Math.random()*13),
+      g:snow?.012:.34,s:kind==='pizza'?14+Math.random()*9:kind==='gold'?2+Math.random()*3:5+Math.random()*6,
+      rot:Math.random()*6.28,vr:(Math.random()-.5)*.3,life:snow?440:210+Math.random()*70,ph:Math.random()*6.28})}
+  if(!raf)raf=requestAnimationFrame(frame)}
+function heart(c,s){c.beginPath();c.moveTo(0,s*.35);c.bezierCurveTo(-s,-s*.3,-s*.4,-s,0,-s*.35);c.bezierCurveTo(s*.4,-s,s,-s*.3,0,s*.35);c.fill()}
+function star(c,s){c.beginPath();for(let i=0;i<10;i++){const r=i%2?s*.45:s,a=i*Math.PI/5-Math.PI/2;c.lineTo(Math.cos(a)*r,Math.sin(a)*r)}c.closePath();c.fill()}
+function slice(c,s){c.fillStyle='#f6cf6a';c.beginPath();c.moveTo(0,s);c.lineTo(-s*.6,-s*.6);c.lineTo(s*.6,-s*.6);c.closePath();c.fill();
+  c.fillStyle='#d9a35e';c.fillRect(-s*.66,-s*.8,s*1.32,s*.28);c.fillStyle='#c4122f';c.beginPath();c.arc(-s*.15,-s*.2,s*.15,0,6.28);c.arc(s*.18,s*.15,s*.13,0,6.28);c.fill()}
+function frame(){raf=0;const c=cfx.getContext('2d'),W=innerWidth,H=innerHeight;c.clearRect(0,0,W,H);
+  parts=parts.filter(p=>p.life>0&&p.y<H+60);
+  for(const p of parts){p.vy+=p.g;p.vx*=.985;if(p.kind==='snow')p.x+=Math.sin(p.life/30+p.ph)*.6;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life--;
+    c.save();c.translate(p.x,p.y);c.rotate(p.rot);c.globalAlpha=Math.min(1,p.life/40);c.fillStyle=p.col;
+    if(p.kind==='classic')c.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);else if(p.kind==='hearts')heart(c,p.s);else if(p.kind==='stars')star(c,p.s);
+    else if(p.kind==='pizza')slice(c,p.s);else if(p.kind==='gold'){c.globalAlpha*=.6+.4*Math.sin(p.life/4+p.ph);c.beginPath();c.arc(0,0,p.s,0,6.28);c.fill()}
+    else{c.beginPath();c.arc(0,0,p.s*.5,0,6.28);c.fill()}
+    c.restore()}
+  if(parts.length)raf=requestAnimationFrame(frame)}
+})();
+</script>

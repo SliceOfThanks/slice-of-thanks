@@ -1,6 +1,6 @@
 # Build status (read this first in a new session)
 
-Last updated: 2026-10-24. Live code version: v0.9.4 (see releases.json and app_settings.code_version).
+Last updated: 2026-10-24. Live code version: v0.10.0 (see releases.json and app_settings.code_version).
 
 ## Done and live
 - Supabase project cmnclubiarmthibqibuj. Edge Function `api` (api-0.4.0, verify_jwt false, own auth). Tables have RLS with no policies.
@@ -60,9 +60,10 @@ Git tags cannot be pushed. Use commit IDs.
 - v0.9.2 (2026-10-24, commit be1c0b1, app only): Toppings step groups are details.tgroup folds (Classic open by default; the selected topping's group opens; closed groups show "N on the pizza" via updateCount and topGroup). The Sprinkle a handful / Undo / Clear row moved to the top of the step.
 - v0.9.3 (2026-10-24, commit 86a83aa, app only): bacon redrawn.
 - v0.9.4 (2026-10-24, commit 340c4dc, api-0.9.0, migration personal_sends.sql): pizza.bakeLevel 0-3 from bake time (bakeLevelFor; early finish uses elapsed time). bakeMarks draws bubbles (1+), crust char (2+), darker edge and oregano (3) in the prototype and shared/pizza-core.js. Gerald's BAKE_LINES lead the receipt; level 3 is always 5 slices. EGGS perfectBake. Box step kind switch (box.kind business/personal, stored as sendKind): personal hides [data-biz] fields, shows the photo upload (Pro, square-cropped JPEG), sends box.personal and box.photo_url after /photo. sot_create_send strips gift/cta/logo for personal, sets sender.business null, send_as person, sender.personal, logo_url = photo. Presets keep kind. Settings has an open You card (name, business, mailing address, reply-to); send step has #fromName. Email greeting uses the first name.
+- v0.10.0 (2026-10-24, commit 048f833, api-0.10.2, migration calendar.sql): Calendly and TidyCal OAuth (lib/calendar.ts; secrets CALENDLY_/TIDYCAL_CLIENT_ID and _SECRET; redirect .../functions/v1/api/oauth/{provider}/callback). Tables oauth_states and meetings; tokens in the vault (integrations.token_vault_id). The worker syncs 5 calendars a minute (each every 10 minutes) and runs sot_meetings_ended: want_pizza (or prefs.after_meeting auto on Pro) and automations on sends the signature pizza (members.prefs.signature, saved by POST /signature); otherwise the meeting goes to ready and buildWaitingEmail goes to reply_to. Home This week renders cal.meetings (live.js meetingRow); Settings > Calendar card (#calCard). /send with meeting_id marks the meeting sent. Personal box: box.lidText sent as lid_text, shown on the lid. Subject: isThanksOccasion (Kitchen and lib/email.ts) picks "sent you a slice of thanks" or "A special pizza delivery for you from". Footer always uses platform_address; the Settings mailing address field is gone. Profile saves flush on pagehide. Playwright suites now in tests/pw (cal-test.js is new).
 
 ## Next, in order
-1. Calendar connections (Calendly, TidyCal) feeding Home > This week, with Stacey's rules:
+1. Live test the calendar connections with a real Calendly and TidyCal booking (built in v0.10.0), with Stacey's rules:
    - Pro and Team: each upcoming meeting has a choice to have a pizza ready when it ends (or the Settings default).
    - A Slice (free): the member picks which upcoming meetings get a pizza. When a picked meeting ends, their signature pizza is created for that person automatically (a signature pizza must be set; prompt them to set one in Settings if not) and an email tells them it is waiting. The member opens it and sends it (free sends are never automatic).
    - Home quick actions stay: Make a new pizza, Hire Gerald, Send the Pizza of the Month.

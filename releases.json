@@ -149,6 +149,12 @@
       "commit": "340c4dc686b469a0b3906ec1d882c350443d8289",
       "date": "2026-10-24",
       "notes": "Bake levels by time (10 sec quick, 1 min bubbly, 3 min stone-fired, 5 min Gerald's perfect bake with a Treat Jar egg). Business or Personal switch on the box step; personal pizzas drop the business parts and can carry a round photo (Pro). You card in Settings, From field on the send step. api-0.9.0: /photo route, first-name greeting."
+    },
+    {
+      "version": "v0.10.0",
+      "commit": "048f8339183cd192412890b28c2baffc48cdeeb9",
+      "date": "2026-10-24",
+      "notes": "Calendly and TidyCal connections (each member connects their own). Home This week with a pizza switch per meeting; Pro and Team send the signature pizza when a picked meeting ends, A Slice gets it waiting on Home. Personal lid message. Subject lines follow the occasion sticker. Slice of Thanks address on every email. api-0.10.2, migration calendar.sql."
     }
   ]
 }

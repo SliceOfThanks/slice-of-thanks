@@ -160,8 +160,8 @@ upgrade = function (key) {
   const free = !LIVE.session || LIVE.session.plan === 'free';
   $('#upYearly').hidden = !free;
   $('#upNote').textContent = free
-    ? 'Special Delivery is a one-time $2.99 that unlocks these features for one pizza and includes its send. The Whole Pie is 250 emails a month. Cancel anytime.'
-    : 'The Whole Pie is 250 emails a month. Cancel anytime.';
+    ? 'The Whole Pie is $9 a month or $90 a year after the trial, with 250 emails a month. Cancel anytime. Special Delivery is a one-time $2.99 that unlocks these features for one pizza and includes its send.'
+    : 'The Whole Pie is $9 a month or $90 a year, with 250 emails a month. Cancel anytime.';
 };
 const _renderPlanCard2 = renderPlanCard;
 renderPlanCard = function () {

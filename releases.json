@@ -167,6 +167,12 @@
       "commit": "cb924ffff88269180573543a5e7fe6290ccc6f37",
       "date": "2026-10-24",
       "notes": "White logo and pizza envelope in the header; Pizza envelopes confetti (also after every send); envelope on the recipient page and email. Personal pizzas ride under the Slice of Thanks logo. Loaded Gerald and pizzeria classics. Gerald picks the occasion sticker from the message. First and last name for new people; vegan tag in People. Pizza of the Month folds on Home. TidyCal sync fix (date format). api-0.11.0."
+    },
+    {
+      "version": "v0.12.0",
+      "commit": "b2daf45f83bb13e416264136401456c95f2cde3f",
+      "date": "2026-10-24",
+      "notes": "Import contacts from Calendly and TidyCal into People (offered after connecting). Hire Gerald: Business or Personal, and How much topping (Light, Regular, Loaded); quick picks get the same choice. Personal sends skip the Meeting field. Header logo smaller. Email: Slice of Thanks text logo and Potato's box with the logo. api-0.12.0, migration import_contacts.sql."
     }
   ]
 }

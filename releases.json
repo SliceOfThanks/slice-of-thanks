@@ -59,6 +59,12 @@
       "commit": "3fd4ca0d52b9961c3134a8fc8c8d2d34f9d56142",
       "date": "2026-10-24",
       "notes": "Softer dark mode text. What's new shows the five newest, with a page for all. BD API uses sliceofthanks.app."
+    },
+    {
+      "version": "v0.4.4",
+      "commit": "eeb536ff8dadafe984dce04f88e7fa89eafa919c",
+      "date": "2026-10-24",
+      "notes": "Log out in Kitchen Settings. SOT-Login widget styles the BD login page."
     }
   ]
 }

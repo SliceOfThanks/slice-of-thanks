@@ -16,13 +16,13 @@
   --mono:"Courier Prime","Courier New",monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#24160F; --surface:#3E2416; --sunk:#4A2D1D; --ink:#FFF3E0; --muted:#D9BEA4; --line:#634433;
+  --bg:#24160F; --surface:#3E2416; --sunk:#4A2D1D; --ink:#E3D0B8; --muted:#BBA088; --line:#634433;
   --tomato:#D93A30; --tomato-ink:#FFF3E0; --mustard:#F5C04E; --basil:#9cc265; --cheese:#F5C04E; --pink:#5A2E2A;
   --edge:#17110E; --shade:#120A07; --board:#17110E; --board-ink:#FFF3E0; --tomato-text:#FF8A7A;
   --cloth-a:#6B2A22; --cloth-b:#3E2416;
   --warn-bg:#4a3510; --warn-ink:#f6cf72; --ok-bg:#263618; --ok-ink:#b6d88a; --oven:#0d0604; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#24160F; --surface:#3E2416; --sunk:#4A2D1D; --ink:#FFF3E0; --muted:#D9BEA4; --line:#634433;
+  --bg:#24160F; --surface:#3E2416; --sunk:#4A2D1D; --ink:#E3D0B8; --muted:#BBA088; --line:#634433;
   --tomato:#D93A30; --tomato-ink:#FFF3E0; --mustard:#F5C04E; --basil:#9cc265; --cheese:#F5C04E; --pink:#5A2E2A;
   --edge:#17110E; --shade:#120A07; --board:#17110E; --board-ink:#FFF3E0; --tomato-text:#FF8A7A;
   --cloth-a:#6B2A22; --cloth-b:#3E2416;
@@ -631,6 +631,17 @@ body.is-free .pro-tag{display:inline-block}
       <h2>What's new</h2>
       <p class="muted" style="font-size:.9rem">Updates from the Slice of Thanks kitchen. Tap Try it to see something new in action.</p>
       <ul class="feed" id="feed"></ul>
+      <div class="btn-row"><button class="btn small" id="feedMore" type="button">See all updates</button></div>
+    </div>
+  </section>
+
+  <!-- WHAT'S NEW: every update -->
+  <section id="view-news" hidden>
+    <div><button class="linkish" id="newsBack">Back to Crew</button></div>
+    <div class="card">
+      <h2>What's new</h2>
+      <p class="muted" style="font-size:.9rem">Every update from the Slice of Thanks kitchen, newest first.</p>
+      <ul class="feed" id="feedAll"></ul>
     </div>
   </section>
 
@@ -1052,13 +1063,13 @@ const cv=$('#pizza');
 /* ---------- views ---------- */
 let account=store.get('account',null);
 const GATE_TEXT={today:'Today shows your meetings and sends pizza prompts when they end.',people:'People keeps track of everyone you send pizzas to and whether they opened them.',bulk:'Send to a list lets you upload a CSV and send everyone a pizza.',settings:'Settings holds your logo, signature pizza, and calendar.'};
-const views={admin:$('#view-admin'),gate:$('#view-gate'),today:$('#view-today'),make:$('#view-make'),people:$('#view-people'),gerald:$('#view-gerald'),bulk:$('#view-bulk'),settings:$('#view-settings')};
-function show(v){const tv=v==='bulk'?'people':v==='admin'?'settings':v;
+const views={admin:$('#view-admin'),gate:$('#view-gate'),today:$('#view-today'),make:$('#view-make'),people:$('#view-people'),gerald:$('#view-gerald'),bulk:$('#view-bulk'),news:$('#view-news'),settings:$('#view-settings')};
+function show(v){const tv=v==='bulk'?'people':v==='admin'?'settings':v==='news'?'gerald':v;
  if(!account&&GATE_TEXT[v]){for(const k in views)views[k].hidden=k!=='gate';$('#gateWhat').textContent=GATE_TEXT[v];
   document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.view===tv?'true':'false'));window.scrollTo({top:0});return}
  for(const k in views)views[k].hidden=k!==v;
  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.view===tv?'true':'false'));
- if(v==='today')renderToday();if(v==='settings')renderSettings();if(v==='gerald')renderGerald();if(v==='bulk')renderBulk();if(v==='people')renderPeople();if(v==='admin')renderAdmin();if(v==='make'){renderStep();kick()}
+ if(v==='today')renderToday();if(v==='settings')renderSettings();if(v==='gerald')renderGerald();if(v==='bulk')renderBulk();if(v==='people')renderPeople();if(v==='admin')renderAdmin();if(v==='news')renderFeed();if(v==='make'){renderStep();kick()}
  window.scrollTo({top:0})}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>show(b.dataset.view));
 
@@ -1482,8 +1493,10 @@ function runDemo(d){
  if(d.type==='cheese'){scMode='cheese';step=1;show('make');['mozz','cheddar','parm'].forEach((k,j)=>{setTimeout(()=>{cheeseBrush=k;for(let i=0;i<15;i++){const a=Math.random()*6.283,dd=Math.sqrt(Math.random())*.78;addCheeseDab(Math.cos(a)*dd,Math.sin(a)*dd,true)}renderSauce()},300+j*450)});return}
  if(d.type==='spell'){pizza.cheeseDabs=[];for(let i=0;i<40;i++){const a=Math.random()*6.283,dd=Math.sqrt(Math.random())*.78;pizza.cheeseDabs.push({x:Math.cos(a)*dd,y:Math.sin(a)*dd,k:'mozz',s:Math.random()*9,r:.8})}pizza.cheese='mozz';
   step=2;selTop='olive';msgStyle='shape';show('make');setTimeout(()=>{spell(d.value)},350);return}}
-function renderFeed(){let seen=store.get('seenNews',[]);const ul=$('#feed');ul.innerHTML='';
- allNews().forEach(a=>{const li=document.createElement('li');
+const FEED_SHOWN=5;
+function renderFeed(){const all=allNews();fillFeed($('#feed'),all.slice(0,FEED_SHOWN));fillFeed($('#feedAll'),all);$('#feedMore').hidden=all.length<=FEED_SHOWN}
+function fillFeed(ul,items){let seen=store.get('seenNews',[]);ul.innerHTML='';
+ items.forEach(a=>{const li=document.createElement('li');
   li.innerHTML='<div class="row-h"><span class="feed-date">'+esc(a.date)+'</span>'+(!seen.includes(a.id)&&a.demo?'<span class="new">New</span>':'')+'</div><b>'+esc(a.title)+'</b><span>'+esc(a.text)+'</span>';
   if(a.demo){const b=document.createElement('button');b.className='btn small';b.type='button';b.textContent=a.label||'Try it';b.onclick=()=>{runDemo(a.demo);seen=store.get('seenNews',[]);if(!seen.includes(a.id)){seen.push(a.id);store.set('seenNews',seen)}};li.appendChild(b)}
   ul.appendChild(li)})}
@@ -1551,6 +1564,7 @@ $('#csvFile').addEventListener('change',e=>{const f=e.target.files[0];if(!f)retu
 $('#sampleCsv').onclick=()=>loadList(SAMPLE_CSV);
 $('#copyHeader').onclick=()=>{try{navigator.clipboard.writeText('Name,Email,Phone,Company,Vegan').then(()=>toast('Column headers copied. Paste them into row 1 of your spreadsheet.'),()=>toast('Headers: Name, Email, Phone, Company, Vegan'))}catch(e){toast('Headers: Name, Email, Phone, Company, Vegan')}};
 $('#bulkBack').onclick=()=>show('people');
+$('#feedMore').onclick=()=>show('news');$('#newsBack').onclick=()=>show('gerald');
 function merge(t,r){return t.replace(/\{first\}/g,first(r.name)).replace(/\{company\}/g,r.company||'your team')}
 function bulkBox(r){return{style:bulk.style,sticker:bulk.sticker,confetti:bulk.confetti,tone:'playful',note:merge(bulk.note,r),sign:bulk.sign,to:r.name,contact:r.contact,meeting:bulk.sticker,linkLabel:profile.linkLabel,link:profile.link,method:'email',reward:Object.assign({text:'',code:'',link:'',exp:''},profile.reward||{})}}
 function bulkPizza(r){if(bulk.mode==='signature'){const p=clonePizza(signature);if(r.vegan){veganize(p)}return p}

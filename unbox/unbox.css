@@ -4,7 +4,7 @@
   --display:"Shrikhand","Cooper Black",Georgia,serif;--script:"Yellowtail","Brush Script MT",cursive;--body:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --hand:"Caveat","Comic Sans MS",cursive;--mono:"Courier Prime","Courier New",monospace;
   background:var(--bg);color:var(--ink);font-family:var(--body);max-width:480px;margin:0 auto;padding:0 16px 32px;box-sizing:border-box;text-align:center;min-height:100vh}
-@media (prefers-color-scheme: dark){.sot-u{--bg:#24160F;--surface:#3E2416;--sunk:#4A2D1D;--ink:#FFF3E0;--muted:#D9BEA4;--tomato:#D93A30;--tomato-ink:#FFF3E0;--tomato-text:#FF8A7A;
+@media (prefers-color-scheme: dark){.sot-u{--bg:#24160F;--surface:#3E2416;--sunk:#4A2D1D;--ink:#E3D0B8;--muted:#BBA088;--tomato:#D93A30;--tomato-ink:#FFF3E0;--tomato-text:#FF8A7A;
   --mustard:#F5C04E;--basil:#9cc265;--edge:#17110E;--shade:#120A07;--cloth-a:#6B2A22;--cloth-b:#3E2416;color-scheme:dark}}
 html:has(.sot-u),body:has(.sot-u){background:#FFF3E0!important}
 @media (prefers-color-scheme: dark){html:has(.sot-u),body:has(.sot-u){background:#24160F!important}}

@@ -53,8 +53,8 @@ Git tags cannot be pushed. Use commit IDs.
    - Pro and Team: each upcoming meeting has a choice to have a pizza ready when it ends (or the Settings default).
    - A Slice (free): the member picks which upcoming meetings get a pizza. When a picked meeting ends, their signature pizza is created for that person automatically (a signature pizza must be set; prompt them to set one in Settings if not) and an email tells them it is waiting. The member opens it and sends it (free sends are never automatic).
    - Home quick actions stay: Make a new pizza, Hire Gerald, Send the Pizza of the Month.
-3. Spanish in the Kitchen UI.
-4. SOT-Admin widget: Releases, Subscription Plans, Pizza of the Month. Include a purchases list.
+2. Spanish in the Kitchen UI.
+3. SOT-Admin widget: Releases, Subscription Plans, Pizza of the Month. Include a purchases list.
 Then Phase 2 per the blueprint (webhooks, Calendly, TidyCal, birthdays).
 
 ## Working with Stacey

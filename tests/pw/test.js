@@ -253,8 +253,9 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     check(st.visited.includes('/account/upgrade'), 'Change plan goes to BD upgrade page');
     await page.goto(ORIGIN + '/kitchen'); await wait(1200);
     await inRoot(page, "R.querySelector('#tab-settings').click()"); await wait(600);
-    await Promise.all([page.waitForNavigation(), inRoot(page, "[...R.querySelectorAll('#liveBilling button')].find(b=>b.textContent.indexOf('Update card')===0).click()")]);
-    check(st.visited.includes('/account/billing'), 'Update card opens BD secure billing');
+    await inRoot(page, "[...R.querySelectorAll('#liveBilling button')].find(b=>b.textContent.indexOf('Update card')===0).click()"); await wait(800);
+    check(await inRoot(page, "const f=R.querySelector('#liveSheet iframe');return !!f&&!R.querySelector('#liveSheet').hidden"), 'Update card opens BD secure billing inside the app');
+    check(new URL(page.url()).pathname === '/kitchen', 'Update card keeps the member in the app');
     await ctx.close();
   }
 

@@ -22,7 +22,7 @@
       tease: function (s) { return s + ' hid something under this pizza. Eat all 6 slices to find out.'; },
       gone: 'All gone.', ate: 'You ate all 6 slices. Gerald is impressed. Potato is a little jealous.',
       under: 'Under the pizza', copy: 'Copy code', copied: 'Copied!', use: 'Use it now', useBy: function (d) { return 'Use it by ' + d; },
-      back: function (s) { return 'Send ' + s + ' a pizza back'; }, review: "GERALD'S REVIEW", critic: 'Head Critic, Slice of Thanks',
+      back: function (s) { return 'Send ' + s + ' a pizza back'; }, review: "GERALD'S REVIEW", critic: 'Head Chef, Slice of Thanks',
       rating: function (n) { return 'Rating: ' + n + ' of 5 slices'; }, eaten: function (n) { return 'Slices eaten: ' + '●'.repeat(n) + '○'.repeat(6 - n) + ' ' + n + ' of 6'; },
       from: 'From', potato: 'Delivered by Potato, Head of Delivery.', why: 'Why did I get this?',
       whyText: function (s) { return s + ' sent you this pizza through Slice of Thanks to say thank you.'; },
@@ -37,7 +37,7 @@
       tease: function (s) { return s + ' escondió algo debajo de esta pizza. Come las 6 porciones para descubrirlo.'; },
       gone: 'Se acabó.', ate: 'Te comiste las 6 porciones. Gerald está impresionado. Potato tiene un poco de envidia.',
       under: 'Debajo de la pizza', copy: 'Copiar código', copied: '¡Copiado!', use: 'Úsalo ahora', useBy: function (d) { return 'Úsalo antes del ' + d; },
-      back: function (s) { return 'Envíale una pizza a ' + s; }, review: 'RESEÑA DE GERALD', critic: 'Crítico principal, Slice of Thanks',
+      back: function (s) { return 'Envíale una pizza a ' + s; }, review: 'RESEÑA DE GERALD', critic: 'Chef principal, Slice of Thanks',
       rating: function (n) { return 'Calificación: ' + n + ' de 5 porciones'; }, eaten: function (n) { return 'Porciones comidas: ' + '●'.repeat(n) + '○'.repeat(6 - n) + ' ' + n + ' de 6'; },
       from: 'De', potato: 'Entregada por Potato, jefa de entregas.', why: '¿Por qué recibí esto?',
       whyText: function (s) { return s + ' te envió esta pizza a través de Slice of Thanks para darte las gracias.'; },
@@ -132,6 +132,8 @@
       box.sticker ? el('div', { class: 'lid-sticker', text: box.sticker }) : null,
       pizza.vegan ? el('div', { class: 'lid-vegan', text: '🌱 Vegan' }) : null
     ]);
+    // Pro box topper: a seasonal decoration on the lid
+    var topper = box.topper && P.topperEl ? P.topperEl(box.topper) : null; if (topper) lid.appendChild(topper);
     /* Notes can start with their own greeting, like "Hi [first name]": then the page does not add another */
     var ownGreeting = /^\s*(hi|hello|hey|dear|hola|good (morning|afternoon|evening))\b/i.test(box.note || '');
     var greet = d.recipient_name && !ownGreeting ? (lang === 'es' ? 'Hola ' : 'Hi ') + first(d.recipient_name) + ', ' : '';

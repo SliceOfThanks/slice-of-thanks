@@ -306,10 +306,41 @@ function renderBilling() {
   const btns = document.createElement('div'); btns.className = 'btn-row';
   const cp = document.createElement('button'); cp.type = 'button'; cp.className = 'btn small primary'; cp.textContent = 'Change plan'; cp.onclick = openPlans;
   const card = document.createElement('button'); card.type = 'button'; card.className = 'btn small'; card.textContent = 'Update card or billing address';
-  card.onclick = () => { location.href = bdLink('billing', '/account/billing'); };
+  card.onclick = openCardSheet;
   btns.append(cp, card);
   if (s.plan !== 'free') { const pk = document.createElement('button'); pk.type = 'button'; pk.className = 'btn small'; pk.textContent = 'Buy more emails'; pk.onclick = openPacks; btns.appendChild(pk); }
   c.appendChild(btns);
+}
+/* Card and billing address: BD's own billing page, shown inside the app.
+   Same site, so we can hide BD's header and sidebar and show only the card and address part. */
+const CARD_CSS = 'html.sot-card body{visibility:hidden}html.sot-card .sot-card-area,html.sot-card .sot-card-area *,html.sot-card .modal,html.sot-card .modal *{visibility:visible}' +
+  'html.sot-card .sot-card-area{position:fixed;inset:0;overflow:auto;z-index:2147483000;background:#fff;margin:0;padding:12px;max-width:none;width:auto}' +
+  'html.sot-card .modal-backdrop{z-index:2147483500}html.sot-card .modal{z-index:2147483600}';
+function tidyCardFrame(fr) {
+  let doc;
+  try { doc = fr.contentDocument; } catch (e) { doc = null; }
+  if (!doc || !doc.body) return false;
+  const btn = [...doc.querySelectorAll('a,button')].find(x => (x.textContent || '').includes('Add New Credit Card'));
+  if (!btn) return true;
+  let area = btn;
+  while (area.parentElement && area.parentElement !== doc.body && !(area.textContent || '').includes('Payment History')) area = area.parentElement;
+  if (area === doc.body) return true;
+  area.classList.add('sot-card-area');
+  const st = doc.createElement('style'); st.textContent = CARD_CSS; doc.head.appendChild(st);
+  doc.documentElement.classList.add('sot-card');
+  return true;
+}
+function openCardSheet() {
+  const url = bdLink('billing', '/account/billing');
+  const wrap = document.createElement('div');
+  const note = document.createElement('p'); note.className = 'muted'; note.style.margin = '0 0 8px';
+  note.textContent = 'Add a new card or change your billing address. This is our secure checkout, so your card number never touches the app.';
+  const fr = document.createElement('iframe'); fr.title = 'Card and billing address'; fr.src = url;
+  fr.style.cssText = 'width:100%;height:62vh;border:2.5px solid #3E2416;border-radius:12px;background:#fff';
+  fr.onload = () => { if (!tidyCardFrame(fr)) { closeLiveSheet(); location.href = url; } };
+  wrap.append(note, fr);
+  const back = liveSheet('Card and billing address', wrap, [{ label: 'Done', primary: true, run: () => { closeLiveSheet(); loadBilling(true); } }]);
+  back.querySelector('.sheet').style.maxWidth = '760px';
 }
 async function loadBilling(force) {
   if (!LIVE.session) return;
@@ -338,6 +369,38 @@ function openPlans() {
   note.textContent = 'Next you pick the plan and confirm on our secure checkout. Your pizzas, contacts and settings stay the same.';
   p.appendChild(note);
   liveSheet('Change plan', p, [{ label: 'Continue to change plan', primary: true, run: () => { location.href = bdLink('change_plan', '/account/upgrade'); } }]);
+}
+
+/* Delete my account and data. A paid plan is cancelled first so nobody keeps paying for an account that is gone. */
+function openDeleteSheet() {
+  const s = LIVE.session; if (!s) return;
+  const p = document.createElement('div');
+  if (s.plan !== 'free') {
+    p.innerHTML = '<p>You are on ' + (PLAN_NAMES[s.plan] || s.plan) + '. Cancel your plan first, so you are not billed again. Then come back here to delete your account.</p>' +
+      '<p class="muted">In the billing page, open Subscriptions and cancel. If you do not see a way to cancel, use Contact Us and we cancel it for you.</p>';
+    liveSheet('Cancel your plan first', p, [{ label: 'Cancel my plan', primary: true, run: openCardSheet }]);
+    return;
+  }
+  p.innerHTML = '<p>This deletes your account and everything in it:</p><ul class="muted" style="margin:0 0 8px 18px;padding:0">' +
+    '<li>Your People list and tags</li><li>Every pizza you made or sent, and their pizza pages (links stop working)</li>' +
+    '<li>Your calendar connections, presets, box and settings</li><li>Your login</li></ul>' +
+    '<p class="muted">We keep payment records and your terms acceptance because the law asks us to. People who unsubscribed stay unsubscribed. This cannot be undone.</p>' +
+    '<div class="field"><label for="liveDelConfirm">Type DELETE to confirm</label><input type="text" id="liveDelConfirm" autocomplete="off" maxlength="10"></div>';
+  const back = liveSheet('Delete my account and data', p, [{ label: 'Delete everything', primary: true, run: async () => {
+    const v = ($('#liveDelConfirm').value || '').trim().toUpperCase();
+    if (v !== 'DELETE') { toast('Type DELETE to confirm.'); return; }
+    const btn = back.querySelector('.btn.primary'); btn.disabled = true; btn.textContent = 'Deleting...';
+    const r = await LIVE.call('/account/delete', { confirm: 'DELETE' });
+    if (r && r.ok) {
+      try { Object.keys(localStorage).filter(k => k.indexOf('zabreak_') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+      const done = document.createElement('p'); done.textContent = 'Your account and data are deleted. Thank you for every pizza. Gerald and Potato will miss you.';
+      liveSheet('Account deleted', done, []);
+      setTimeout(() => { location.href = '/logout'; }, 4000);
+      return;
+    }
+    btn.disabled = false; btn.textContent = 'Delete everything';
+    toast(r && r.code === 'cancel_plan_first' ? 'Cancel your plan first, then try again.' : 'That did not go through. Try again in a minute.');
+  } }]);
 }
 
 /* --- Profile and logo save to Supabase --- */
@@ -378,12 +441,14 @@ handleLogo = function (file) {
   const r = document.createElement('div'); r.className = 'field';
   r.innerHTML = '<label for="liveReply">Replies go to</label><input type="text" id="liveReply" maxlength="200" inputmode="email" autocomplete="email"><small class="muted">Your email. When a guest replies, it comes here. We also tell you here when a meeting pizza is waiting.</small>';
   pb.closest('.field').after(r);
-  /* Log out ends the BD session; BD's /logout page does it */
+  /* Account card at the bottom of Settings: Log out (BD's /logout ends the session) and Delete my account */
   if (LIVE.TOKEN) {
-    const lo = document.createElement('div'); lo.className = 'btn-row';
-    lo.innerHTML = '<button class="btn small" type="button" id="liveLogout">Log out</button>';
-    r.after(lo);
-    lo.querySelector('button').onclick = () => { store.set('draft', null); location.href = '/logout'; };
+    const ac = document.createElement('div'); ac.className = 'card'; ac.id = 'liveAccount';
+    ac.innerHTML = '<h2>Account</h2><p class="muted" style="margin:4px 0 10px">Log out on this device, or close your account for good.</p>' +
+      '<div class="btn-row"><button class="btn small" type="button" id="liveLogout">Log out</button><button class="btn small ghost" type="button" id="liveDelete" style="color:#b3261e">Delete my account and data</button></div>';
+    $('#view-settings').appendChild(ac);
+    $('#liveLogout').onclick = () => { store.set('draft', null); location.href = '/logout'; };
+    $('#liveDelete').onclick = openDeleteSheet;
   }
   let t = 0;
   const save = () => { clearTimeout(t); t = setTimeout(() => LIVE.call('/profile', { profile: { reply_to: $('#liveReply').value.trim() } }), 800); };
@@ -411,6 +476,7 @@ function boxPayload(bx) {
   const rw = bx.reward || {};
   const b = { style: bx.style, sticker: bx.sticker, confetti: bx.confetti, tone: bx.tone, note: bx.note, sign: bx.sign, meeting: bx.meeting,
     pro_style: PRO_STYLES.includes(bx.style) || PRO_CONF.includes(bx.confetti) };
+  if (bx.topper && isPro()) { b.topper = bx.topper; b.pro_style = true; }
   /* Personal pizzas leave off the business name, logo, button and gift; the photo goes up before the send */
   if (bx.kind === 'personal') { b.personal = true; if ((bx.lidText || '').trim()) b.lid_text = bx.lidText.trim().slice(0, 40); if (isPro() && bx.photo && bx.photo.indexOf('http') === 0) b.photo_url = bx.photo; return b; }
   if (isPro() && bx.link) { b.cta_label = bx.linkLabel || 'Book a follow-up'; b.cta_url = bx.link; }

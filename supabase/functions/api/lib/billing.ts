@@ -86,3 +86,17 @@ export function invoiceList(apiResponse: any, now = Date.now()): Invoice[] {
   }
   return out.sort((a, b) => String(b.date ?? "").localeCompare(String(a.date ?? ""))).slice(0, 50);
 }
+
+// Delete my account: removes the member's BD login and listing. BD API: DELETE {site}/api/v2/user/delete, form body user_id.
+export async function deleteBdUser(opts: { site: string; key: string; bdUserId: number; fetchFn?: typeof fetch }) {
+  const res = await (opts.fetchFn ?? fetch)(opts.site.replace(/\/+$/, "") + "/api/v2/user/delete", {
+    method: "DELETE",
+    headers: { "X-Api-Key": opts.key, "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
+    body: new URLSearchParams({ user_id: String(opts.bdUserId) }),
+    signal: AbortSignal.timeout(8000),
+    redirect: "manual",
+  });
+  const j = await res.json().catch(() => null);
+  if (!res.ok || !j || (j.status && j.status !== "success")) throw new Error(`bd_api ${res.status} ${String(j?.message ?? "").slice(0, 120)}`);
+  return j;
+}

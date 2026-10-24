@@ -6,7 +6,7 @@ import { verifyBdToken } from "./lib/auth.ts";
 import { recipientToken, tokenHash } from "./lib/crypto.ts";
 import { buildEmail, buildWaitingEmail, SITE } from "./lib/email.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
-import { billingLines, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
+import { billingLines, deleteBdUser, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
 import { pickProvider } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
@@ -314,6 +314,18 @@ async function route(req: Request, path: string): Promise<Response> {
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || null;
     const r = await rpc("sot_accept_terms", { p_member: memberId, p_method: "kitchen_checkbox", p_at: null, p_ip: ip, p_ua: (req.headers.get("user-agent") ?? "").slice(0, 300) || null });
     return json(req, r);
+  }
+  // Delete my account and data. The member types DELETE to confirm; a paid plan is cancelled first.
+  if (path === "/account/delete" && req.method === "POST") {
+    if (String(body.confirm ?? "").trim().toUpperCase() !== "DELETE") return json(req, { ok: false, code: "confirm" });
+    const r = await rpc<Record<string, any>>("sot_delete_member", { p_member: memberId });
+    if (!r?.ok || r.already) return json(req, r);
+    let bd = false;
+    if (env("BD_API_KEY")) {
+      try { await deleteBdUser({ site: env("BD_SITE_URL") || BD_API_SITE, key: env("BD_API_KEY"), bdUserId: m.claims.uid }); bd = true; await rpc("sot_deletion_bd", { p_id: r.deletion_id, p_ok: true, p_error: null }); }
+      catch (e) { console.error("bd delete", String(e)); await rpc("sot_deletion_bd", { p_id: r.deletion_id, p_ok: false, p_error: String(e) }).catch(() => null); }
+    }
+    return json(req, { ok: true, bd_deleted: bd });
   }
   if (path === "/profile" && req.method === "POST") {
     await rpc("sot_update_profile", { p_member: memberId, p: body.profile ?? {} });

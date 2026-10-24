@@ -18,7 +18,7 @@ Writing style for anything she reads: plain, direct, no em dashes, no "it's not 
 SOT-App, SOT-Unbox, SOT-Admin, SOT-Auth. Keep them tiny. BD widget rules: no backslashes, no regex functions, no example URLs with https://, no literal widget shortcodes in widget code, helper widgets start with <?php and end with ?>.
 
 ## Design lock
-The prototype in prototype/ is the visual source of truth: warm cream, dark brown heavy outlines, playful serif headings, red and yellow controls, rounded bordered cards, flat vector art, mobile first. Gerald is the raccoon Head Critic and always writes the receipt. Potato is the bulldog Head of Delivery. Six interactive slices, Gerald receipt and the sender's button stay on the same eating screen, with the gift revealed only after the sixth slice.
+The prototype in prototype/ is the visual source of truth: warm cream, dark brown heavy outlines, playful serif headings, red and yellow controls, rounded bordered cards, flat vector art, mobile first. Gerald is the raccoon Head Chef: he runs the kitchen, makes pizzas on request (Hire Gerald, free for everyone) and always writes the receipt. Potato is the bulldog Head of Delivery. Six interactive slices, Gerald receipt and the sender's button stay on the same eating screen, with the gift revealed only after the sixth slice.
 
 ## Plans
 free = A Slice, pro = The Whole Pie, team = Pizza Party. Limits are emails sent, never automation counts.

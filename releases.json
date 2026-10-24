@@ -131,6 +131,12 @@
       "commit": "afc140a8874038b45a99ee22d23b46d4b88363c1",
       "date": "2026-10-24",
       "notes": "Message picker keeps the choice, Save as preset at the bottom of the box step, Your box folds in Settings, Make every new pizza vegan, live Calendar wording."
+    },
+    {
+      "version": "v0.9.2",
+      "commit": "be1c0b160f1fef3d7b33758b6637669202f45ce4",
+      "date": "2026-10-24",
+      "notes": "Topping sections fold (Classic open, counts on closed ones). Sprinkle a handful, Undo and Clear move to the top of the Toppings step."
     }
   ]
 }

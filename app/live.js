@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.4.1 =====
+/* ===== Slice of Thanks live layer v0.4.2 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -6,7 +6,8 @@ const LIVE = (function () {
   const API = host.getAttribute('data-api') || 'https://cmnclubiarmthibqibuj.supabase.co/functions/v1/api';
   const TOKEN = host.getAttribute('data-token') || '';
   const SIGNUP = host.getAttribute('data-signup-url') || '/join';
-  const LOGIN = host.getAttribute('data-login-url') || '/login';
+  /* BD's login page sends the member back to loc after logging in */
+  const LOGIN = (host.getAttribute('data-login-url') || '/login') + '?loc=' + encodeURIComponent(location.pathname || '/kitchen');
   const UPGRADE = host.getAttribute('data-upgrade-url') || '/join';
   const ATTR_URL = { special_delivery: 'data-special-url', pack_100: 'data-pack100-url', pack_500: 'data-pack500-url', pack_1000: 'data-pack1000-url' };
   const SITE = 'https://www.sliceofthanks.app';

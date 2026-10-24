@@ -125,6 +125,12 @@
       "commit": "25c55c6a7cf62db8870101c859ecfe2a8ae08d1e",
       "date": "2026-10-24",
       "notes": "Meats and veggies (some Pro only), Hot Mess Express (all plans) and Heart Attack Express (Pro), sock and tiny hat retired, vegan fix, CSV upload no longer adds unsaved people."
+    },
+    {
+      "version": "v0.9.1",
+      "commit": "afc140a8874038b45a99ee22d23b46d4b88363c1",
+      "date": "2026-10-24",
+      "notes": "Message picker keeps the choice, Save as preset at the bottom of the box step, Your box folds in Settings, Make every new pizza vegan, live Calendar wording."
     }
   ]
 }

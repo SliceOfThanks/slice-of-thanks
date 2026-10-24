@@ -1,6 +1,6 @@
 # Build status (read this first in a new session)
 
-Last updated: 2026-10-24. Live code version: v0.9.0 (see releases.json and app_settings.code_version).
+Last updated: 2026-10-24. Live code version: v0.9.1 (see releases.json and app_settings.code_version).
 
 ## Done and live
 - Supabase project cmnclubiarmthibqibuj. Edge Function `api` (api-0.4.0, verify_jwt false, own auth). Tables have RLS with no policies.
@@ -54,6 +54,8 @@ Git tags cannot be pushed. Use commit IDs.
 
 - v0.8.0 passed Stacey's ChatGPT test except one issue (CSV upload added unsaved people to People), fixed in v0.9.0.
 - v0.9.0 (2026-10-24, commit 25c55c6, app only): toppings. TOPS gains g 'meat' (sausage, ham, bacon; canadianBacon, meatball, bbqChicken with pro:true) and g 'veg' (bananaPepper, jalapeno, buffalo drizzle; sunTomato, pickle with pro:true). Chips: Meats and Veggies and heat sections; pro:true toppings are locked on A Slice (makeChips locked). Vegan pizzas show PLANT_NAMES. sock and hat moved to g 'retired' (hidden from chips, still drawn on old pizzas). Drawing cases and Gerald review lines are in BOTH prototype and shared/pizza-core.js (keep them in sync). PREMADES: hotmess (Hot Mess Express, white sauce, banana peppers, olives, jalapenos, buffalo; in FREE_PREMADES) and heartattack (Heart Attack Express, Kevin's order: light sauce via pm.light, four cheeses with extra, six meats; Pro). Fixed veganize() calling itself forever (it existed since the first commit). Tests: pw/tops-test.js plus the other suites pass.
+
+- v0.9.1 (2026-10-24, commit afc140a, app only plus one database change): the pepperoni message dropdown keeps the picked message and copies it into the text box (the panel redraw keeps it too). A second Save as preset button (#presetSaveRow) at the bottom of the box step. Settings: Your box card folds (store boxCardOpen, closed by default, summary line), Dietary needs has Make every new pizza vegan (settings.veganDefault, saved to members.prefs vegan_default; sot_update_profile now accepts it). newPizza, pizzeria classics, Hire Gerald, People quick sends and CSV lists start vegan when it is on. The Calendar card says Calendly and TidyCal arrive next. Tests: pw/settings-test.js plus the other suites pass.
 
 ## Next, in order
 1. Calendar connections (Calendly, TidyCal) feeding Home > This week, with Stacey's rules:

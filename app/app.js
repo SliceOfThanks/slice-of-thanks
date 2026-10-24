@@ -176,8 +176,11 @@ function drawTop(c,t,cx,cy,R,u,b,now,vg){
    c.fillStyle='rgba(255,220,180,.28)';[[-1.5,-1.5],[3,2],[-3,3]].forEach(([x,y])=>{c.beginPath();c.arc(x*u,y*u,1*u,0,6.283);c.fill()});break}
   case 'ham':c.scale(1.4,1.4);c.fillStyle=mix('#f4aaa3','#d8786e',b);c.beginPath();c.moveTo(-7*u,-6*u);c.lineTo(7*u,-7*u);c.lineTo(8*u,6*u);c.lineTo(-6*u,7*u);c.closePath();c.fill();
    c.strokeStyle='rgba(255,240,235,.6)';c.lineWidth=1.4*u;c.stroke();break;
-  case 'bacon':{c.scale(1.4,1.4);c.lineCap='round';c.lineWidth=5.4*u;c.strokeStyle=mix('#c4482f','#7e2a17',b);c.beginPath();c.moveTo(-11*u,0);for(let i=1;i<=6;i++)c.lineTo((-11+i*22/6)*u,(i%2?-2.2:2.2)*u);c.stroke();
-   c.lineWidth=1.6*u;c.strokeStyle=mix('#f6d6c4','#d9a07c',b);c.beginPath();c.moveTo(-11*u,0);for(let i=1;i<=6;i++)c.lineTo((-11+i*22/6)*u,(i%2?-2.2:2.2)*u);c.stroke();break}
+  case 'bacon':{c.scale(1.75,1.75);const wave=(off,dir)=>{for(let i=0;i<=12;i++){const x=(-11+i*22/12)*u,y=(Math.sin(i/12*Math.PI*3)*2+off)*u;if(i===0&&dir)c.moveTo(x,y);else c.lineTo(x,y)}};
+   const back=(off)=>{for(let i=12;i>=0;i--){const x=(-11+i*22/12)*u,y=(Math.sin(i/12*Math.PI*3)*2+off)*u;c.lineTo(x,y)}};
+   c.beginPath();wave(-3.2,true);back(3.2);c.closePath();c.fillStyle=mix('#c4482f','#7e2a17',b);c.fill();
+   c.beginPath();wave(-1.9,true);back(-.9);c.closePath();c.fillStyle=mix('#f4d2bd','#d19a76',b);c.fill();
+   c.beginPath();wave(.9,true);back(1.8);c.closePath();c.fill();break}
   case 'canadianBacon':c.scale(1.15,1.15);c.fillStyle=mix('#ec958d','#c9665c',b);c.beginPath();c.arc(0,0,10*u,0,6.283);c.fill();c.strokeStyle=mix('#b8564f','#86352e',b);c.lineWidth=2*u;c.stroke();
    c.fillStyle='rgba(255,235,230,.35)';c.beginPath();c.ellipse(-3*u,-3*u,3*u,1.6*u,-.6,0,6.283);c.fill();break;
   case 'meatball':c.scale(1.4,1.4);c.fillStyle=mix('#875030','#4f2812',b);c.beginPath();c.arc(0,0,7.5*u,0,6.283);c.fill();c.fillStyle='rgba(0,0,0,.18)';[[2,2],[-2.5,1.5],[1,-3]].forEach(([x,y])=>{c.beginPath();c.arc(x*u,y*u,1.2*u,0,6.283);c.fill()});

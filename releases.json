@@ -11,6 +11,12 @@
       "commit": "721c325d0ca901aee9ca5cd1eaa78fa4025b80ef",
       "date": "2026-10-23",
       "notes": "Secure API, SOT-Auth and SOT-Unbox widgets, shared pizza engine, six-slice recipient page."
+    },
+    {
+      "version": "v0.3.0",
+      "commit": "0525e6811c2cb8b61710bf93951098d9a1353f00",
+      "date": "2026-10-23",
+      "notes": "Kitchen member app with live email send, SOT-App widget."
     }
   ]
 }

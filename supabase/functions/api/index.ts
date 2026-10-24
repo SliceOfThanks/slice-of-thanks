@@ -12,7 +12,7 @@ import { fillNote } from "./lib/merge.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
 const VERSION = "api-0.11.0";
-const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@08a8dc99a1c2fa71ebfbd7b8a9c1d0e5e7edae8a/brand";
+const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@cb924ffff88269180573543a5e7fe6290ccc6f37/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
 // BD's own domain. The www address redirects, and the redirect turns the API POST into a GET (405).

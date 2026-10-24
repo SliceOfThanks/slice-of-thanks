@@ -161,6 +161,12 @@
       "commit": "e535476bf87c3d5c69bdff5d09a4e6e94107e9ee",
       "date": "2026-10-24",
       "notes": "Hire Gerald picks from this week's meetings and People or adds someone new; pizza message with a 16 letter limit; Gerald's pizzas get his perfect bake, five slices and chef hat confetti. Gerald wears a chef hat."
+    },
+    {
+      "version": "v0.11.0",
+      "commit": "cb924ffff88269180573543a5e7fe6290ccc6f37",
+      "date": "2026-10-24",
+      "notes": "White logo and pizza envelope in the header; Pizza envelopes confetti (also after every send); envelope on the recipient page and email. Personal pizzas ride under the Slice of Thanks logo. Loaded Gerald and pizzeria classics. Gerald picks the occasion sticker from the message. First and last name for new people; vegan tag in People. Pizza of the Month folds on Home. TidyCal sync fix (date format). api-0.11.0."
     }
   ]
 }

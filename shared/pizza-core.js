@@ -184,8 +184,9 @@ function pizzaImage(p,bitten){const cv=document.createElement('canvas');const pc
  try{return cv.toDataURL('image/png')}catch(e){return''}}
 
 function review(p,b){
- const n=p.toppings.length,has=k=>p.toppings.some(t=>t.k===k),lab=labelText(p),occ=String(b.sticker||'').toLowerCase(),
-  pers=b.kind==='personal'||b.personal===true||!!(occ&&occ.indexOf('thank')<0&&!['great meeting','nice to meet you','following up',"let's do this"].includes(occ));
+ const n=p.toppings.length,has=k=>p.toppings.some(t=>t.k===k),lab=labelText(p),occ=String(b.sticker||'').toLowerCase(),lw=String(lab||'').toLowerCase(),
+  CEL=['retire','birthday','bday','congrat','anniversar','wedding','baby','graduat','promotion','new job','holiday','christmas','new year','engag','new home'],
+  pers=b.kind==='personal'||b.personal===true||CEL.some(w=>lw.indexOf(w)>=0)||!!(occ&&occ.indexOf('thank')<0&&!['great meeting','nice to meet you','following up',"let's do this"].includes(occ));
  const lines=[];
  if(b.tone==='polished'){
   lines.push(lab?'A thoughtful touch with the "'+lab+'" spelled in pepperoni. '+(pers?'Someone is very loved.':'Clearly a productive meeting.'):'Balanced, well dressed, and delivered on time.');
@@ -212,7 +213,7 @@ function review(p,b){
  return{text:lines.slice(0,3).join(' '),stars:p.byGerald||p.bakeLevel===3?5:p.bake<.6?4:5}}
 const BAKE_LINES=['Quick bake. Somebody has a meeting to get to.','','Stone-fired. Look at those char spots on the crust.',"Five full minutes in the oven. Crispy edge, perfect char, a little oregano. Chef's kiss."];
 /* ---------- confetti ---------- */
-const CONFETTI=[['none','None'],['classic','Classic confetti'],['fireworks','Fireworks'],['paws','Paw prints'],['shamrocks','Shamrocks'],['petals','Flower petals'],['leaves','Falling leaves'],['bats','Bats'],['caps','Grad caps'],['suns','Suns'],['pizza','Pizza slices'],['hearts','Hearts'],['stars','Stars'],['gold','Gold sparkles'],['brand','Brand color confetti'],['logo','Logo confetti'],['snow','Snowflakes'],['gerald',"Gerald's chef hats"]];
+const CONFETTI=[['none','None'],['classic','Classic confetti'],['fireworks','Fireworks'],['paws','Paw prints'],['shamrocks','Shamrocks'],['petals','Flower petals'],['leaves','Falling leaves'],['bats','Bats'],['caps','Grad caps'],['suns','Suns'],['pizza','Pizza slices'],['hearts','Hearts'],['stars','Stars'],['gold','Gold sparkles'],['brand','Brand color confetti'],['logo','Logo confetti'],['snow','Snowflakes'],['envelopes','Pizza envelopes'],['gerald',"Gerald's chef hats"]];
 const PRO_CONF=['gold','brand','logo'];
 const SEASONAL={shamrocks:[3],bats:[10],snow:[12,1],leaves:[10,11],petals:[4,5],caps:[5,6],paws:[8],fireworks:[7],suns:[6,7,8,9]};
 function inSeason(k,m){const s=SEASONAL[k];return !s||s.includes(m||viewMonth())}
@@ -233,7 +234,7 @@ function burst(kind){if(!kind||kind==='none')return;try{if(matchMedia('(prefers-
  if(kind==='fireworks'){for(let k=0;k<5;k++){setTimeout(()=>{const ox=W*(.15+.7*Math.random()),oy=H*(.15+.3*Math.random()),col=pal[k%pal.length];
    for(let i=0;i<70;i++){const a=i/70*6.283,sp=2+Math.random()*4.5;cparts.push({kind,col:Math.random()<.25?'#ffffff':col,x:ox,y:oy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,g:.05,s:2.6,rot:0,vr:0,life:80+Math.random()*30,ph:0})}
    if(!cRaf)cRaf=requestAnimationFrame(cFrame)},k*320)}return}
- const fall=FALLING.includes(kind),big=['pizza','potato','caps','bats','paws','logo','gerald'].includes(kind);
+ const fall=FALLING.includes(kind),big=['pizza','potato','caps','bats','paws','logo','gerald','envelopes'].includes(kind);
  const n=fall?(kind==='snow'?110:90):big?60:150;
  for(let i=0;i<n;i++){cparts.push({kind,col:pal[i%pal.length],
   x:fall?Math.random()*W:W/2+(Math.random()-.5)*80,y:fall?-Math.random()*H*.6:H*.5,
@@ -241,6 +242,9 @@ function burst(kind){if(!kind||kind==='none')return;try{if(matchMedia('(prefers-
   g:fall?.01:.33,s:kind==='logo'?14+Math.random()*8:kind==='crumbs'?2+Math.random()*3:kind==='pizza'?14+Math.random()*8:kind==='gold'?2+Math.random()*3:big?10+Math.random()*6:fall&&kind!=='snow'?8+Math.random()*5:5+Math.random()*6,
   rot:Math.random()*6.28,vr:(Math.random()-.5)*(fall?.08:.3),life:fall?420:200+Math.random()*60,ph:Math.random()*6.28})}
  if(!cRaf)cRaf=requestAnimationFrame(cFrame)}
+/* The pizza envelope is the main Slice of Thanks mark; it doubles as confetti */
+const ENV_IMG='data:image/png;base64,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';
+const envImg=new Image();envImg.src=ENV_IMG;
 /* Gerald's own confetti, only on pizzas he makes: chef hats and his red bow tie */
 function chefHatC(c,s){c.strokeStyle='#3a1d12';c.lineWidth=Math.max(1,s*.1);c.fillStyle='#ffffff';c.beginPath();c.arc(-s*.42,-s*.3,s*.38,0,6.28);c.arc(s*.42,-s*.3,s*.38,0,6.28);c.fill();c.stroke();
  c.beginPath();c.arc(0,-s*.5,s*.46,0,6.28);c.fill();c.stroke();c.fillRect(-s*.55,-s*.25,s*1.1,s*.7);c.strokeRect(-s*.55,-s*.05,s*1.1,s*.5)}
@@ -270,6 +274,7 @@ function cFrame(){cRaf=0;const c=cfx.getContext('2d'),W=innerWidth,H=innerHeight
   else if(p.kind==='hearts')heart(c,p.s);else if(p.kind==='stars')star(c,p.s);else if(p.kind==='pizza')slice(c,p.s);else if(p.kind==='potato')potHead(c,p.s);else if(p.kind==='shamrocks')shamrockC(c,p.s);else if(p.kind==='petals'){c.beginPath();c.ellipse(0,0,p.s*.5,p.s*.28,0,0,6.28);c.fill()}
   else if(p.kind==='caps')capC(c,p.s);else if(p.kind==='paws')pawC(c,p.s);else if(p.kind==='suns')sunC(c,p.s);else if(p.kind==='bats')batC(c,p.s,p.life);else if(p.kind==='leaves')leafC(c,p.s);
   else if(p.kind==='fireworks'){c.beginPath();c.arc(0,0,p.s,0,6.28);c.fill()}
+  else if(p.kind==='envelopes'){if(envImg.complete&&envImg.naturalWidth)c.drawImage(envImg,-p.s,-p.s*.73,p.s*2,p.s*1.46);else{c.fillStyle='#fdf8ec';c.fillRect(-p.s,-p.s*.7,p.s*2,p.s*1.4)}}
   else if(p.kind==='gerald'){if(p.col==='#ffffff')chefHatC(c,p.s);else bowTieC(c,p.s*.8)}
   else if(p.kind==='gold'){c.globalAlpha*=.6+.4*Math.sin(p.life/4+p.ph);c.beginPath();c.arc(0,0,p.s,0,6.28);c.fill()}
   else{c.beginPath();c.arc(0,0,p.s*.5,0,6.28);c.fill()}

@@ -83,7 +83,7 @@ const PEOPLE = [{ id: 'p1', name: 'Jordan Reyes', email: 'jordan@brightline.test
     await inRoot(page, "R.querySelectorAll('#peopleList .person [data-act=send]')[0].click()"); await wait(200);
     check(!(await inRoot(page, "return !!R.querySelector('#qsBasis')")), 'Person with permission on file is not asked again');
     // Add a person
-    await inRoot(page, "R.querySelector('#addPersonBtn').click(); R.querySelector('#npName').value='Sam Lee'; R.querySelector('#npContact').value='sam@lee.test'; R.querySelector('#npCompany').value='Lee Co'; R.querySelector('#savePerson').click()"); await wait(500);
+    await inRoot(page, "R.querySelector('#addPersonBtn').click(); const f=R.querySelector('#npFirst');f.value='Sam';f.dispatchEvent(new Event('input'));const l=R.querySelector('#npLast');l.value='Lee';l.dispatchEvent(new Event('input')); R.querySelector('#npContact').value='sam@lee.test'; R.querySelector('#npCompany').value='Lee Co'; R.querySelector('#savePerson').click()"); await wait(500);
     const sv = (st.bodies['/people/save'] || []).find(x => x.person && x.person.name === 'Sam Lee');
     check(!!sv && sv.person.email === 'sam@lee.test' && sv.person.company === 'Lee Co', 'Add person saves to the server');
     // CSV list

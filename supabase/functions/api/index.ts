@@ -11,7 +11,7 @@ import { pickProvider } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.10.2";
+const VERSION = "api-0.11.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@08a8dc99a1c2fa71ebfbd7b8a9c1d0e5e7edae8a/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -82,6 +82,7 @@ async function deliver(sendId: string, pizzaImageUrl?: string) {
     unsubscribeSender: `${SITE}/unsubscribe?t=${encodeURIComponent(token)}&s=sender`,
     unsubscribeAll: `${SITE}/unsubscribe?t=${encodeURIComponent(token)}&s=global`,
     pizzaImageUrl: pizzaImageUrl ?? snap.image_url ?? undefined, potatoImageUrl: `${ASSETS}/characters/potato-delivery-side-email.png`,
+    markImageUrl: `${ASSETS}/logo/pizza-envelope.png`,
   });
   const fromName = (snap.sender?.send_as === "business" && snap.sender?.business) ? snap.sender.business : (snap.sender?.name || "Slice of Thanks");
   // Which service sends is a setting (app_settings email_provider); everything above is ours

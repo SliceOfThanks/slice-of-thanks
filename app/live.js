@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.10.1 =====
+/* ===== Slice of Thanks live layer v0.11.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -461,7 +461,7 @@ async function liveSend() {
     logSend({ who: box.to, org: '', contact: box.contact, vegan: pizza.vegan }, pizza, box, box.meeting ? 'After ' + box.meeting.toLowerCase() : 'Fresh pizza');
     if (LIVE.session && r.bucket && LIVE.session.credits[r.bucket] !== undefined) LIVE.session.credits[r.bucket]--;
     toast(r.delivered === false && r.reason !== 'not_due' ? 'Saved. Delivery is retrying and should arrive shortly.' : 'Potato is on her way to ' + first(box.to) + '.');
-    burst('pizza'); store.set('draft', null); endSpecial(); show('today'); loadPeople(); return;
+    burst('envelopes'); store.set('draft', null); endSpecial(); show('today'); loadPeople(); return;
   }
   sendProblem(r, liveSend);
 }
@@ -551,7 +551,7 @@ async function peopleSend(c, btn) {
   if (r.ok && r.delivered === false && r.reason === 'provider_error') { toast('Potato could not deliver this one, and it did not use an email. Try again in a few minutes.'); return; }
   if (r.ok) {
     if (LIVE.session && r.bucket && LIVE.session.credits[r.bucket] !== undefined) LIVE.session.credits[r.bucket]--;
-    toast('Potato is on her way to ' + first(c.name) + '.'); burst('pizza'); resetQs(c); loadPeople(); return;
+    toast('Potato is on her way to ' + first(c.name) + '.'); burst('envelopes'); resetQs(c); loadPeople(); return;
   }
   sendProblem(r, () => peopleSend(c, btn));
 }
@@ -673,7 +673,7 @@ $('#bulkSend').onclick = async () => {
     (when ? ' for ' + prettyWhen(when) : '. Potato delivers them over the next few minutes') + '.' + (skipped ? ' Skipped: ' + skipped + '.' : '');
   if (stop === 'needs_terms') askTerms(() => {}); else if (stop === 'needs_upgrade') upgrade('bulk'); else if (stop) toast(MSG[stop] || MSG.server_error);
   if (tally.ok) {
-    burst('pizza'); toast(when ? 'Your list is scheduled.' : 'Your pizzas are in the oven.');
+    burst('envelopes'); toast(when ? 'Your list is scheduled.' : 'Your pizzas are in the oven.');
     const s = await LIVE.call('/session').catch(() => null); if (s && s.credits && LIVE.session) { LIVE.session.credits = s.credits; renderPlanCard(); }
     loadPeople();
   }
@@ -921,7 +921,7 @@ async function sendMeetingSignature(m, btn) {
   btn.disabled = false; btn.textContent = label;
   if (r.ok) {
     if (LIVE.session && r.bucket && LIVE.session.credits[r.bucket] !== undefined) LIVE.session.credits[r.bucket]--;
-    toast('Potato is on her way to ' + first(m.name || 'them') + '.'); burst('pizza'); loadCalendar(); loadPeople(); return;
+    toast('Potato is on her way to ' + first(m.name || 'them') + '.'); burst('envelopes'); loadCalendar(); loadPeople(); return;
   }
   sendProblem(r, () => sendMeetingSignature(m, btn));
 }

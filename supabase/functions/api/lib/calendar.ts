@@ -95,7 +95,8 @@ export async function calendlyMeetings(access: string, userUri: string, from: Da
   return out;
 }
 
-const day = (d: Date) => d.toISOString().slice(0, 10);
+// TidyCal only accepts Y-m-dTH:i:sZ (no milliseconds); a plain date is refused with a 422
+const day = (d: Date) => d.toISOString().slice(0, 19) + "Z";
 
 export async function tidycalMeetings(access: string, from: Date, to: Date, fetchFn?: typeof fetch): Promise<CalMeeting[]> {
   const types = new Map<number, string>();

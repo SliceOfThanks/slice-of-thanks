@@ -118,7 +118,9 @@
     var bark = el('p', { class: 'u-bark', hidden: true, text: t.woof });
     var pet = el('button', { class: 'u-pet', type: 'button', 'aria-label': 'Pet Potato' });
     var scootLogo = el('span', { class: 'u-scoot-logo' });
-    if (sender.logo_url) scootLogo.appendChild(el('img', { src: sender.logo_url, alt: sender.personal ? '' : (sender.business || who) + ' logo', class: sender.personal ? 'photo' : '' })); else scootLogo.textContent = sender.business || who;
+    // A personal pizza rides under the Slice of Thanks logo; a business pizza under the business logo or name
+    if (sender.personal) scootLogo.appendChild(el('img', { src: BASE + '/brand/logo/slice-of-thanks-logo-240.png', alt: 'Slice of Thanks' }));
+    else if (sender.logo_url) scootLogo.appendChild(el('img', { src: sender.logo_url, alt: (sender.business || who) + ' logo' })); else scootLogo.textContent = sender.business || who;
     var scoot = el('div', { class: 'u-scoot' }, [bark, pet, el('img', { src: BASE + '/brand/characters/potato-delivery-side.png', alt: 'Potato the bulldog driving a red delivery scooter in her helmet and goggles' }), scootLogo]);
     var pets = 0;
     pet.addEventListener('click', function () { pets++; pet.classList.remove('hop'); void pet.offsetWidth; pet.classList.add('hop'); bark.hidden = false; setTimeout(function () { bark.hidden = true; }, 900); if (pets === 5) P.burst('potato'); });
@@ -232,6 +234,7 @@
     var whyP = el('p', { class: 'u-why', hidden: true, text: t.whyText(who) });
     var unsubHref = SITE + '/unsubscribe?t=' + encodeURIComponent(TOKEN) + '&s=sender';
     var f = el('div', { class: 'u-foot' }, [
+      el('a', { class: 'u-mark', href: SITE, 'aria-label': 'Slice of Thanks' }, [el('img', { src: BASE + '/brand/logo/pizza-envelope-96.png', alt: '' })]),
       el('button', { type: 'button', text: t.why, onclick: function () { whyP.hidden = !whyP.hidden; } }), ' · ',
       el('a', { href: unsubHref, text: t.unsub }), ' · ', el('a', { href: SITE + '/privacy', text: t.privacy }), ' · ',
       el('a', { href: SITE + '/terms', text: t.terms }), ' · ', el('a', { href: SITE + '/report', text: t.report }), whyP

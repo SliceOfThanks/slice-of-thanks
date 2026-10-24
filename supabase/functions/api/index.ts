@@ -96,7 +96,7 @@ async function deliver(sendId: string, pizzaImageUrl?: string) {
     await rpc("sot_mark_failed", { p_send: sendId, p_reason: r.error, p_retry: r.retry });
     return { delivered: false, reason: r.retry ? "provider_retrying" : "provider_error" };
   }
-  await rpc("sot_mark_sent", { p_send: sendId, p_provider_id: r.messageId, p_provider: provider.key });
+  await rpc("sot_mark_sent_via", { p_send: sendId, p_provider_id: r.messageId, p_provider: provider.key });
   return { delivered: true };
 }
 

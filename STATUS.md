@@ -38,9 +38,10 @@ Last updated: 2026-10-24. Live code version: v0.5.1 (see releases.json and app_s
 2. Set app_settings code_version (live and staging) to the commit, insert into releases, append releases.json, push.
 Git tags cannot be pushed. Use commit IDs.
 
+- api-0.6.0 (2026-10-24): send worker. pg_cron job sot-send-worker calls POST /api/worker every minute with a vault secret (no secret anywhere else). It delivers due queued sends: scheduled sends and provider retries, which before this sat in the queue forever. Sends stuck in sending for 15 minutes are marked failed and refunded, never retried. Pizza pictures are uploaded at create time and kept in pizzas.snapshot.image_url. The Kitchen has no schedule picker yet; it comes with the People tab CSV sends.
+
 ## Next, in order
-1. Scheduled-send worker and retries (pg_cron + pg_net calling the api).
-   Then calendar connections (Calendly, TidyCal) feeding Home > This week, with Stacey's rules:
+1. Calendar connections (Calendly, TidyCal) feeding Home > This week, with Stacey's rules:
    - Pro and Team: each upcoming meeting has a choice to have a pizza ready when it ends (or the Settings default).
    - A Slice (free): the member picks which upcoming meetings get a pizza. When a picked meeting ends, their signature pizza is created for that person automatically (a signature pizza must be set; prompt them to set one in Settings if not) and an email tells them it is waiting. The member opens it and sends it (free sends are never automatic).
    - Home quick actions stay: Make a new pizza, Hire Gerald, Send the Pizza of the Month.

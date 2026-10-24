@@ -21,3 +21,12 @@ Live schema is the source of truth. List it with the Supabase list_tables tool b
 - purchase_credits_fix (file purchase_credits_fix.sql): fixes an ambiguous column name in sot_lots and its callers.
 - email_provider (file email_provider.sql): sends.provider records which service sent each email; app_settings email_provider ({"pizza": "brevo"}) picks the service; new sot_mark_sent_via records the provider (additive; the old sot_mark_sent is unchanged). Apply BEFORE deploying api-0.5.0.
 - member_prefs (file member_prefs.sql): members.prefs (jsonb, only allowed keys: met_gerald). sot_update_profile merges p.prefs; sot_session returns prefs. Keeps one-time notices dismissed across devices and private windows.
+
+## send_worker.sql (applied 2026-10-24)
+- Turns on pg_cron and pg_net.
+- Creates the vault secret `sot_worker_secret` inside the database. Nobody types or sees it.
+- `sot_worker_ok(secret)`: the api's /worker route checks the caller with it.
+- `sot_recover_stuck()`: a send left in `sending` for 15 minutes is marked failed (`stuck_while_sending`) and its credit is given back. It is never retried, so nobody gets the same pizza twice.
+- `sot_set_send_image(send, url)`: keeps the uploaded pizza picture with the pizza so a later delivery has it.
+- Cron job `sot-send-worker`, every minute: POST /functions/v1/api/worker with header x-sot-worker from the vault. The worker delivers up to 25 due sends per run (scheduled sends and provider retries; `sot_mark_failed` retries temporary failures up to 3 attempts, 5 minutes apart).
+- To pause the worker: `select cron.unschedule('sot-send-worker');`. The app_settings `sending_paused` switch still blocks new sends.

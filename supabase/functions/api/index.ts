@@ -9,7 +9,7 @@ import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
 import { pickProvider } from "./lib/mail/index.ts";
 
-const VERSION = "api-0.5.1";
+const VERSION = "api-0.6.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@6ee4e204b57bdb3c50150e9a5fe275383e9b22e9/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -79,7 +79,7 @@ async function deliver(sendId: string, pizzaImageUrl?: string) {
     link: `${SITE}/p?t=${encodeURIComponent(token)}`,
     unsubscribeSender: `${SITE}/unsubscribe?t=${encodeURIComponent(token)}&s=sender`,
     unsubscribeAll: `${SITE}/unsubscribe?t=${encodeURIComponent(token)}&s=global`,
-    pizzaImageUrl, potatoImageUrl: `${ASSETS}/characters/potato-delivery-side.png`,
+    pizzaImageUrl: pizzaImageUrl ?? snap.image_url ?? undefined, potatoImageUrl: `${ASSETS}/characters/potato-delivery-side.png`,
   });
   const fromName = (snap.sender?.send_as === "business" && snap.sender?.business) ? snap.sender.business : (snap.sender?.name || "Slice of Thanks");
   // Which service sends is a setting (app_settings email_provider); everything above is ours
@@ -136,6 +136,28 @@ async function route(req: Request, path: string): Promise<Response> {
     return json(req, r);
   }
 
+  // Send worker: pg_cron calls this every minute with the vault secret (migration send_worker.sql).
+  // Delivers scheduled sends and provider retries that are due, and closes out sends stuck mid-send.
+  if (path === "/worker" && req.method === "POST") {
+    const ok = await rpc<boolean>("sot_worker_ok", { p_secret: req.headers.get("x-sot-worker") ?? "" });
+    if (!ok) return json(req, { error: "not_allowed" }, 403);
+    const stuck = await rpc<number>("sot_recover_stuck", {});
+    const started = Date.now();
+    let delivered = 0, failed = 0;
+    for (const id of (await rpc<string[]>("sot_due_sends", { p_limit: 25 })) ?? []) {
+      if (Date.now() - started > 40_000) break; // the rest go next minute
+      try {
+        const d = await deliver(id);
+        if (d.delivered) delivered++; else if (d.reason !== "not_due") failed++;
+      } catch (e) {
+        failed++;
+        console.error("worker send", id, String(e));
+      }
+    }
+    if (stuck || delivered || failed) console.log("worker", JSON.stringify({ stuck, delivered, failed }));
+    return json(req, { ok: true, stuck, delivered, failed });
+  }
+
   // Member routes
   const m = await member(req);
   if (!m) return json(req, { error: "not_signed_in" }, 401);
@@ -189,12 +211,17 @@ async function route(req: Request, path: string): Promise<Response> {
     const r = await rpc<Record<string, any>>("sot_create_send", {
       p_member: memberId, p_env: m.session.env, p_send_id: sendId, p_token_hash: await tokenHash(token), p_idem: `${memberId}:${idem}`, p: payload,
     });
-    if (!r.ok || r.duplicate || !r.due_now) return json(req, r);
+    if (!r.ok || r.duplicate) return json(req, r);
+    // Upload the picture now and keep it with the pizza, so a send the worker delivers later has it too
     let imageUrl: string | undefined;
     const blob = body.image_data_url ? dataUrlToBlob(String(body.image_data_url), 1_500_000) : null;
     if (blob) {
-      try { imageUrl = await publitioUpload({ key: env("PUBLITIO_API_KEY"), secret: env("PUBLITIO_API_SECRET"), blob, folder: "slice-of-thanks", title: `pizza-${sendId}` }); } catch { /* email still goes without the picture */ }
+      try {
+        imageUrl = await publitioUpload({ key: env("PUBLITIO_API_KEY"), secret: env("PUBLITIO_API_SECRET"), blob, folder: "slice-of-thanks", title: `pizza-${sendId}` });
+        await rpc("sot_set_send_image", { p_send: sendId, p_url: imageUrl });
+      } catch { /* email still goes without the picture */ }
     }
+    if (!r.due_now) return json(req, r);
     const d = await deliver(sendId, imageUrl);
     return json(req, { ...r, ...d });
   }

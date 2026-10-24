@@ -115,6 +115,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .chip[aria-pressed="true"]{background:var(--mustard);color:#3E2416}
 .dot{width:12px;height:12px;border-radius:50%;display:inline-block;flex:none;border:1px solid rgba(0,0,0,.25)}
 .group-label{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:4px}
+/* Topping sections fold; closed ones show how many of their toppings are on the pizza */
+.tgroup{border:2px solid var(--line);border-radius:14px;padding:0 12px;background:var(--surface)}
+.tgroup summary{list-style:none;display:flex;align-items:center;gap:8px;padding:10px 0;cursor:pointer}
+.tgroup summary::-webkit-details-marker{display:none}
+.tgroup summary .group-label{margin:0}
+.tgroup summary::after{content:'▾';margin-left:auto;color:var(--muted);transition:transform .2s}
+.tgroup[open] summary::after{transform:rotate(180deg)}
+.tgroup .tg-on{font-size:.8rem;color:var(--muted)}
+.tgroup .chips{padding:0 0 12px}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-size:.86rem;font-weight:700}
 .field small{color:var(--muted);font-size:.8rem}
@@ -517,12 +526,13 @@ body.is-free .pro-tag{display:inline-block}
       <h2>Pile on toppings</h2>
       <p class="muted">Pick a topping, then tap or drag across the pizza. There's no limit.</p>
       <p class="vegan-note" id="veganNote" hidden>🌱 Vegan pizza. Vegan dough, plant-based pepperoni, and dairy-free cheese.</p>
-      <p class="group-label">Classic</p><div class="chips" id="chips-food"></div>
-      <p class="group-label">Meats</p><div class="chips" id="chips-meat"></div>
-      <p class="group-label">Veggies and heat</p><div class="chips" id="chips-veg"></div>
-      <p class="group-label">About the meeting</p><div class="chips" id="chips-meeting"></div>
-      <p class="group-label">Silly</p><div class="chips" id="chips-silly"></div>
-      <p class="group-label">Pro toppings</p><div class="chips" id="chips-pro"></div>
+      <div class="btn-row"><button class="btn small" id="handful">Sprinkle a handful</button><button class="btn small" id="undo">Undo</button><button class="btn small ghost" id="clearTops">Clear</button><span class="count" id="topCount"></span></div>
+      <details class="tgroup" data-g="food" open><summary><span class="group-label">Classic</span><span class="tg-on" id="tgOn-food"></span></summary><div class="chips" id="chips-food"></div></details>
+      <details class="tgroup" data-g="meat"><summary><span class="group-label">Meats</span><span class="tg-on" id="tgOn-meat"></span></summary><div class="chips" id="chips-meat"></div></details>
+      <details class="tgroup" data-g="veg"><summary><span class="group-label">Veggies and heat</span><span class="tg-on" id="tgOn-veg"></span></summary><div class="chips" id="chips-veg"></div></details>
+      <details class="tgroup" data-g="meeting"><summary><span class="group-label">About the meeting</span><span class="tg-on" id="tgOn-meeting"></span></summary><div class="chips" id="chips-meeting"></div></details>
+      <details class="tgroup" data-g="silly"><summary><span class="group-label">Silly</span><span class="tg-on" id="tgOn-silly"></span></summary><div class="chips" id="chips-silly"></div></details>
+      <details class="tgroup" data-g="pro"><summary><span class="group-label">Pro toppings</span><span class="tg-on" id="tgOn-pro"></span></summary><div class="chips" id="chips-pro"></div></details>
       <div class="field">
         <label for="labelText">Add a message</label>
         <div class="chips" id="msgStyle"></div>
@@ -531,7 +541,6 @@ body.is-free .pro-tag{display:inline-block}
         <small id="msgHelp"></small>
         <div><button class="linkish" id="removeSign" type="button">Remove pepperoni message</button></div>
       </div>
-      <div class="btn-row"><button class="btn small" id="handful">Sprinkle a handful</button><button class="btn small" id="undo">Undo</button><button class="btn small ghost" id="clearTops">Clear</button><span class="count" id="topCount"></span></div>
     </div>
 
     <div class="panel" data-step="3" hidden>
@@ -1299,12 +1308,15 @@ $('#veganChip').onclick=()=>{pizza.vegan=!pizza.vegan;pizza.cheese=swapCheese(ch
 /* toppings */
 const PLANT_NAMES={pepperoni:'Plant pepperoni',sausage:'Plant sausage',ham:'Plant ham',bacon:'Plant bacon',canadianBacon:'Plant Canadian bacon',meatball:'Plant meatballs',bbqChicken:'BBQ plant chicken'};
 function topName(k){return pizza.vegan&&PLANT_NAMES[k]?PLANT_NAMES[k]:TOPS[k].n}
-function renderTopChips(){$('#veganNote').hidden=!pizza.vegan;['food','meat','veg','meeting','silly','pro'].forEach(g=>{
+function renderTopChips(){$('#veganNote').hidden=!pizza.vegan;{const g=topGroup(selTop),d=g&&document.querySelector('.tgroup[data-g="'+g+'"]');if(d)d.open=true}updateCount();['food','meat','veg','meeting','silly','pro'].forEach(g=>{
  const items=(g==='pro'?PRO_TOPS.map(k=>[k,TOPS[k]]):Object.entries(TOPS).filter(([,v])=>v.g===g)).map(([k,v])=>[k,(v.e?v.e+' ':'')+topName(k),v.sw]);
  makeChips($('#chips-'+g),items,()=>selTop,v=>{selTop=v;document.querySelectorAll('[id^=chips-] .chip:not(.locked)').forEach(x=>x.setAttribute('aria-pressed',x.dataset.val===v?'true':'false'));
   renderMsg2()},{locked:v=>!isPro()&&(g==='pro'||!!(TOPS[v]&&TOPS[v].pro)),onLocked:()=>upgrade('toppings')})});
  renderMsg2()}
-function updateCount(){const n=pizza.toppings.length;$('#topCount').textContent=n?n+' topping'+(n===1?'':'s'):''}
+function topGroup(k){return PRO_TOPS.includes(k)?'pro':(TOPS[k]&&TOPS[k].g)}
+function updateCount(){const n=pizza.toppings.length;$('#topCount').textContent=n?n+' topping'+(n===1?'':'s'):'';
+ const per={};pizza.toppings.forEach(t=>{const g=topGroup(t.k);if(g)per[g]=(per[g]||0)+1});
+ document.querySelectorAll('.tgroup').forEach(d=>{const c=per[d.dataset.g]||0;$('#tgOn-'+d.dataset.g).textContent=c?'\u00b7 '+c+' on the pizza':''})}
 
 /* labels: split long messages across several pepperonis */
 const PER_PEP=8;

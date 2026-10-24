@@ -83,6 +83,12 @@
       "commit": "c6db887366ca419d0ede42a8889919730d44d74d",
       "date": "2026-10-24",
       "notes": "Home: free plan wording uses the signature pizza for picked meetings."
+    },
+    {
+      "version": "v0.4.8",
+      "commit": "ab9a81533e072a0b3c6fba88cc66432813fb7921",
+      "date": "2026-10-24",
+      "notes": "What's new: Pizza of the Month item points to Home."
     }
   ]
 }

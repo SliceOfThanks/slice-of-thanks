@@ -1,6 +1,6 @@
 # Build status (read this first in a new session)
 
-Last updated: 2026-10-24. Live code version: v0.4.7 (see releases.json and app_settings.code_version).
+Last updated: 2026-10-24. Live code version: v0.4.8 (see releases.json and app_settings.code_version).
 
 ## Done and live
 - Supabase project cmnclubiarmthibqibuj. Edge Function `api` (api-0.4.0, verify_jwt false, own auth). Tables have RLS with no policies.
@@ -22,6 +22,7 @@ Last updated: 2026-10-24. Live code version: v0.4.7 (see releases.json and app_s
 - Email provider layer (api-0.5.0, deployed 2026-10-24): all sending goes through lib/mail (types.ts, brevo.ts, index.ts). Provider chosen by app_settings email_provider; sends.provider records who sent it (sot_mark_sent_via). To add a provider: new lib/mail/<name>.ts, add to PROVIDERS, Supabase secret for its key, change the setting.
 - Login: decided to keep BD's /login (BD handles passwords, reCAPTCHA, reset) and style it with widgets/SOT-Login.html, placed above the Member Login Page widget on /login (page has Disable Default CSS on). Kitchen Settings has Log out (BD /logout). /join is not styled yet. SOT-Login 1.6.0 verified live 2026-10-24: form in card, reCAPTCHA works, login returns to /kitchen. Debug panel at /login?sotdebug=1. Only submit buttons get the big button style (BD has a small lock button by the password box). Click Refresh Live Site after widget changes (BD page cache).
 - v0.4.6: Today tab renamed Home. Home has Gerald's intro (once per member, saved in members.prefs.met_gerald), a Send a pizza card (Make a new pizza, Hire Gerald), the Pizza of the Month card, and This week (meetings). Kitchen keeps a Hire Gerald button on the dough step. Crew keeps crew, Treat Jar, tips, What's new.
+- ChatGPT test of v0.4.6 passed (Home tab, Gerald intro once, quick starts, Pizza of the Month send).
 - Test purchases are made as manual BD invoices marked Paid in BD admin (free). Never ask Stacey to pay real money for tests.
 - Test members: the Whole Pie one has a paid Special Delivery invoice; the A Slice one has a 100 Email Pack invoice that was refunded before any sync (should never be credited).
 - Not verified against a real BD invoice yet. When the first test purchase is made, check purchases and credit_ledger. If BD names the invoice line differently, add a match to app_settings bd_products (both envs).

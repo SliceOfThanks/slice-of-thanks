@@ -1,11 +1,11 @@
 <?php
-/* SOT-Checkout: Slice of Thanks look for BD's sign up pages (/checkout/...). Version 1.3.1
+/* SOT-Checkout: Slice of Thanks look for BD's sign up pages (/checkout/...). Version 1.3.2
    BD's checkout pages skip the site footer widgets, so this widget is loaded from the default widget
    Bootstrap Theme - Signup Page - H1 Title, which only appears on the sign up pages.
    Add ?sotdebug=1 to the page address to see a small box proving the widget loaded there. */
 $sot_co_uri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
 if (strpos($sot_co_uri, 'sotdebug=1') !== false) {
-  echo '<div style="position:fixed;bottom:8px;left:8px;z-index:99999;background:#fff;color:#000;border:2px solid #000;border-radius:8px;padding:6px 10px;font:13px monospace">SOT-Checkout 1.3.1 loaded. Server address: ' . htmlspecialchars($sot_co_uri) . '</div>';
+  echo '<div style="position:fixed;bottom:8px;left:8px;z-index:99999;background:#fff;color:#000;border:2px solid #000;border-radius:8px;padding:6px 10px;font:13px monospace">SOT-Checkout 1.3.2 loaded. Server address: ' . htmlspecialchars($sot_co_uri) . '</div>';
 }
 ?>
 <!-- The script hides all of this on any page whose address does not start with /checkout.
@@ -80,6 +80,11 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 #sot-login-slot .checkbox label,#sot-login-slot label:has(input[type=checkbox]){display:flex!important;gap:10px!important;align-items:flex-start!important;padding-left:0!important;font-weight:500!important}
 #sot-login-slot input[type=checkbox]{position:static!important;margin:3px 0 0!important;width:20px!important;height:20px!important;flex:none!important}
 #sot-login-slot input[type=submit],#sot-login-slot button[type=submit]{font:700 1.1rem "Work Sans",system-ui,sans-serif!important;border-radius:999px!important;padding:14px 20px!important;height:auto!important}
+/* 1.3.2: the script tags BD's form title and main button, whatever tag BD uses for them */
+#sot-login-slot .sot-co-title{font:400 1.7rem "Shrikhand",Georgia,serif!important;color:var(--sot-ink)!important;border:0!important;margin:0 0 14px!important;padding:0!important;background:transparent!important;text-transform:none!important;letter-spacing:0!important}
+#sot-login-slot .sot-co-go,#sot-login-slot .sot-co-go *{font:700 1.15rem "Work Sans",system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+#sot-login-slot .sot-co-go{display:block!important;width:100%!important;border-radius:999px!important;padding:14px 20px!important;height:auto!important;color:var(--sot-tomato-ink)!important;
+  background:var(--sot-tomato)!important;border:3px solid var(--sot-edge)!important;box-shadow:4px 4px 0 var(--sot-edge)!important}
 </style>
 <div class="sot-login" id="sot-login">
   <a class="sot-login-head" href="/kitchen"><span class="sot-slice">Slice of</span><span class="sot-thanks">Thanks</span><span class="sot-tag">Thank-you pizzas, made fresh after every meeting</span></a>
@@ -93,7 +98,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 </div>
 <script>
 (function () {
-  var VERSION = 'checkout 1.3.1';
+  var VERSION = 'checkout 1.3.2';
   var NL = String.fromCharCode(10);
   var tries = 0;
   function cookieNames() {
@@ -118,6 +123,24 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
       if (!shell.contains(hs[i])) { hs[i].style.display = 'none'; }
     }
   }
+  function desc(el) {
+    if (!el) { return '-'; }
+    var cs = getComputedStyle(el);
+    return el.tagName.toLowerCase() + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(' ').join('.') : '') + ' ' + cs.fontSize + ' ' + cs.fontFamily.split(',')[0];
+  }
+  /* BD's form title and main button use different tags on different pages: tag them so the styles above always apply */
+  function tagParts(slot) {
+    var ts = slot.querySelectorAll('h1, h2, h3, h4, h5, h6, legend, .panel-title, .panel-heading, .h1, .h2, .h3, .h4, [class*=title], [class*=heading]');
+    for (var i = 0; i < ts.length; i++) {
+      if (ts[i].querySelector('input, select, textarea') || ts[i].tagName === 'LABEL') { continue; }
+      ts[i].classList.add('sot-co-title');
+    }
+    var bs = slot.querySelectorAll('button, input[type=submit], input[type=button], .btn');
+    for (var j = 0; j < bs.length; j++) {
+      var txt = (bs[j].value || bs[j].textContent || '').trim();
+      if (txt.length > 3) { bs[j].classList.add('sot-co-go'); }
+    }
+  }
   /* Open /checkout/a-slice?sotdebug=1 to see what the widget found (names only, no values) */
   function debug(shell, found) {
     if (location.search.indexOf('sotdebug=1') < 0) { return; }
@@ -133,6 +156,8 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
       NL + 'form moved into card: ' + found + ', logged in cookie: ' + loggedIn() +
       NL + 'cookies: ' + cookieNames().join(', ') +
       NL + 'headings: ' + heads.join(' / ') +
+      NL + 'title: ' + desc(document.querySelector('#sot-login-slot .sot-co-title')) +
+      NL + 'button: ' + desc(document.querySelector('#sot-login-slot .sot-co-go')) +
       NL + 'page: ' + location.pathname;
     shell.appendChild(pre);
   }
@@ -164,6 +189,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
     if (pw) { var f = pw.closest('form'); box = (f && (f.closest('.module') || f.closest('.well') || f.parentElement)) || f; }
     if (box) {
       slot.appendChild(box);
+      tagParts(slot);
       slot.setAttribute('data-done', '1');
       slot.style.display = '';
       hideTitles(shell);

@@ -1,5 +1,11 @@
-<!-- SOT-Checkout: Slice of Thanks look for BD's sign up pages (/checkout/...). Version 1.0.0
-     Place it ABOVE BD's sign up form on the checkout page. It only runs on pages whose address starts with /checkout.
+<?php
+/* SOT-Checkout: Slice of Thanks look for BD's sign up pages (/checkout/...). Version 1.1.0
+   BD's checkout pages cannot be edited, so this widget is loaded from the site footer and prints nothing
+   unless the page address starts with /checkout. */
+$sot_co_uri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
+if (strpos($sot_co_uri, '/checkout') === 0) {
+?>
+<!-- It only runs on pages whose address starts with /checkout.
      BD still creates the account, checks the legal boxes, and takes any payment. This widget only styles it,
      moves BD's form into the Slice of Thanks card, and adds the links around it. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -76,7 +82,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 </div>
 <script>
 (function () {
-  var VERSION = 'checkout 1.0.0';
+  var VERSION = 'checkout 1.1.0';
   var NL = String.fromCharCode(10);
   var tries = 0;
   function cookieNames() {
@@ -162,6 +168,16 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
       NL + 'page: ' + location.pathname;
     shell.appendChild(pre);
   }
+  /* This page cannot hide BD's header and footer in Page Options, so do it here: our shell becomes the page */
+  function clearPage(shell) {
+    if (shell.parentElement !== document.body) { document.body.insertBefore(shell, document.body.firstChild); }
+    var kids = document.body.children;
+    for (var i = 0; i < kids.length; i++) {
+      var k = kids[i];
+      if (k === shell || k.tagName === 'SCRIPT' || k.tagName === 'STYLE' || k.tagName === 'LINK' || k.tagName === 'NOSCRIPT') { continue; }
+      k.style.setProperty('display', 'none', 'important');
+    }
+  }
   function place() {
     var shell = document.getElementById('sot-login');
     var slot = document.getElementById('sot-login-slot');
@@ -181,6 +197,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
       slot.setAttribute('data-done', '1');
       slot.style.display = '';
       hideTitles(shell);
+      clearPage(shell);
       debug(shell, true);
       return;
     }
@@ -190,6 +207,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
       slot.innerHTML = '<h2>You already have an account</h2><p>Change your plan anytime from Settings in your Kitchen.</p><a class="btn" href="/kitchen">Go to the Kitchen</a>';
       slot.setAttribute('data-done', '1');
       slot.style.display = '';
+      clearPage(shell);
       debug(shell, false);
       return;
     }
@@ -201,3 +219,6 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
   if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', place); } else { place(); }
 })();
 </script>
+<?php
+}
+?>

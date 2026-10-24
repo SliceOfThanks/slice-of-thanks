@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.3.0 =====
+/* ===== Slice of Thanks live layer v0.3.1 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent and real sends. */
 const LIVE = (function () {
@@ -8,6 +8,7 @@ const LIVE = (function () {
   const SIGNUP = host.getAttribute('data-signup-url') || '/join';
   const LOGIN = host.getAttribute('data-login-url') || '/login';
   const UPGRADE = host.getAttribute('data-upgrade-url') || '/join';
+  const SPECIAL = host.getAttribute('data-special-url') || '';
   const SITE = 'https://www.sliceofthanks.app';
   let session = null;
 
@@ -19,7 +20,7 @@ const LIVE = (function () {
     if (r.status === 401) j.code = 'not_signed_in';
     return j;
   }
-  return { API, TOKEN, SIGNUP, LOGIN, UPGRADE, SITE, call, get session() { return session; }, set session(s) { session = s; } };
+  return { API, TOKEN, SIGNUP, LOGIN, UPGRADE, SPECIAL, SITE, call, get session() { return session; }, set session(s) { session = s; } };
 })();
 
 /* --- Remove prototype-only sample data and controls --- */
@@ -128,6 +129,46 @@ renderPlanCard = function () {
 };
 goPro = function () { closeUp(); location.href = LIVE.UPGRADE; };
 
+/* --- Special Delivery: $2.99 one time, A Slice only. Unlocks Pro features for one pizza and includes its send. --- */
+let specialOn = false;
+function planView() { return LIVE.session && LIVE.session.plan !== 'free' ? 'pro' : 'free'; }
+function startSpecial(quiet) {
+  specialOn = true; viewAs = 'pro'; refreshPlan();
+  if (!quiet) toast('Special Delivery is on. Pro features are unlocked for this pizza.');
+}
+function endSpecial() { if (!specialOn) return; specialOn = false; viewAs = planView(); refreshPlan(); }
+function offerSpecial() {
+  closeUp();
+  if (!account) { $('#sendNow').onclick(); return; }
+  const have = (LIVE.session && LIVE.session.credits && LIVE.session.credits.special_delivery) || 0;
+  if (have > 0) { startSpecial(); return; }
+  const p = document.createElement('p'); p.className = 'muted';
+  p.textContent = 'For a one-time $2.99, this pizza gets everything in The Whole Pie: your logo, brand colors, all box styles, Pro confetti and toppings, a gift code, and your own button. The send is included, so it does not use one of your 10 monthly emails.';
+  liveSheet('Special Delivery', p, [
+    { label: 'Get Special Delivery for $2.99', primary: true, run: () => {
+      if (!LIVE.SPECIAL) { toast('Special Delivery checkout opens soon.'); return; }
+      store.set('draft', { pizza: cleanPizza(pizza), box: JSON.parse(JSON.stringify(box)), at: Date.now(), special: true });
+      location.href = LIVE.SPECIAL;
+    } },
+    { label: 'Not now', run: closeLiveSheet }
+  ]);
+}
+$('#upYearly').onclick = offerSpecial;
+const _upgrade = upgrade;
+upgrade = function (key) {
+  _upgrade(key);
+  const free = !LIVE.session || LIVE.session.plan === 'free';
+  $('#upYearly').hidden = !free;
+  $('#upNote').textContent = free
+    ? 'Special Delivery is a one-time $2.99 that unlocks these features for one pizza and includes its send. The Whole Pie is 250 emails a month. Cancel anytime.'
+    : 'The Whole Pie is 250 emails a month. Cancel anytime.';
+};
+const _renderPlanCard2 = renderPlanCard;
+renderPlanCard = function () {
+  _renderPlanCard2();
+  const t = $('#planTeam'); if (t) t.onclick = () => { location.href = LIVE.UPGRADE; };
+};
+
 /* --- Profile and logo save to Supabase --- */
 let profTimer = 0;
 const _saveProfile = saveProfile;
@@ -186,7 +227,7 @@ function buildPayload() {
     pizza: cleanPizza(pizza), box: b,
     recipient: { name: box.to.trim(), email: box.contact.trim(), country: $('#liveCountry') ? $('#liveCountry').value.replace('OTHER', '') : '', locale: $('#liveLang') ? $('#liveLang').value : 'en' },
     consent: { basis: $('#liveBasis') ? $('#liveBasis').value : 'one_to_one', method: 'Selected in the Kitchen at send', note: box.meeting || '' },
-    send_type: 'one_to_one', image_data_url: img.length < 1900000 ? img : ''
+    send_type: 'one_to_one', special_delivery: specialOn, image_data_url: img.length < 1900000 ? img : ''
   };
 }
 const MSG = {
@@ -211,7 +252,7 @@ async function liveSend() {
     logSend({ who: box.to, org: '', contact: box.contact, vegan: pizza.vegan }, pizza, box, box.meeting ? 'After ' + box.meeting.toLowerCase() : 'Fresh pizza');
     if (LIVE.session && r.bucket && LIVE.session.credits[r.bucket] !== undefined) LIVE.session.credits[r.bucket]--;
     toast(r.delivered === false && r.reason !== 'not_due' ? 'Saved. Delivery is retrying and should arrive shortly.' : 'Potato is on her way to ' + first(box.to) + '.');
-    burst('pizza'); store.set('draft', null); show('today'); return;
+    burst('pizza'); store.set('draft', null); endSpecial(); show('today'); return;
   }
   if (r.code === 'needs_terms') return askTerms(liveSend);
   if (r.code === 'needs_address') return askAddress(liveSend);
@@ -244,7 +285,8 @@ $('#sendNow').onclick = () => {
   const d = store.get('draft', null);
   if (d && d.pizza && Date.now() - (d.at || 0) < 7 * 864e5) {
     pizza = d.pizza; box = Object.assign(boxFromProfile(null), d.box); store.set('draft', null);
-    step = 5; saidStep = 5; show('make'); renderStep(); toast('Welcome. Your pizza is ready to send.');
+    if (d.special && s.credits && s.credits.special_delivery > 0) startSpecial(true);
+    step = 5; saidStep = 5; show('make'); renderStep(); toast(specialOn ? 'Special Delivery is on. Your pizza is ready to send.' : 'Welcome. Your pizza is ready to send.');
   } else { show('today'); }
 })();
 
@@ -253,10 +295,11 @@ const _renderToday = renderToday;
 renderToday = function () {
   _renderToday();
   const se = $('#simEnd'); if (se) se.hidden = true;
+  SOTR.querySelectorAll('.tag').forEach(t => { if (t.textContent.trim() === 'Sample calendar') t.hidden = true; });
   const ul = $('#meetings');
   if (ul && !meetings.length) {
     ul.innerHTML = '';
-    const li = document.createElement('li'); li.className = 'meeting';
+    const li = document.createElement('li'); li.className = 'meeting'; li.style.gridTemplateColumns = '1fr';
     li.innerHTML = '<div class="info"><b>No meetings yet</b><span class="muted">Calendly and TidyCal connections arrive in the next update. Until then, tap Kitchen to make a pizza.</span></div>';
     ul.appendChild(li);
   }

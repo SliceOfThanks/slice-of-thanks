@@ -57,6 +57,8 @@ var host=document.getElementById('sot-app');
 if(!host||host.shadowRoot)return;
 if(!document.getElementById('sot-fonts')){var fl=document.createElement('link');fl.id='sot-fonts';fl.rel='stylesheet';
 fl.href='https://fonts.googleapis.com/css2?family=Shrikhand&family=Yellowtail&family=Work+Sans:wght@400;500;600;700&family=Caveat:wght@500;700&family=Courier+Prime:wght@400;700&display=swap';document.head.appendChild(fl);}
+if(!document.getElementById('sot-page-bg')){var pb=document.createElement('style');pb.id='sot-page-bg';
+pb.textContent='html:has(#sot-app),body:has(#sot-app){background:#FFF3E0!important}@media (prefers-color-scheme: dark){html:has(#sot-app),body:has(#sot-app){background:#24160F!important}}';document.head.appendChild(pb);}
 var SOTR=host.attachShadow({mode:'open'});
 SOTR.innerHTML='<style>'+%s+'</style>'+%s;
 window.__SOT_ROOT=SOTR;

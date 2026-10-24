@@ -17,7 +17,7 @@
 
   var T = {
     en: {
-      sent: function (s) { return s + ' sent you a pizza'; }, from: 'from', open: 'Open the box', see: 'See your pizza', tap: 'Tap a slice to eat it.',
+      sent: function (s) { return s + ' sent you a pizza'; }, named: function (s) { return 'Your pizza, named by ' + s; }, from: 'from', open: 'Open the box', see: 'See your pizza', tap: 'Tap a slice to eat it.',
       togo: function (n) { return n + ' to go.'; }, lines: ['Mmm.', 'Gerald is watching. He approves.', 'Halfway there.', 'Potato is drooling.', 'One more slice.'],
       tease: function (s) { return s + ' hid something under this pizza. Eat all 6 slices to find out.'; },
       gone: 'All gone.', ate: 'You ate all 6 slices. Gerald is impressed. Potato is a little jealous.',
@@ -32,7 +32,7 @@
       unsubDone: 'Done. You will not get these pizzas anymore.', test: 'TEST PIZZA'
     },
     es: {
-      sent: function (s) { return s + ' te envió una pizza'; }, from: 'de', open: 'Abre la caja', see: 'Mira tu pizza', tap: 'Toca una porción para comerla.',
+      sent: function (s) { return s + ' te envió una pizza'; }, named: function (s) { return 'Tu pizza, bautizada por ' + s; }, from: 'de', open: 'Abre la caja', see: 'Mira tu pizza', tap: 'Toca una porción para comerla.',
       togo: function (n) { return 'Faltan ' + n + '.'; }, lines: ['Mmm.', 'Gerald te está mirando. Lo aprueba.', 'Vas a la mitad.', 'A Potato se le hace agua la boca.', 'Una porción más.'],
       tease: function (s) { return s + ' escondió algo debajo de esta pizza. Come las 6 porciones para descubrirlo.'; },
       gone: 'Se acabó.', ate: 'Te comiste las 6 porciones. Gerald está impresionado. Potato tiene un poco de envidia.',
@@ -146,6 +146,7 @@
 
     // Stage 2: eat
     var s2 = el('div', { class: 'u-stage', hidden: true });
+    s2.appendChild(el('p', { class: 'u-eyebrow u-named', text: t.named(whoFirst) }));
     s2.appendChild(el('h1', { text: pizza.name || 'The Thank-You Special' }));
     var img = el('img', { alt: (pizza.name || 'A pizza') + ', cut into six slices' });
     var eatBtn = el('button', { class: 'u-eat', type: 'button', 'aria-label': t.tap }, [img]);

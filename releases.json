@@ -35,6 +35,12 @@
       "commit": "68c9c0030cb1a8645b95ecea350b3c74cabc721b",
       "date": "2026-10-23",
       "notes": "Legal acceptance at sign up and in the Kitchen, recorded with versions. Brand colors in emails."
+    },
+    {
+      "version": "v0.4.0",
+      "commit": "182419b90f6641c52a53093c95a74c759da43b0d",
+      "date": "2026-10-24",
+      "notes": "Email packs and Special Delivery checkout through BD Digital Products, credited from BD invoices, 12-month expiry, refunds."
     }
   ]
 }

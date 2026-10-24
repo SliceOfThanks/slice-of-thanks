@@ -10,7 +10,7 @@ Writing style for anything she reads: plain, direct, no em dashes, no "it's not 
 ## Architecture
 - Brilliant Directories (sliceofthanks.app): member accounts, logins, plans, BD payments and Digital Products, admin area.
 - Supabase project ref cmnclubiarmthibqibuj: all app data and secure work. Tables have RLS with no public policies; reach them only through Edge Functions with the service role.
-- GitHub tags served by jsDelivr: app, unbox and admin code.
+- GitHub commits served by jsDelivr: app, unbox and admin code. Versions are pinned to commit IDs in releases.json (this session cannot push git tags).
 - Publitio: images and logos, uploaded through Supabase.
 - Brevo: email, called only from Supabase.
 

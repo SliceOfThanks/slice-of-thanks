@@ -19,10 +19,12 @@ Live site: sliceofthanks.app
 
 ## How releases work
 
-Each release is a git tag (v0.1.0, v0.2.0 and so on). jsDelivr serves each tag at
-cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@TAG/...
+Each release has a version name (v0.1.0, v0.2.0 and so on) pinned to an exact commit.
+releases.json lists them. jsDelivr serves each commit at
+cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@COMMIT/...
+A commit never changes, so a published version never changes.
 
-The Releases screen in the admin decides which tag is live and which is staging.
-Publishing switches the live tag. Rolling back switches it back.
+The Releases screen in the admin decides which version is live and which is staging.
+Publishing switches the live version. Rolling back switches it back.
 
 Nothing secret is stored here. API keys live in Supabase secrets.

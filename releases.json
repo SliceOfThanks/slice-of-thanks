@@ -1,5 +1,16 @@
 {
   "versions": [
-    { "version": "v0.1.0", "commit": "6ee4e204b57bdb3c50150e9a5fe275383e9b22e9", "date": "2026-10-23", "notes": "Repository set up: brand files, prototype, blueprint v7." }
+    {
+      "version": "v0.1.0",
+      "commit": "6ee4e204b57bdb3c50150e9a5fe275383e9b22e9",
+      "date": "2026-10-23",
+      "notes": "Repository set up: brand files, prototype, blueprint v7."
+    },
+    {
+      "version": "v0.2.0",
+      "commit": "721c325d0ca901aee9ca5cd1eaa78fa4025b80ef",
+      "date": "2026-10-23",
+      "notes": "Secure API, SOT-Auth and SOT-Unbox widgets, shared pizza engine, six-slice recipient page."
+    }
   ]
 }

@@ -47,6 +47,12 @@
       "commit": "47ace7fa57524a55a777d1c7c91ad5d1e8105adc",
       "date": "2026-10-24",
       "notes": "Removed the prototype demo sign in. I already have an account goes to the BD login page."
+    },
+    {
+      "version": "v0.4.2",
+      "commit": "c41cc0c7e31e75bdce7319268ba8a31abe63b99e",
+      "date": "2026-10-24",
+      "notes": "Login returns to the Kitchen. SOT-App 1.2.0 reports sign in problems."
     }
   ]
 }

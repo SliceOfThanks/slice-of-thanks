@@ -25,9 +25,13 @@ const TOPS={
  turkey:{n:'Turkey',e:'🦃',g:'special'},tree:{n:'Tree',e:'🎄',g:'special'},xstar:{n:'Star',e:'⭐',g:'special'},flake:{n:'Snowflake',e:'❄️',g:'special'},
  pepperoni:{n:'Pepperoni',g:'food',sw:'#b5302a'},olive:{n:'Olives',g:'food',sw:'#26221f'},mushroom:{n:'Mushrooms',g:'food',sw:'#d8c3a5'},
  basil:{n:'Basil',g:'food',sw:'#3d8f3f'},pepper:{n:'Peppers',g:'food',sw:'#4caf50'},pineapple:{n:'Pineapple',g:'food',sw:'#f5d24b'},
+ sausage:{n:'Sausage',g:'meat',sw:'#8a4b2a'},ham:{n:'Ham',g:'meat',sw:'#f0a39c'},bacon:{n:'Bacon',g:'meat',sw:'#b5402e'},
+ canadianBacon:{n:'Canadian bacon',g:'meat',sw:'#e8857e',pro:true},meatball:{n:'Meatballs',g:'meat',sw:'#7a4024',pro:true},bbqChicken:{n:'BBQ chicken',g:'meat',sw:'#c98b4e',pro:true},
+ bananaPepper:{n:'Banana peppers',g:'veg',sw:'#d9cf45'},jalapeno:{n:'Jalapeños',g:'veg',sw:'#3f8f2f'},buffalo:{n:'Buffalo drizzle',g:'veg',sw:'#e5602b'},
+ sunTomato:{n:'Sun-dried tomatoes',g:'veg',sw:'#9b2b1e',pro:true},pickle:{n:'Pickles',g:'veg',sw:'#8fae3c',pro:true},
  handshake:{n:'Handshake',e:'🤝',g:'meeting'},idea:{n:'Big idea',e:'💡',g:'meeting'},coffee:{n:'Coffee',e:'☕',g:'meeting'},
  rocket:{n:'Launch',e:'🚀',g:'meeting'},calendar:{n:'Next meeting',e:'📅',g:'meeting'},scales:{n:'Justice',e:'⚖️',g:'meeting'},
- duck:{n:'Rubber duck',e:'🦆',g:'silly'},sock:{n:'A sock',e:'🧦',g:'silly'},eyes:{n:'Googly eyes',e:'👀',g:'silly'},hat:{n:'Tiny hat',e:'🎩',g:'silly'}
+ duck:{n:'Rubber duck',e:'🦆',g:'silly'},sock:{n:'A sock',e:'🧦',g:'retired'},eyes:{n:'Googly eyes',e:'👀',g:'silly'},hat:{n:'Tiny hat',e:'🎩',g:'retired'}
 };
 function rng(seed){let s=(Math.floor(seed*1e6)>>>0)||1;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
 function hex(h){h=h.replace('#','');return[0,2,4].map(i=>parseInt(h.slice(i,i+2),16))}
@@ -74,6 +78,27 @@ function drawTop(c,t,cx,cy,R,u,b,now,vg){
   case 'pepper':c.strokeStyle='#3b9a3f';c.lineWidth=3.4*u;c.lineCap='round';c.beginPath();c.arc(0,0,8*u,.3,2.7);c.stroke();break;
   case 'pineapple':c.fillStyle='#f5d24b';c.beginPath();c.moveTo(0,-7*u);c.lineTo(7*u,6*u);c.lineTo(-7*u,6*u);c.closePath();c.fill();
    c.strokeStyle='rgba(160,120,0,.35)';c.lineWidth=1*u;c.stroke();break;
+  case 'sausage':{c.scale(1.4,1.4);c.fillStyle=mix('#9a5a33','#5e3018',b);[[0,0,5.2],[-4.5,-3,3.6],[4.4,-2.6,3.4],[-3.2,4,3.3],[3.6,3.8,3.1]].forEach(([x,y,r])=>{c.beginPath();c.arc(x*u,y*u,r*u,0,6.283);c.fill()});
+   c.fillStyle='rgba(255,220,180,.28)';[[-1.5,-1.5],[3,2],[-3,3]].forEach(([x,y])=>{c.beginPath();c.arc(x*u,y*u,1*u,0,6.283);c.fill()});break}
+  case 'ham':c.scale(1.4,1.4);c.fillStyle=mix('#f4aaa3','#d8786e',b);c.beginPath();c.moveTo(-7*u,-6*u);c.lineTo(7*u,-7*u);c.lineTo(8*u,6*u);c.lineTo(-6*u,7*u);c.closePath();c.fill();
+   c.strokeStyle='rgba(255,240,235,.6)';c.lineWidth=1.4*u;c.stroke();break;
+  case 'bacon':{c.scale(1.4,1.4);c.lineCap='round';c.lineWidth=5.4*u;c.strokeStyle=mix('#c4482f','#7e2a17',b);c.beginPath();c.moveTo(-11*u,0);for(let i=1;i<=6;i++)c.lineTo((-11+i*22/6)*u,(i%2?-2.2:2.2)*u);c.stroke();
+   c.lineWidth=1.6*u;c.strokeStyle=mix('#f6d6c4','#d9a07c',b);c.beginPath();c.moveTo(-11*u,0);for(let i=1;i<=6;i++)c.lineTo((-11+i*22/6)*u,(i%2?-2.2:2.2)*u);c.stroke();break}
+  case 'canadianBacon':c.scale(1.15,1.15);c.fillStyle=mix('#ec958d','#c9665c',b);c.beginPath();c.arc(0,0,10*u,0,6.283);c.fill();c.strokeStyle=mix('#b8564f','#86352e',b);c.lineWidth=2*u;c.stroke();
+   c.fillStyle='rgba(255,235,230,.35)';c.beginPath();c.ellipse(-3*u,-3*u,3*u,1.6*u,-.6,0,6.283);c.fill();break;
+  case 'meatball':c.scale(1.4,1.4);c.fillStyle=mix('#875030','#4f2812',b);c.beginPath();c.arc(0,0,7.5*u,0,6.283);c.fill();c.fillStyle='rgba(0,0,0,.18)';[[2,2],[-2.5,1.5],[1,-3]].forEach(([x,y])=>{c.beginPath();c.arc(x*u,y*u,1.2*u,0,6.283);c.fill()});
+   c.fillStyle='rgba(255,220,190,.4)';c.beginPath();c.arc(-2.5*u,-2.5*u,2*u,0,6.283);c.fill();break;
+  case 'bbqChicken':c.scale(1.4,1.4);c.fillStyle=mix('#e0b07a','#b9824a',b);c.beginPath();c.moveTo(-6*u,-4*u);c.lineTo(5*u,-5.5*u);c.lineTo(7*u,3*u);c.lineTo(-1*u,6*u);c.lineTo(-7*u,2*u);c.closePath();c.fill();
+   c.strokeStyle='#7a3518';c.lineWidth=2*u;c.lineCap='round';c.beginPath();c.moveTo(-4*u,-1*u);c.quadraticCurveTo(0,-4*u,4*u,0);c.stroke();break;
+  case 'bananaPepper':c.scale(1.4,1.4);c.strokeStyle=mix('#dcd34a','#b5a52e',b);c.lineWidth=2.6*u;c.beginPath();c.arc(0,0,6.5*u,0,6.283);c.stroke();
+   c.fillStyle='rgba(250,245,200,.9)';[[1.5,0],[-1.2,1.4],[-.6,-1.8]].forEach(([x,y])=>{c.beginPath();c.arc(x*u,y*u,.9*u,0,6.283);c.fill()});break;
+  case 'jalapeno':c.scale(1.4,1.4);c.fillStyle=mix('#3f8f2f','#2a6020',b);c.beginPath();c.arc(0,0,6.5*u,0,6.283);c.fill();c.fillStyle='#d8e8b0';c.beginPath();c.arc(0,0,4.2*u,0,6.283);c.fill();
+   c.fillStyle='#f4f0d0';[[1.6,0],[-.8,1.4],[-.8,-1.4]].forEach(([x,y])=>{c.beginPath();c.arc(x*u,y*u,.9*u,0,6.283);c.fill()});break;
+  case 'buffalo':c.scale(1.15,1.15);c.strokeStyle='#e5602b';c.lineWidth=2.8*u;c.lineCap='round';c.lineJoin='round';c.beginPath();c.moveTo(-14*u,-3*u);c.bezierCurveTo(-8*u,-9*u,-4*u,7*u,1*u,0);c.bezierCurveTo(5*u,-6*u,9*u,6*u,14*u,2*u);c.stroke();break;
+  case 'sunTomato':c.scale(1.4,1.4);c.fillStyle=mix('#a7321f','#6e1b10',b);c.beginPath();c.ellipse(0,0,8*u,5*u,0,0,6.283);c.fill();c.strokeStyle='rgba(60,10,5,.45)';c.lineWidth=1*u;
+   c.beginPath();c.moveTo(-5*u,-1.5*u);c.quadraticCurveTo(0,1.5*u,5*u,-1.5*u);c.moveTo(-4*u,2*u);c.quadraticCurveTo(0,4*u,4*u,1.5*u);c.stroke();break;
+  case 'pickle':c.scale(1.4,1.4);c.fillStyle=mix('#98b545','#6b8a2a',b);c.beginPath();for(let i=0;i<=16;i++){const a=i/16*6.283,r=(i%2?7:7.8)*u;i?c.lineTo(Math.cos(a)*r,Math.sin(a)*r):c.moveTo(Math.cos(a)*r,Math.sin(a)*r)}c.closePath();c.fill();
+   c.fillStyle='#d9e6a6';c.beginPath();c.arc(0,0,4.6*u,0,6.283);c.fill();c.fillStyle='#8aa23a';[[1.8,0],[-.9,1.6],[-.9,-1.6]].forEach(([x,y])=>{c.beginPath();c.ellipse(x*u,y*u,1.1*u,.7*u,0,0,6.283);c.fill()});break;
   case 'pepStar':c.fillStyle=(vg?mix('#c96a3c','#8f4422',b):mix('#c0392b','#8a2017',b));star(c,14*u);break;
   case 'pepHeart':c.fillStyle=(vg?mix('#c96a3c','#8f4422',b):mix('#c0392b','#8a2017',b));c.save();c.translate(0,3*u);heart(c,15*u);c.restore();break;
   case 'coin':c.fillStyle='#e7b931';c.beginPath();c.arc(0,0,9*u,0,6.283);c.fill();c.strokeStyle='#a8801a';c.lineWidth=1.6*u;c.stroke();c.beginPath();c.arc(0,0,5.5*u,0,6.283);c.stroke();break;
@@ -155,6 +180,10 @@ function review(p,b){
  else if(n<4)lines.push('Minimalist. Confident. I see what you did here.');
  if(has('duck'))lines.push('There is a duck on this pizza. I have questions and no complaints.');
  if(has('sock'))lines.push('Is that a sock? Bold.');
+ if(has('sausage')||has('ham')||has('bacon')||has('canadianBacon')||has('meatball')||has('bbqChicken')){const meats=['sausage','ham','bacon','canadianBacon','meatball','bbqChicken'].filter(has).length;
+  lines.push(meats>=5?'Every meat in the kitchen. My cardiologist and I are both impressed.':meats>=3?'A serious meat lineup. This pizza means business.':has('bacon')?'Bacon. Nobody has ever been sad about bacon.':'A little protein. Strong choice.')}
+ if(has('jalapeno')||has('buffalo'))lines.push(has('buffalo')?'Buffalo drizzle. I needed a glass of milk to finish this review.':'Jalapeños. Brave, a little dangerous. I like it.');
+ if(has('pickle'))lines.push('Pickles on a pizza. I was skeptical. I am now a believer.');
  if(lab)lines.push('Spelling "'+lab+'" in pepperoni? This meeting went well.');
  if(p.vegan)lines.push('Plant-based and still bold. I approve.');
  const ck=cheeseKey(p);if(ck==='goat')lines.push('Goat cheese. Someone has taste.');else if(ck==='parm')lines.push('The parmesan flakes are very refined.');else if(!ck)lines.push('No cheese. Brave.');

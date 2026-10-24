@@ -587,7 +587,10 @@ renderBulk = function () {
 };
 const _loadList = loadList;
 loadList = function (txt) {
+  /* The prototype adds list rows to People on upload. Live, People only holds people who were actually sent a pizza. */
+  const keep = contacts.slice();
   _loadList(txt);
+  contacts.length = 0; keep.forEach(c => contacts.push(c));
   const data = parseCSV(txt); if (data.length < 2) return;
   const h = data[0].map(x => x.trim().toLowerCase());
   const iC = h.findIndex(x => x.includes('country')), iP = h.findIndex(x => x.includes('permission') || x.includes('consent') || x === 'basis');
@@ -605,6 +608,7 @@ loadList = function (txt) {
     r.ok = !!r.name && !r.sample && r.contact.indexOf('@') > 0 && r.contact.indexOf('.', r.contact.indexOf('@')) > 0;
   });
   if (bulk.rows.length > 500) { bulk.rows = bulk.rows.slice(0, 500); toast('Lists can have up to 500 people. The first 500 were loaded.'); }
+  else toast('Loaded ' + bulk.rows.length + ' people. They join People when their pizzas are sent.');
   renderBulk();
 };
 $('#openBulk').onclick = () => { if (!isPro()) { upgrade('bulk'); return; } show('bulk'); };

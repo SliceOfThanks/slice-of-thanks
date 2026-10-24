@@ -510,6 +510,8 @@ body.is-free .pro-tag{display:inline-block}
       <p class="muted">Pick a topping, then tap or drag across the pizza. There's no limit.</p>
       <p class="vegan-note" id="veganNote" hidden>🌱 Vegan pizza. Vegan dough, plant-based pepperoni, and dairy-free cheese.</p>
       <p class="group-label">Classic</p><div class="chips" id="chips-food"></div>
+      <p class="group-label">Meats</p><div class="chips" id="chips-meat"></div>
+      <p class="group-label">Veggies and heat</p><div class="chips" id="chips-veg"></div>
       <p class="group-label">About the meeting</p><div class="chips" id="chips-meeting"></div>
       <p class="group-label">Silly</p><div class="chips" id="chips-silly"></div>
       <p class="group-label">Pro toppings</p><div class="chips" id="chips-pro"></div>
@@ -877,7 +879,7 @@ const CHEESES={
  vmozz:{n:'Vegan mozzarella',c:['#fffbea','#f1d88f'],style:'melt',vegan:true},vched:{n:'Vegan cheddar',c:['#fbd06a','#e6a03c'],style:'melt',vegan:true}};
 const CHEESE_SAY={mozz:'Mozzarella. Classic. You cannot go wrong.',cheddar:'Cheddar on pizza? Bold. I am in.',parm:'Fancy little flakes. Very refined.',
  goat:'Goat cheese. Someone has taste.',vmozz:'Melty and plant-based. Nice.',vched:'Vegan cheddar. A modern classic.',none:'No cheese? I will allow it.'};
-function veganize(p){veganize(p);if(p.cheeseDabs)p.cheeseDabs.forEach(d=>d.k=swapCheese(d.k,true))}
+function veganize(p){p.vegan=true;p.cheese=swapCheese(cheeseKey(p),true);if(p.cheeseDabs)p.cheeseDabs.forEach(d=>d.k=swapCheese(d.k,true))}
 function cheeseKey(p){if(p.cheese===true)return p.vegan?'vmozz':'mozz';return p.cheese||null}
 function swapCheese(k,vg){if(!k)return null;const toV={mozz:'vmozz',parm:'vmozz',goat:'vmozz',cheddar:'vched'},toR={vmozz:'mozz',vched:'cheddar'};return vg?(toV[k]||k):(toR[k]||k)}
 const TOPS={
@@ -888,9 +890,13 @@ const TOPS={
  turkey:{n:'Turkey',e:'🦃',g:'special'},tree:{n:'Tree',e:'🎄',g:'special'},xstar:{n:'Star',e:'⭐',g:'special'},flake:{n:'Snowflake',e:'❄️',g:'special'},
  pepperoni:{n:'Pepperoni',g:'food',sw:'#b5302a'},olive:{n:'Olives',g:'food',sw:'#26221f'},mushroom:{n:'Mushrooms',g:'food',sw:'#d8c3a5'},
  basil:{n:'Basil',g:'food',sw:'#3d8f3f'},pepper:{n:'Peppers',g:'food',sw:'#4caf50'},pineapple:{n:'Pineapple',g:'food',sw:'#f5d24b'},
+ sausage:{n:'Sausage',g:'meat',sw:'#8a4b2a'},ham:{n:'Ham',g:'meat',sw:'#f0a39c'},bacon:{n:'Bacon',g:'meat',sw:'#b5402e'},
+ canadianBacon:{n:'Canadian bacon',g:'meat',sw:'#e8857e',pro:true},meatball:{n:'Meatballs',g:'meat',sw:'#7a4024',pro:true},bbqChicken:{n:'BBQ chicken',g:'meat',sw:'#c98b4e',pro:true},
+ bananaPepper:{n:'Banana peppers',g:'veg',sw:'#d9cf45'},jalapeno:{n:'Jalapeños',g:'veg',sw:'#3f8f2f'},buffalo:{n:'Buffalo drizzle',g:'veg',sw:'#e5602b'},
+ sunTomato:{n:'Sun-dried tomatoes',g:'veg',sw:'#9b2b1e',pro:true},pickle:{n:'Pickles',g:'veg',sw:'#8fae3c',pro:true},
  handshake:{n:'Handshake',e:'🤝',g:'meeting'},idea:{n:'Big idea',e:'💡',g:'meeting'},coffee:{n:'Coffee',e:'☕',g:'meeting'},
  rocket:{n:'Launch',e:'🚀',g:'meeting'},calendar:{n:'Next meeting',e:'📅',g:'meeting'},scales:{n:'Justice',e:'⚖️',g:'meeting'},
- duck:{n:'Rubber duck',e:'🦆',g:'silly'},sock:{n:'A sock',e:'🧦',g:'silly'},eyes:{n:'Googly eyes',e:'👀',g:'silly'},hat:{n:'Tiny hat',e:'🎩',g:'silly'}
+ duck:{n:'Rubber duck',e:'🦆',g:'silly'},sock:{n:'A sock',e:'🧦',g:'retired'},eyes:{n:'Googly eyes',e:'👀',g:'silly'},hat:{n:'Tiny hat',e:'🎩',g:'retired'}
 };
 const STICKERS=['Thank You','Great Meeting','Nice to Meet You',"Let's Do This"];
 const STYLES={kraft:'Kraft',classic:'Classic',gold:'Fancy gold',midnight:'Midnight gold',plaid:'Plaid',floral:'Floral',picnic:'Picnic',garden:'Spring garden',hearts:'Hearts'};
@@ -939,7 +945,7 @@ let toastTimer;
 let viewAs=store.get('viewAs','free');
 function isPro(){return viewAs!=='free'}
 function isAdmin(){return viewAs==='admin'}
-const FREE_PREMADES=['marg','pep','veggie','vegan'];
+const FREE_PREMADES=['marg','pep','veggie','vegan','hotmess'];
 const PRO_TOPS=['pepStar','pepHeart','coin','sparkle'];
 const PRO_INFO={
  general:['Make every pizza look like your business','Your logo, your colors, and your own button on every pizza you send.'],
@@ -1023,6 +1029,27 @@ function drawTop(c,t,cx,cy,R,u,b,now,vg){
   case 'pepper':c.strokeStyle='#3b9a3f';c.lineWidth=3.4*u;c.lineCap='round';c.beginPath();c.arc(0,0,8*u,.3,2.7);c.stroke();break;
   case 'pineapple':c.fillStyle='#f5d24b';c.beginPath();c.moveTo(0,-7*u);c.lineTo(7*u,6*u);c.lineTo(-7*u,6*u);c.closePath();c.fill();
    c.strokeStyle='rgba(160,120,0,.35)';c.lineWidth=1*u;c.stroke();break;
+  case 'sausage':{c.scale(1.4,1.4);c.fillStyle=mix('#9a5a33','#5e3018',b);[[0,0,5.2],[-4.5,-3,3.6],[4.4,-2.6,3.4],[-3.2,4,3.3],[3.6,3.8,3.1]].forEach(([x,y,r])=>{c.beginPath();c.arc(x*u,y*u,r*u,0,6.283);c.fill()});
+   c.fillStyle='rgba(255,220,180,.28)';[[-1.5,-1.5],[3,2],[-3,3]].forEach(([x,y])=>{c.beginPath();c.arc(x*u,y*u,1*u,0,6.283);c.fill()});break}
+  case 'ham':c.scale(1.4,1.4);c.fillStyle=mix('#f4aaa3','#d8786e',b);c.beginPath();c.moveTo(-7*u,-6*u);c.lineTo(7*u,-7*u);c.lineTo(8*u,6*u);c.lineTo(-6*u,7*u);c.closePath();c.fill();
+   c.strokeStyle='rgba(255,240,235,.6)';c.lineWidth=1.4*u;c.stroke();break;
+  case 'bacon':{c.scale(1.4,1.4);c.lineCap='round';c.lineWidth=5.4*u;c.strokeStyle=mix('#c4482f','#7e2a17',b);c.beginPath();c.moveTo(-11*u,0);for(let i=1;i<=6;i++)c.lineTo((-11+i*22/6)*u,(i%2?-2.2:2.2)*u);c.stroke();
+   c.lineWidth=1.6*u;c.strokeStyle=mix('#f6d6c4','#d9a07c',b);c.beginPath();c.moveTo(-11*u,0);for(let i=1;i<=6;i++)c.lineTo((-11+i*22/6)*u,(i%2?-2.2:2.2)*u);c.stroke();break}
+  case 'canadianBacon':c.scale(1.15,1.15);c.fillStyle=mix('#ec958d','#c9665c',b);c.beginPath();c.arc(0,0,10*u,0,6.283);c.fill();c.strokeStyle=mix('#b8564f','#86352e',b);c.lineWidth=2*u;c.stroke();
+   c.fillStyle='rgba(255,235,230,.35)';c.beginPath();c.ellipse(-3*u,-3*u,3*u,1.6*u,-.6,0,6.283);c.fill();break;
+  case 'meatball':c.scale(1.4,1.4);c.fillStyle=mix('#875030','#4f2812',b);c.beginPath();c.arc(0,0,7.5*u,0,6.283);c.fill();c.fillStyle='rgba(0,0,0,.18)';[[2,2],[-2.5,1.5],[1,-3]].forEach(([x,y])=>{c.beginPath();c.arc(x*u,y*u,1.2*u,0,6.283);c.fill()});
+   c.fillStyle='rgba(255,220,190,.4)';c.beginPath();c.arc(-2.5*u,-2.5*u,2*u,0,6.283);c.fill();break;
+  case 'bbqChicken':c.scale(1.4,1.4);c.fillStyle=mix('#e0b07a','#b9824a',b);c.beginPath();c.moveTo(-6*u,-4*u);c.lineTo(5*u,-5.5*u);c.lineTo(7*u,3*u);c.lineTo(-1*u,6*u);c.lineTo(-7*u,2*u);c.closePath();c.fill();
+   c.strokeStyle='#7a3518';c.lineWidth=2*u;c.lineCap='round';c.beginPath();c.moveTo(-4*u,-1*u);c.quadraticCurveTo(0,-4*u,4*u,0);c.stroke();break;
+  case 'bananaPepper':c.scale(1.4,1.4);c.strokeStyle=mix('#dcd34a','#b5a52e',b);c.lineWidth=2.6*u;c.beginPath();c.arc(0,0,6.5*u,0,6.283);c.stroke();
+   c.fillStyle='rgba(250,245,200,.9)';[[1.5,0],[-1.2,1.4],[-.6,-1.8]].forEach(([x,y])=>{c.beginPath();c.arc(x*u,y*u,.9*u,0,6.283);c.fill()});break;
+  case 'jalapeno':c.scale(1.4,1.4);c.fillStyle=mix('#3f8f2f','#2a6020',b);c.beginPath();c.arc(0,0,6.5*u,0,6.283);c.fill();c.fillStyle='#d8e8b0';c.beginPath();c.arc(0,0,4.2*u,0,6.283);c.fill();
+   c.fillStyle='#f4f0d0';[[1.6,0],[-.8,1.4],[-.8,-1.4]].forEach(([x,y])=>{c.beginPath();c.arc(x*u,y*u,.9*u,0,6.283);c.fill()});break;
+  case 'buffalo':c.scale(1.15,1.15);c.strokeStyle='#e5602b';c.lineWidth=2.8*u;c.lineCap='round';c.lineJoin='round';c.beginPath();c.moveTo(-14*u,-3*u);c.bezierCurveTo(-8*u,-9*u,-4*u,7*u,1*u,0);c.bezierCurveTo(5*u,-6*u,9*u,6*u,14*u,2*u);c.stroke();break;
+  case 'sunTomato':c.scale(1.4,1.4);c.fillStyle=mix('#a7321f','#6e1b10',b);c.beginPath();c.ellipse(0,0,8*u,5*u,0,0,6.283);c.fill();c.strokeStyle='rgba(60,10,5,.45)';c.lineWidth=1*u;
+   c.beginPath();c.moveTo(-5*u,-1.5*u);c.quadraticCurveTo(0,1.5*u,5*u,-1.5*u);c.moveTo(-4*u,2*u);c.quadraticCurveTo(0,4*u,4*u,1.5*u);c.stroke();break;
+  case 'pickle':c.scale(1.4,1.4);c.fillStyle=mix('#98b545','#6b8a2a',b);c.beginPath();for(let i=0;i<=16;i++){const a=i/16*6.283,r=(i%2?7:7.8)*u;i?c.lineTo(Math.cos(a)*r,Math.sin(a)*r):c.moveTo(Math.cos(a)*r,Math.sin(a)*r)}c.closePath();c.fill();
+   c.fillStyle='#d9e6a6';c.beginPath();c.arc(0,0,4.6*u,0,6.283);c.fill();c.fillStyle='#8aa23a';[[1.8,0],[-.9,1.6],[-.9,-1.6]].forEach(([x,y])=>{c.beginPath();c.ellipse(x*u,y*u,1.1*u,.7*u,0,0,6.283);c.fill()});break;
   case 'pepStar':c.fillStyle=(vg?mix('#c96a3c','#8f4422',b):mix('#c0392b','#8a2017',b));star(c,14*u);break;
   case 'pepHeart':c.fillStyle=(vg?mix('#c96a3c','#8f4422',b):mix('#c0392b','#8a2017',b));c.save();c.translate(0,3*u);heart(c,15*u);c.restore();break;
   case 'coin':c.fillStyle='#e7b931';c.beginPath();c.arc(0,0,9*u,0,6.283);c.fill();c.strokeStyle='#a8801a';c.lineWidth=1.6*u;c.stroke();c.beginPath();c.arc(0,0,5.5*u,0,6.283);c.stroke();break;
@@ -1255,15 +1282,16 @@ $('#clearCheese').onclick=()=>{pizza.cheeseDabs=[];pizza.cheese=null;updateChees
 function renderVegan(){const vm=meetings.find(x=>x.id===currentMeetingId),vc=vm&&vm.vegan?vm.who:(box&&box.to&&findContact(box.to)&&findContact(box.to).vegan?box.to:'');
  $('#veganHint').hidden=!vc||pizza.vegan;if(vc)$('#veganHint').textContent='Heads up: '+first(vc)+' is marked vegan.';
  $('#veganChip').setAttribute('aria-pressed',pizza.vegan?'true':'false');$('#veganChip').textContent=pizza.vegan?'🌱 Vegan, from the dough up':'🌱 Make it vegan'}
-$('#veganChip').onclick=()=>{pizza.vegan=!pizza.vegan;pizza.cheese=swapCheese(cheeseKey(pizza),pizza.vegan);(pizza.cheeseDabs||[]).forEach(d=>d.k=swapCheese(d.k,pizza.vegan));cheeseBrush=swapCheese(cheeseBrush,pizza.vegan);renderVegan();kick();
+$('#veganChip').onclick=()=>{pizza.vegan=!pizza.vegan;pizza.cheese=swapCheese(cheeseKey(pizza),pizza.vegan);(pizza.cheeseDabs||[]).forEach(d=>d.k=swapCheese(d.k,pizza.vegan));cheeseBrush=swapCheese(cheeseBrush,pizza.vegan);renderVegan();renderTopChips();kick();
  gSay(pizza.vegan?'Vegan dough, vegan cheese. Gerald approves.':'Back to regular dough. Noted.')};
 
 /* toppings */
-function topName(k){return k==='pepperoni'&&pizza.vegan?'Plant pepperoni':TOPS[k].n}
-function renderTopChips(){$('#veganNote').hidden=!pizza.vegan;['food','meeting','silly','pro'].forEach(g=>{
+const PLANT_NAMES={pepperoni:'Plant pepperoni',sausage:'Plant sausage',ham:'Plant ham',bacon:'Plant bacon',canadianBacon:'Plant Canadian bacon',meatball:'Plant meatballs',bbqChicken:'BBQ plant chicken'};
+function topName(k){return pizza.vegan&&PLANT_NAMES[k]?PLANT_NAMES[k]:TOPS[k].n}
+function renderTopChips(){$('#veganNote').hidden=!pizza.vegan;['food','meat','veg','meeting','silly','pro'].forEach(g=>{
  const items=(g==='pro'?PRO_TOPS.map(k=>[k,TOPS[k]]):Object.entries(TOPS).filter(([,v])=>v.g===g)).map(([k,v])=>[k,(v.e?v.e+' ':'')+topName(k),v.sw]);
  makeChips($('#chips-'+g),items,()=>selTop,v=>{selTop=v;document.querySelectorAll('[id^=chips-] .chip:not(.locked)').forEach(x=>x.setAttribute('aria-pressed',x.dataset.val===v?'true':'false'));
-  renderMsg2()},g==='pro'?{locked:()=>!isPro(),onLocked:()=>upgrade('toppings')}:null)});
+  renderMsg2()},{locked:v=>!isPro()&&(g==='pro'||!!(TOPS[v]&&TOPS[v].pro)),onLocked:()=>upgrade('toppings')})});
  renderMsg2()}
 function updateCount(){const n=pizza.toppings.length;$('#topCount').textContent=n?n+' topping'+(n===1?'':'s'):''}
 
@@ -1443,6 +1471,10 @@ function review(p,b){
  else if(n<4)lines.push('Minimalist. Confident. I see what you did here.');
  if(has('duck'))lines.push('There is a duck on this pizza. I have questions and no complaints.');
  if(has('sock'))lines.push('Is that a sock? Bold.');
+ if(has('sausage')||has('ham')||has('bacon')||has('canadianBacon')||has('meatball')||has('bbqChicken')){const meats=['sausage','ham','bacon','canadianBacon','meatball','bbqChicken'].filter(has).length;
+  lines.push(meats>=5?'Every meat in the kitchen. My cardiologist and I are both impressed.':meats>=3?'A serious meat lineup. This pizza means business.':has('bacon')?'Bacon. Nobody has ever been sad about bacon.':'A little protein. Strong choice.')}
+ if(has('jalapeno')||has('buffalo'))lines.push(has('buffalo')?'Buffalo drizzle. I needed a glass of milk to finish this review.':'Jalapeños. Brave, a little dangerous. I like it.');
+ if(has('pickle'))lines.push('Pickles on a pizza. I was skeptical. I am now a believer.');
  if(lab)lines.push('Spelling "'+lab+'" in pepperoni? This meeting went well.');
  if(p.vegan)lines.push('Plant-based and still bold. I approve.');
  const ck=cheeseKey(p);if(ck==='goat')lines.push('Goat cheese. Someone has taste.');else if(ck==='parm')lines.push('The parmesan flakes are very refined.');else if(!ck)lines.push('No cheese. Brave.');
@@ -1587,7 +1619,7 @@ function geraldPizza(vibe,topic,vegan){
  p.cheese=vegan?(vibe==='over'?'vched':'vmozz'):{classic:'mozz',fancy:'goat',fun:'cheddar',over:'cheddar'}[vibe];
  const recipe={classic:[['pepperoni',9],['basil',6],['mushroom',5],['handshake',1]],fancy:[['olive',10],['basil',8],['mushroom',6],['pepper',4],['idea',1]],
   fun:[['pepperoni',8],['pineapple',5],['eyes',2],['hat',1],['handshake',1]],
-  over:[['pepperoni',9],['olive',9],['mushroom',8],['pepper',8],['pineapple',8],['basil',8],['duck',3],['sock',1],['rocket',2],['idea',2]]}[vibe];
+  over:[['pepperoni',9],['sausage',6],['bacon',5],['olive',8],['mushroom',7],['pepper',7],['jalapeno',5],['basil',6],['duck',2],['rocket',2],['idea',2]]}[vibe];
  const lim=[0,.8];
  recipe.forEach(([k,n])=>{for(let i=0;i<n;i++){const a=Math.random()*6.283,d=lim[0]+Math.sqrt(Math.random())*(lim[1]-lim[0]);p.toppings.push({k,x:Math.cos(a)*d,y:Math.sin(a)*d,rot:Math.random()*6.283})}});
  if(topic)placeLabels(p,topic);
@@ -2062,9 +2094,11 @@ const PREMADES=[
  {id:'white',name:'White Pizza',desc:'Garlic white with mozzarella, parmesan, goat cheese, and basil.',sauce:'white',cheese:[['mozz',25],['parm',30],['goat',8]],tops:[['basil',7]]},
  {id:'four',name:'Four Cheese',desc:'Mozzarella, cheddar, parmesan, and goat cheese.',sauce:'red',cheese:[['mozz',20],['cheddar',15],['parm',25],['goat',6]],tops:[]},
  {id:'pesto',name:'Pesto Garden',desc:'Pesto, mozzarella, mushrooms, and peppers.',sauce:'pesto',cheese:[['mozz',35]],tops:[['mushroom',7],['pepper',7]]},
+ {id:'hotmess',name:'Hot Mess Express',desc:'Garlic white sauce, banana peppers, olives, and jalapeños, topped with a buffalo drizzle.',sauce:'white',cheese:[['mozz',38]],tops:[['bananaPepper',10],['olive',8],['jalapeno',9],['buffalo',5]]},
+ {id:'heartattack',name:'Heart Attack Express',desc:"Kevin's order: light sauce, every cheese with extra, and sausage, ham, bacon, Canadian bacon, meatballs, and BBQ chicken.",sauce:'red',light:true,cheese:[['mozz',55],['cheddar',35],['parm',35],['goat',12]],tops:[['sausage',7],['ham',6],['bacon',5],['canadianBacon',5],['meatball',5],['bbqChicken',6]]},
  {id:'vegan',name:'Vegan Garden',desc:'Vegan dough and cheese, plant pepperoni, and veggies.',vegan:true,sauce:'red',cheese:[['vmozz',40]],tops:[['pepperoni',8],['pepper',7],['mushroom',6],['basil',5]]}];
 function premadePizza(pm){const p=newPizza();p.size=.92;p.tosses=TOSSES;p.vegan=!!pm.vegan;p.sauce=pm.sauce;p.sauceDabs=[];
- for(let r=0;r<=.84;r+=.1){const n=Math.max(1,Math.round(r*28));for(let i=0;i<n;i++){const a=i/n*6.283+r*3;p.sauceDabs.push({x:Math.cos(a)*r,y:Math.sin(a)*r,r:.15,k:pm.sauce})}}
+ for(let r=0;r<=.84;r+=.1){const n=Math.max(1,Math.round(r*(pm.light?16:28)));for(let i=0;i<n;i++){const a=i/n*6.283+r*3;p.sauceDabs.push({x:Math.cos(a)*r,y:Math.sin(a)*r,r:pm.light?.1:.15,k:pm.sauce})}}
  const rr=rng(pm.id.length*3.1+pm.tops.length);p.cheeseDabs=[];
  pm.cheese.forEach(([k,n])=>{for(let i=0;i<n;i++){const a=rr()*6.283,d=Math.sqrt(rr())*.78;p.cheeseDabs.push({x:Math.cos(a)*d,y:Math.sin(a)*d,k,s:rr()*9,r:.6+rr()*.5})}});
  p.cheese=pm.cheese[0]?pm.cheese[0][0]:null;
@@ -2074,7 +2108,7 @@ function renderPremades(){const g=$('#premades');if(g.childElementCount&&g.datas
  PREMADES.forEach(pm=>{const b=document.createElement('button');b.type='button';b.className='pm';const lockPm=!isPro()&&!FREE_PREMADES.includes(pm.id);const c=document.createElement('canvas');c.width=64;c.height=64;c.setAttribute('aria-hidden','true');
   const t=document.createElement('span');t.innerHTML='<b>'+esc(pm.name)+'</b>'+esc(pm.desc);b.append(c,t);b.onclick=()=>usePremade(pm);if(lockPm){b.classList.add('locked');const pt=document.createElement('span');pt.className='pro';pt.textContent='Pro';t.appendChild(pt);b.setAttribute('aria-label',pm.name+', Pro');b.onclick=()=>upgrade('premade')}g.appendChild(b);drawPizza(c,premadePizza(pm),56)})}
 function usePremade(pm){pizza=premadePizza(pm);$('#premadeBox').open=false;step=2;saidStep=2;renderStep();window.scrollTo({top:0,behavior:'smooth'});
- gSay(pm.id==='hawaii'?'Pineapple. I will not start this debate today. Add your own touch, then bake it.':'A '+pm.name+'. Solid choice. Now add your own touch.');
+ gSay(pm.id==='hawaii'?'Pineapple. I will not start this debate today. Add your own touch, then bake it.':pm.id==='heartattack'?'Kevin knows what he wants. Respect.':pm.id==='hotmess'?'Buffalo drizzle. Keep a glass of milk nearby.':'A '+pm.name+'. Solid choice. Now add your own touch.');
  toast(pm.name+' is ready. Add toppings or a message, then bake it.')}
 
 /* ---------- animation loop ---------- */

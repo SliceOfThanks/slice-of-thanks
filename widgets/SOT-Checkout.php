@@ -1,11 +1,11 @@
 <?php
-/* SOT-Checkout: Slice of Thanks look for BD's sign up pages (/checkout/...). Version 1.3.2
+/* SOT-Checkout: Slice of Thanks look for BD's sign up pages (/checkout/...). Version 1.3.3
    BD's checkout pages skip the site footer widgets, so this widget is loaded from the default widget
    Bootstrap Theme - Signup Page - H1 Title, which only appears on the sign up pages.
    Add ?sotdebug=1 to the page address to see a small box proving the widget loaded there. */
 $sot_co_uri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
 if (strpos($sot_co_uri, 'sotdebug=1') !== false) {
-  echo '<div style="position:fixed;bottom:8px;left:8px;z-index:99999;background:#fff;color:#000;border:2px solid #000;border-radius:8px;padding:6px 10px;font:13px monospace">SOT-Checkout 1.3.2 loaded. Server address: ' . htmlspecialchars($sot_co_uri) . '</div>';
+  echo '<div style="position:fixed;bottom:8px;left:8px;z-index:99999;background:#fff;color:#000;border:2px solid #000;border-radius:8px;padding:6px 10px;font:13px monospace">SOT-Checkout 1.3.3 loaded. Server address: ' . htmlspecialchars($sot_co_uri) . '</div>';
 }
 ?>
 <!-- The script hides all of this on any page whose address does not start with /checkout.
@@ -14,6 +14,7 @@ if (strpos($sot_co_uri, 'sotdebug=1') !== false) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Yellowtail&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
+/* 1.3.3: sizes are in px because BD sets the page's root font size to 10px, which shrank every rem size */
 :root{--sot-bg:#FFF3E0;--sot-surface:#FFFAF2;--sot-ink:#3E2416;--sot-muted:#7A5641;--sot-line:#EBCFA8;--sot-edge:#3E2416;
   --sot-tomato:#D62828;--sot-tomato-ink:#FFF3E0;--sot-tomato-text:#C21F1F;--sot-mustard:#F5C04E;--sot-field:#FFFFFF}
 @media (prefers-color-scheme: dark){:root{--sot-bg:#24160F;--sot-surface:#3E2416;--sot-ink:#E3D0B8;--sot-muted:#BBA088;--sot-line:#634433;
@@ -23,11 +24,11 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 .sot-login{max-width:620px;margin:0 auto;padding:28px 0 56px;display:flex;flex-direction:column;gap:18px}
 .sot-login-head{background:var(--sot-tomato);color:var(--sot-tomato-ink);border:3px solid var(--sot-edge);border-radius:24px;
   box-shadow:6px 6px 0 var(--sot-edge);padding:18px 22px 16px;text-decoration:none;display:block}
-.sot-login-head .sot-slice{font:400 1.6rem "Yellowtail",cursive;color:var(--sot-mustard);display:block;line-height:1}
-.sot-login-head .sot-thanks{font:400 2.4rem "Shrikhand",Georgia,serif;display:block;line-height:1.05;text-shadow:3px 3px 0 var(--sot-edge)}
-.sot-login-head .sot-tag{font-weight:600;font-size:.95rem;display:block;margin-top:6px}
+.sot-login-head .sot-slice{font:400 26px "Yellowtail",cursive;color:var(--sot-mustard);display:block;line-height:1}
+.sot-login-head .sot-thanks{font:400 38px "Shrikhand",Georgia,serif;display:block;line-height:1.05;text-shadow:3px 3px 0 var(--sot-edge)}
+.sot-login-head .sot-tag{font-weight:600;font-size:15px;display:block;margin-top:6px}
 .sot-login-card{background:var(--sot-surface);border:3px solid var(--sot-edge);border-radius:22px;box-shadow:6px 6px 0 var(--sot-edge);padding:22px}
-.sot-login-card h1,.sot-login-card h2,.sot-login-card h3{font:400 1.7rem "Shrikhand",Georgia,serif;margin:0 0 14px;color:var(--sot-ink)}
+.sot-login-card h1,.sot-login-card h2,.sot-login-card h3{font:400 27px "Shrikhand",Georgia,serif;margin:0 0 14px;color:var(--sot-ink)}
 .sot-login-card hr{display:none}
 .sot-login-card label{display:block;font-weight:700;margin:14px 0 6px;color:var(--sot-ink)}
 /* Checkbox rows (legal agreement and BD's consent boxes): box and text side by side */
@@ -37,15 +38,15 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 /* One column so every field fits the card */
 #sot-login-slot [class*="col-"]{width:100%!important;float:none!important;max-width:100%!important;flex:none!important;padding-left:0!important;padding-right:0!important}
 #sot-login-slot .row{display:block!important}
-.sot-login-card select,.sot-login-card textarea{display:block;width:100%;box-sizing:border-box;font:500 1rem "Work Sans",system-ui,sans-serif;color:var(--sot-ink);background:var(--sot-field);border:3px solid var(--sot-edge);border-radius:14px;padding:12px 14px}
+.sot-login-card select,.sot-login-card textarea{display:block;width:100%;box-sizing:border-box;font:500 16px "Work Sans",system-ui,sans-serif;color:var(--sot-ink);background:var(--sot-field);border:3px solid var(--sot-edge);border-radius:14px;padding:12px 14px}
 .sot-login-card .text-danger,.sot-login-card .required,.sot-login-card label span{color:var(--sot-tomato-text)}
 .sot-login-card input[type=text],.sot-login-card input[type=email],.sot-login-card input[type=password]{display:block;width:100%;box-sizing:border-box;
-  font:500 1rem "Work Sans",system-ui,sans-serif;color:var(--sot-ink);background:var(--sot-field);border:3px solid var(--sot-edge);border-radius:14px;padding:12px 14px;margin:0}
+  font:500 16px "Work Sans",system-ui,sans-serif;color:var(--sot-ink);background:var(--sot-field);border:3px solid var(--sot-edge);border-radius:14px;padding:12px 14px;margin:0}
 .sot-login-card input::placeholder{color:var(--sot-muted)}
 .sot-login-card input:focus{outline:3px solid var(--sot-mustard);outline-offset:2px}
 /* Only the main action gets the big button; BD's small helper buttons (like the password lock) stay small */
 .sot-login-card input[type=submit],.sot-login-card button[type=submit],.sot-login-card a.btn{display:block;width:100%;box-sizing:border-box;margin:18px 0 0;cursor:pointer;
-  font:700 1.05rem "Work Sans",system-ui,sans-serif;color:var(--sot-tomato-ink);background:var(--sot-tomato);border:3px solid var(--sot-edge);border-radius:999px;
+  font:700 17px "Work Sans",system-ui,sans-serif;color:var(--sot-tomato-ink);background:var(--sot-tomato);border:3px solid var(--sot-edge);border-radius:999px;
   padding:13px 20px;box-shadow:4px 4px 0 var(--sot-edge);text-align:center;text-decoration:none}
 #sot-login-slot button:not([type=submit]){display:inline-block;width:auto;margin:0;padding:2px 6px;background:transparent;border:0;box-shadow:none;color:var(--sot-muted);cursor:pointer}
 .sot-login-card button[type=submit]:active,.sot-login-card input[type=submit]:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--sot-edge)}
@@ -58,7 +59,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 .sot-login-card .alert{border:2px solid var(--sot-edge);border-radius:14px;padding:10px 14px;margin:0 0 12px;background:var(--sot-line);color:var(--sot-ink)}
 .sot-login-card .g-recaptcha{margin-top:16px}
 /* BD's field notes, such as Required Field */
-.sot-login-card .help-block,.sot-login-card .error,.sot-login-card .text-muted{display:block;font-size:.88rem;margin-top:6px;color:var(--sot-tomato-text)}
+.sot-login-card .help-block,.sot-login-card .error,.sot-login-card .text-muted{display:block;font-size:14px;margin-top:6px;color:var(--sot-tomato-text)}
 /* BD's login CSS sets the container colors with !important on a strong selector; the id here outranks it */
 #sot-login-slot .module,#sot-login-slot .row,#sot-login-slot .fpad-lg,#sot-login-slot .member-login-container,#sot-login-slot form,#sot-login-slot .form-group,#sot-login-slot fieldset{
   width:auto!important;max-width:none!important;margin-left:0!important;margin-right:0!important;padding:0!important;
@@ -68,21 +69,21 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 #sot-login-slot .fa-lock,#sot-login-slot .glyphicon-lock{position:absolute!important;left:auto!important;right:4px!important;top:4px!important;bottom:auto!important;transform:none!important;color:var(--sot-muted)}
 .sot-plan-line{text-align:center}
 .sot-plan-line span{display:block;color:var(--sot-muted);font-weight:600}
-.sot-plan-line b{display:block;font:400 2rem "Shrikhand",Georgia,serif;color:var(--sot-ink);line-height:1.2}
+.sot-plan-line b{display:block;font:400 32px "Shrikhand",Georgia,serif;color:var(--sot-ink);line-height:1.2}
 .sot-login-foot{text-align:center;display:flex;flex-direction:column;gap:8px}
 .sot-login-foot a{color:var(--sot-tomato-text);font-weight:700}
 .sot-login-foot .sot-muted{color:var(--sot-muted)}
 /* 1.3.1: BD's Bootstrap rules win over the card rules above, so these repeat them with the id and !important */
-#sot-login-slot h1,#sot-login-slot h2,#sot-login-slot h3,#sot-login-slot legend{font:400 1.7rem "Shrikhand",Georgia,serif!important;color:var(--sot-ink)!important;border:0!important;margin:0 0 14px!important;padding:0!important}
+#sot-login-slot h1,#sot-login-slot h2,#sot-login-slot h3,#sot-login-slot legend{font:400 27px "Shrikhand",Georgia,serif!important;color:var(--sot-ink)!important;border:0!important;margin:0 0 14px!important;padding:0!important}
 #sot-login-slot input[type=text],#sot-login-slot input[type=email],#sot-login-slot input[type=password],#sot-login-slot input[type=tel],#sot-login-slot select,#sot-login-slot textarea{
   height:auto!important;border:3px solid var(--sot-edge)!important;border-radius:14px!important;background:var(--sot-field)!important;color:var(--sot-ink)!important;
-  padding:12px 14px!important;font:500 1rem "Work Sans",system-ui,sans-serif!important;box-shadow:none!important}
+  padding:12px 14px!important;font:500 16px "Work Sans",system-ui,sans-serif!important;box-shadow:none!important}
 #sot-login-slot .checkbox label,#sot-login-slot label:has(input[type=checkbox]){display:flex!important;gap:10px!important;align-items:flex-start!important;padding-left:0!important;font-weight:500!important}
 #sot-login-slot input[type=checkbox]{position:static!important;margin:3px 0 0!important;width:20px!important;height:20px!important;flex:none!important}
-#sot-login-slot input[type=submit],#sot-login-slot button[type=submit]{font:700 1.1rem "Work Sans",system-ui,sans-serif!important;border-radius:999px!important;padding:14px 20px!important;height:auto!important}
+#sot-login-slot input[type=submit],#sot-login-slot button[type=submit]{font:700 18px "Work Sans",system-ui,sans-serif!important;border-radius:999px!important;padding:14px 20px!important;height:auto!important}
 /* 1.3.2: the script tags BD's form title and main button, whatever tag BD uses for them */
-#sot-login-slot .sot-co-title{font:400 1.7rem "Shrikhand",Georgia,serif!important;color:var(--sot-ink)!important;border:0!important;margin:0 0 14px!important;padding:0!important;background:transparent!important;text-transform:none!important;letter-spacing:0!important}
-#sot-login-slot .sot-co-go,#sot-login-slot .sot-co-go *{font:700 1.15rem "Work Sans",system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+#sot-login-slot .sot-co-title{font:400 27px "Shrikhand",Georgia,serif!important;color:var(--sot-ink)!important;border:0!important;margin:0 0 14px!important;padding:0!important;background:transparent!important;text-transform:none!important;letter-spacing:0!important}
+#sot-login-slot .sot-co-go,#sot-login-slot .sot-co-go *{font:700 18px "Work Sans",system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important}
 #sot-login-slot .sot-co-go{display:block!important;width:100%!important;border-radius:999px!important;padding:14px 20px!important;height:auto!important;color:var(--sot-tomato-ink)!important;
   background:var(--sot-tomato)!important;border:3px solid var(--sot-edge)!important;box-shadow:4px 4px 0 var(--sot-edge)!important}
 </style>
@@ -98,7 +99,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 </div>
 <script>
 (function () {
-  var VERSION = 'checkout 1.3.2';
+  var VERSION = 'checkout 1.3.3';
   var NL = String.fromCharCode(10);
   var tries = 0;
   function cookieNames() {

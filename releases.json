@@ -41,6 +41,12 @@
       "commit": "182419b90f6641c52a53093c95a74c759da43b0d",
       "date": "2026-10-24",
       "notes": "Email packs and Special Delivery checkout through BD Digital Products, credited from BD invoices, 12-month expiry, refunds."
+    },
+    {
+      "version": "v0.4.1",
+      "commit": "47ace7fa57524a55a777d1c7c91ad5d1e8105adc",
+      "date": "2026-10-24",
+      "notes": "Removed the prototype demo sign in. I already have an account goes to the BD login page."
     }
   ]
 }

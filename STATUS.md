@@ -1,6 +1,6 @@
 # Build status (read this first in a new session)
 
-Last updated: 2026-10-24. Live code version: v0.4.0 (see releases.json and app_settings.code_version).
+Last updated: 2026-10-24. Live code version: v0.4.1 (see releases.json and app_settings.code_version).
 
 ## Done and live
 - Supabase project cmnclubiarmthibqibuj. Edge Function `api` (api-0.4.0, verify_jwt false, own auth). Tables have RLS with no policies.
@@ -12,6 +12,8 @@ Last updated: 2026-10-24. Live code version: v0.4.0 (see releases.json and app_s
 - Payments (v0.4.0): email packs (Pro and Team) and Special Delivery (A Slice) are BD Digital Products. BD has no purchase webhook we can trust, so Supabase reads the member's BD invoices with the BD API (POST /api/v2/user/transactions, secret BD_API_KEY, site BD_SITE_URL or www.sliceofthanks.app). It checks when the Kitchen opens (at most every 10 minutes, /session) and every 6 seconds for 36 seconds after a member comes back from checkout (/purchases/check). Paid invoice lines whose name contains a bd_products match (app_settings) are credited once (purchases.bd_order_ref = invoiceId:line) into bucket pack or special_delivery, expiring 12 months after payment, oldest used first. Refunded invoices remove what is left. Only invoices from the last 12 months are read.
 - Checkout links: data-special-url, data-pack100-url, data-pack500-url, data-pack1000-url on SOT-App (widget 1.1.0), or app_settings checkout_urls. Empty means the button says it opens soon.
 - Waiting on Stacey: BD_API_KEY secret in Supabase, the four BD Digital Products named exactly "Special Delivery", "100 Email Pack", "500 Email Pack", "1,000 Email Pack", and their links in SOT-App 1.1.0. Until BD_API_KEY is set, nothing is checked and nothing breaks.
+- v0.4.1: the prototype demo sign in is gone; "I already have an account" goes to /login.
+- First ChatGPT test (v0.4.0) was not signed in to BD, so it proved only that the Special Delivery link opens the BD product page. Needs a real signed-in test.
 - Not verified against a real BD invoice yet. When the first test purchase is made, check purchases and credit_ledger. If BD names the invoice line differently, add a match to app_settings bd_products (both envs).
 
 ## Release routine

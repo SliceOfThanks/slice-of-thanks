@@ -18,6 +18,8 @@ Last updated: 2026-10-24. Live code version: v0.4.3 (see releases.json and app_s
 - Sign in fixed 2026-10-24 (Stacey set a letters-and-numbers secret; symbols like quotes break SOT-Auth line 12). Never put secrets in chat; Stacey generates them.
 - BD API must be called on sliceofthanks.app (www redirects and the POST becomes a GET, 405). api-0.4.2.
 - Dark mode text softened to #E3D0B8 / muted #BBA088 (prototype and unbox.css). Crew What's new shows 5; See all updates opens view-news.
+- Payments verified 2026-10-24: Whole Pie test member (BD 20) got Special Delivery from BD invoice 3702000002 line i2, credited once; A Slice test member (BD 19) refunded pack never credited.
+- Email provider layer (api-0.5.0, in repo, NOT deployed yet): all sending goes through lib/mail (types.ts, brevo.ts, index.ts). Provider chosen by app_settings email_provider. Waiting on migration email_provider (Stacey must approve in the Supabase prompt), then deploy api with lib/mail files. To add a provider: new lib/mail/<name>.ts, add to PROVIDERS, Supabase secret for its key, change the setting.
 - Test purchases are made as manual BD invoices marked Paid in BD admin (free). Never ask Stacey to pay real money for tests.
 - Test members: the Whole Pie one has a paid Special Delivery invoice; the A Slice one has a 100 Email Pack invoice that was refunded before any sync (should never be credited).
 - Not verified against a real BD invoice yet. When the first test purchase is made, check purchases and credit_ledger. If BD names the invoice line differently, add a match to app_settings bd_products (both envs).

@@ -7,8 +7,9 @@ import { recipientToken, tokenHash } from "./lib/crypto.ts";
 import { buildEmail, SITE } from "./lib/email.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, fetchTransactions, type ProductMatch } from "./lib/billing.ts";
+import { pickProvider } from "./lib/mail/index.ts";
 
-const VERSION = "api-0.4.2";
+const VERSION = "api-0.5.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@6ee4e204b57bdb3c50150e9a5fe275383e9b22e9/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -81,30 +82,22 @@ async function deliver(sendId: string, pizzaImageUrl?: string) {
     pizzaImageUrl, potatoImageUrl: `${ASSETS}/characters/potato-delivery-side.png`,
   });
   const fromName = (snap.sender?.send_as === "business" && snap.sender?.business) ? snap.sender.business : (snap.sender?.name || "Slice of Thanks");
-  try {
-    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: { "api-key": env("BREVO_API_KEY"), "content-type": "application/json", accept: "application/json" },
-      body: JSON.stringify({
-        sender: { name: `${fromName} via Slice of Thanks`, email: SENDER_EMAIL },
-        to: [{ email: job.email, name: job.name || undefined }],
-        replyTo: job.reply_to ? { email: job.reply_to } : undefined,
-        subject: mail.subject, htmlContent: mail.html, textContent: mail.text,
-        headers: { "List-Unsubscribe": `<${SITE}/unsubscribe?t=${encodeURIComponent(token)}&s=sender>` },
-        tags: [job.is_test ? "test" : "live", job.send_type],
-      }),
-    });
-    const out = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      await rpc("sot_mark_failed", { p_send: sendId, p_reason: `brevo ${res.status} ${out?.code ?? ""}`, p_retry: res.status >= 500 || res.status === 429 });
-      return { delivered: false, reason: "provider_error" };
-    }
-    await rpc("sot_mark_sent", { p_send: sendId, p_provider_id: String(out.messageId ?? "") });
-    return { delivered: true };
-  } catch (e) {
-    await rpc("sot_mark_failed", { p_send: sendId, p_reason: String(e).slice(0, 200), p_retry: true });
-    return { delivered: false, reason: "network" };
+  // Which service sends is a setting (app_settings email_provider); everything above is ours
+  const provider = pickProvider(await rpc("sot_setting", { p_env: "live", p_key: "email_provider" }).catch(() => null));
+  const r = await provider.send({
+    from: { name: `${fromName} via Slice of Thanks`, email: SENDER_EMAIL },
+    to: { email: job.email, name: job.name || undefined },
+    replyTo: job.reply_to || undefined,
+    subject: mail.subject, html: mail.html, text: mail.text,
+    headers: { "List-Unsubscribe": `<${SITE}/unsubscribe?t=${encodeURIComponent(token)}&s=sender>` },
+    tags: [job.is_test ? "test" : "live", job.send_type],
+  }, env(provider.secret));
+  if (!r.ok) {
+    await rpc("sot_mark_failed", { p_send: sendId, p_reason: r.error, p_retry: r.retry });
+    return { delivered: false, reason: r.retry ? "provider_retrying" : "provider_error" };
   }
+  await rpc("sot_mark_sent", { p_send: sendId, p_provider_id: r.messageId, p_provider: provider.key });
+  return { delivered: true };
 }
 
 async function route(req: Request, path: string): Promise<Response> {

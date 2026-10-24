@@ -84,3 +84,36 @@ Deno.test("billing lines: paid and refunded, skips unpaid, old and plan invoices
   ]);
   assertEquals(billingLines({ status: "error" }, PRODUCTS, now), []);
 });
+
+import { brevo } from "./mail/brevo.ts";
+import { pickProvider } from "./mail/index.ts";
+const MSG = { from: { name: "Stacey via Slice of Thanks", email: "pizza@sliceofthanks.app" }, to: { email: "pat@example.com", name: "Pat" }, replyTo: "s@example.com", subject: "Hi", html: "<p>Hi</p>", text: "Hi", headers: { "List-Unsubscribe": "<x>" }, tags: ["live", "one_to_one"] };
+const fakeFetch = (status: number, body: unknown, seen?: { url?: string; init?: RequestInit }) =>
+  (async (url: string, init: RequestInit) => { if (seen) { seen.url = url; seen.init = init; } return new Response(JSON.stringify(body), { status }); }) as unknown as typeof fetch;
+
+Deno.test("provider choice comes from the setting, Brevo by default", () => {
+  assertEquals(pickProvider({ pizza: "brevo" }).key, "brevo");
+  assertEquals(pickProvider("brevo").key, "brevo");
+  assertEquals(pickProvider(null).key, "brevo");
+  assertEquals(pickProvider({ pizza: "not_built_yet" }).key, "brevo");
+});
+Deno.test("brevo adapter: request shape and message id", async () => {
+  const seen: { url?: string; init?: RequestInit } = {};
+  const r = await brevo.send(MSG, "KEY", fakeFetch(201, { messageId: "<abc@brevo>" }, seen));
+  assertEquals(r, { ok: true, messageId: "<abc@brevo>" });
+  assertEquals(seen.url, "https://api.brevo.com/v3/smtp/email");
+  assertEquals((seen.init!.headers as Record<string, string>)["api-key"], "KEY");
+  const b = JSON.parse(String(seen.init!.body));
+  assertEquals(b.sender, MSG.from);
+  assertEquals(b.to, [{ email: "pat@example.com", name: "Pat" }]);
+  assertEquals(b.replyTo, { email: "s@example.com" });
+  assertEquals([b.subject, b.htmlContent, b.textContent], ["Hi", "<p>Hi</p>", "Hi"]);
+  assertEquals(b.tags, ["live", "one_to_one"]);
+});
+Deno.test("brevo adapter: retries only temporary failures", async () => {
+  assertEquals(await brevo.send(MSG, "K", fakeFetch(429, { code: "too_many_requests" })), { ok: false, retry: true, error: "brevo 429 too_many_requests" });
+  assertEquals(await brevo.send(MSG, "K", fakeFetch(503, {})), { ok: false, retry: true, error: "brevo 503" });
+  assertEquals(await brevo.send(MSG, "K", fakeFetch(400, { code: "invalid_parameter" })), { ok: false, retry: false, error: "brevo 400 invalid_parameter" });
+  const net = await brevo.send(MSG, "K", (async () => { throw new Error("down"); }) as unknown as typeof fetch);
+  assert(!net.ok && net.retry);
+});

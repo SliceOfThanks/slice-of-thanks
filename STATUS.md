@@ -1,6 +1,6 @@
 # Build status (read this first in a new session)
 
-Last updated: 2026-10-24. Live code version: v0.7.0 (see releases.json and app_settings.code_version).
+Last updated: 2026-10-24. Live code version: v0.8.0 (see releases.json and app_settings.code_version).
 
 ## Done and live
 - Supabase project cmnclubiarmthibqibuj. Edge Function `api` (api-0.4.0, verify_jwt false, own auth). Tables have RLS with no policies.
@@ -47,6 +47,10 @@ Git tags cannot be pushed. Use commit IDs.
 - v0.7.0 with api-0.7.0 (2026-10-24, commit 08a8dc9): People tab on real data. GET /people (sot_people: contacts with last 10 pizzas, opened from recipient_events box_opened, has_consent), POST /people/save (sot_save_contact, optional basis). People "Send another pizza" posts /send with source people; people without consent on file get country and How you know them fields. CSV lists: POST /send/bulk, 50 rows per call, csv_import feature (Pro and Team), per-row Country and Permission columns with list defaults, optional schedule (datetime-local), rows queue and the worker (now 50 per minute) delivers them. Signature lists share one picture; Gerald's unique pizzas and vegan rows go without a picture. The sample list is hidden in the live app because its addresses are not real. sot_create_send keeps company, vegan and a label. Headline rule everywhere: "Name from Business", business alone when send_as is business (email subject and lead, unbox, preview). Email uses brand/characters/potato-delivery-side-email.png (cream background). Tests: scratchpad pw/people-test.js (21 checks) and pw/test.js pass.
 - BD (Stacey, 2026-10-24): A Slice after-signup redirect set to /kitchen, Pizza Party trial set to 14 days, DMARC rua added. Still hers: /join SEO title, BD duplicate terms checkbox (later).
 - SOT-Login 1.6.1 and SOT-Join 1.0.1 (px sizes) are in the repo; Stacey pastes them into BD.
+
+- v0.7.0 passed Stacey's ChatGPT test (People, add and send, Name from Business email, CSV now and scheduled, login and join sizes).
+- v0.8.0 with api-0.8.0 (2026-10-24, commit ae3b9f4): Box step preview floats (sticky) with an X to unpin and Pin to bring it back (store boxPinned). Note details [first name] [last name] [role] [company] (and old {first} {company}) via buttons under every note; filled per person by api lib/merge.ts fillNote at send, and by fillNote in the prototype for previews. Notes that start with a greeting skip the automatic "Hi Name," on the pizza page and preview. Box presets: table box_presets (removed_at, no hard deletes), sot_presets / sot_save_preset / sot_remove_preset, limits in app_settings preset_limits {free 1, pro 10, team 20}; GET /presets, POST /presets/save, /presets/remove. Picker and Save as preset at the top of the box step; Box presets card in Settings with Edit (box step in preset mode), Rename, Remove. Contacts have role; Kitchen send step shows Their company and Their role only when the note uses them; Add person has Role. CSV: First/Last/Role columns, Consent column (yes, opted in, client and so on map to permission or relationship), Download a sample CSV (example.com rows are always skipped). Tests: pw/presets-test.js (32 checks), pw/people-test.js, pw/test.js pass.
+- Small, with the next api deploy: the email greeting uses the full recipient name ("Hi List Test One,"); use the first name.
 
 ## Next, in order
 1. Calendar connections (Calendly, TidyCal) feeding Home > This week, with Stacey's rules:

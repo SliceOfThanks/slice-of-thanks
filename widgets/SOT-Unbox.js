@@ -1,3 +1,4 @@
+<script>
 (function () {
   var root = document.getElementById('sot-unbox');
   if (!root) { return; }
@@ -18,3 +19,4 @@
     load(base + '/shared/pizza-core.js', function () { load(base + '/unbox/unbox.js'); });
   });
 })();
+</script>

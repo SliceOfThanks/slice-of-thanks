@@ -39,6 +39,8 @@
 .kx-btn[aria-expanded="true"]{background:var(--mustard);color:#3E2416}
 .kx-btn[aria-expanded="true"] small{color:#5A3B25}
 .kx-btn canvas,.kx-btn .g-av{width:44px;height:44px;flex:none}
+.kx-one{grid-template-columns:1fr}
+.home-start h2{margin-bottom:12px}
 @media (max-width:380px){.kx-buttons{grid-template-columns:1fr}}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -371,7 +373,7 @@ body.is-free .pro-tag{display:inline-block}
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Sections">
-    <button role="tab" id="tab-today" data-view="today" aria-selected="true">Today</button>
+    <button role="tab" id="tab-today" data-view="today" aria-selected="true">Home</button>
     <button role="tab" id="tab-make" data-view="make" aria-selected="false">Kitchen</button>
     <button role="tab" id="tab-people" data-view="people" aria-selected="false">People</button>
     <button role="tab" id="tab-gerald" data-view="gerald" aria-selected="false">Crew</button>
@@ -402,7 +404,29 @@ body.is-free .pro-tag{display:inline-block}
         <button class="btn ghost" id="promptSkip">Skip</button>
       </div>
     </div>
-    <div class="section-head"><div><h2>Today</h2><p class="muted" id="todayDate"></p></div><span class="tag">Sample calendar</span></div>
+    <div class="card home-start">
+      <h2>Send a pizza</h2>
+      <div class="kx-buttons">
+        <button class="kx-btn" id="homeNew" type="button"><canvas id="homeNewCanvas" width="44" height="44" aria-hidden="true"></canvas><span><b>Make a new pizza</b><small>Build it in the Kitchen</small></span></button>
+        <button class="kx-btn" id="homeHire" type="button"><span class="g-av" aria-hidden="true"></span><span><b>Hire Gerald</b><small>Short on time? He makes it</small></span></button>
+      </div>
+    </div>
+    <div class="card special" id="specialCard">
+      <div class="section-head" style="border:0;padding:0"><p class="eyebrow" id="spMonth"></p><span class="tag" id="spUntil"></span></div>
+      <div class="sp-row"><canvas id="spCanvas" width="140" height="140" aria-label="This month's special pizza"></canvas>
+        <div class="sp-text"><h2 id="spName"></h2><p id="spDesc"></p><p class="muted" style="font-size:.86rem" id="spComes"></p></div></div>
+      <p class="hint" id="spGerald"></p>
+      <div class="btn-row"><button class="btn primary" id="spSend" type="button">Send this pizza</button><button class="btn" id="spPreview" type="button">Preview the unboxing</button></div>
+      <p class="muted" style="font-size:.82rem">Free: send it once this month. Pro: send it as often as you like, with the special box and confetti.</p>
+    </div>
+    <div class="card sponsored" id="sponsorCard" hidden>
+      <div class="section-head" style="border:0;padding:0"><p class="eyebrow" id="soEyebrow">Sponsored</p><span class="tag">Sponsored</span></div>
+      <div class="sp-row"><canvas id="soCanvas" width="140" height="140" aria-label="This month's sponsored pizza"></canvas>
+        <div class="sp-text"><h2 id="soName"></h2><p id="soDesc"></p><p class="offer" id="soOffer"></p></div></div>
+      <p class="muted" style="font-size:.82rem">Free for everyone to send, and it doesn't count toward your monthly limit.</p>
+      <div class="btn-row"><button class="btn primary" id="soSend" type="button">Send this pizza</button><button class="btn" id="soPreview" type="button">Preview the unboxing</button></div>
+    </div>
+    <div class="section-head"><div><h2>This week</h2><p class="muted" id="todayDate"></p></div><span class="tag">Sample calendar</span></div>
     <ul class="meetings" id="meetings"></ul>
     <p class="mode-line" id="modeLine"></p>
     <button class="btn" id="simEnd">Simulate the 3:30 meeting ending</button>
@@ -411,28 +435,10 @@ body.is-free .pro-tag{display:inline-block}
   <!-- KITCHEN -->
   <section id="view-make" hidden>
     <p class="eyebrow" id="makeFor"></p>
-    <!-- Pizza of the Month and Hire Gerald: two ways to start a pizza, opened from the Kitchen -->
+    <!-- Hire Gerald: a quick way to start a pizza, opened from the top of the Kitchen -->
     <div class="kx" id="kitchenExtras">
-      <div class="kx-buttons">
-        <button class="kx-btn" id="kxSpecialBtn" type="button" aria-expanded="false" aria-controls="kxSpecialWrap"><canvas id="kxSpecialCanvas" width="44" height="44" aria-hidden="true"></canvas><span><b>Pizza of the Month</b><small id="kxSpecialSub">This month's special</small></span></button>
+      <div class="kx-buttons kx-one">
         <button class="kx-btn" id="kxHireBtn" type="button" aria-expanded="false" aria-controls="kxHireWrap"><span class="g-av" aria-hidden="true"></span><span><b>Hire Gerald</b><small>Short on time? He makes it</small></span></button>
-      </div>
-      <div class="kx-wrap" id="kxSpecialWrap" hidden>
-        <div class="card special" id="specialCard">
-          <div class="section-head" style="border:0;padding:0"><p class="eyebrow" id="spMonth"></p><span class="tag" id="spUntil"></span></div>
-          <div class="sp-row"><canvas id="spCanvas" width="140" height="140" aria-label="This month's special pizza"></canvas>
-            <div class="sp-text"><h2 id="spName"></h2><p id="spDesc"></p><p class="muted" style="font-size:.86rem" id="spComes"></p></div></div>
-          <p class="hint" id="spGerald"></p>
-          <div class="btn-row"><button class="btn primary" id="spSend" type="button">Send this pizza</button><button class="btn" id="spPreview" type="button">Preview the unboxing</button></div>
-          <p class="muted" style="font-size:.82rem">Free: send it once this month. Pro: send it as often as you like, with the special box and confetti.</p>
-        </div>
-        <div class="card sponsored" id="sponsorCard" hidden>
-          <div class="section-head" style="border:0;padding:0"><p class="eyebrow" id="soEyebrow">Sponsored</p><span class="tag">Sponsored</span></div>
-          <div class="sp-row"><canvas id="soCanvas" width="140" height="140" aria-label="This month's sponsored pizza"></canvas>
-            <div class="sp-text"><h2 id="soName"></h2><p id="soDesc"></p><p class="offer" id="soOffer"></p></div></div>
-          <p class="muted" style="font-size:.82rem">Free for everyone to send, and it doesn't count toward your monthly limit.</p>
-          <div class="btn-row"><button class="btn primary" id="soSend" type="button">Send this pizza</button><button class="btn" id="soPreview" type="button">Preview the unboxing</button></div>
-        </div>
       </div>
       <div class="kx-wrap" id="kxHireWrap" hidden>
         <div class="card hire">
@@ -1084,7 +1090,7 @@ const cv=$('#pizza');
 
 /* ---------- views ---------- */
 let account=store.get('account',null);
-const GATE_TEXT={today:'Today shows your meetings and sends pizza prompts when they end.',people:'People keeps track of everyone you send pizzas to and whether they opened them.',bulk:'Send to a list lets you upload a CSV and send everyone a pizza.',settings:'Settings holds your logo, signature pizza, and calendar.'};
+const GATE_TEXT={today:'Home shows this week\'s meetings, the Pizza of the Month, and pizza prompts when meetings end.',people:'People keeps track of everyone you send pizzas to and whether they opened them.',bulk:'Send to a list lets you upload a CSV and send everyone a pizza.',settings:'Settings holds your logo, signature pizza, and calendar.'};
 const views={admin:$('#view-admin'),gate:$('#view-gate'),today:$('#view-today'),make:$('#view-make'),people:$('#view-people'),gerald:$('#view-gerald'),bulk:$('#view-bulk'),news:$('#view-news'),settings:$('#view-settings')};
 function show(v){const tv=v==='bulk'?'people':v==='admin'?'settings':v==='news'?'gerald':v;
  if(!account&&GATE_TEXT[v]){for(const k in views)views[k].hidden=k!=='gate';$('#gateWhat').textContent=GATE_TEXT[v];
@@ -1098,7 +1104,8 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>show(b.datase
 /* ---------- today ---------- */
 function renderToday(){
  $('#meetGerald').hidden=!!store.get('metGerald',false);
- $('#todayDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+ $('#todayDate').textContent='Week of '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric'});
+ renderSpecial();try{drawPizza($('#homeNewCanvas'),clonePizza(signature),44)}catch(e){}
  const ul=$('#meetings');ul.innerHTML='';
  meetings.forEach(m=>{
   const li=document.createElement('li');li.className='meeting';
@@ -1532,13 +1539,11 @@ function renderHire(){
  const pm=meetings.find(m=>m.status==='prompt');sel.value=prev||(pm?pm.id:sel.options[0].value);syncHireVegan();
  makeChips($('#hireVibe'),VIBES,()=>hireVibe,v=>hireVibe=v)}
 /* Kitchen shortcuts show while starting a pizza (the dough step) and open one card at a time */
-function renderKitchenExtras(){const kx=$('#kitchenExtras');kx.hidden=step!==0||editingSignature;if(kx.hidden)return;
- renderHire();renderSpecial();const sp=currentSpecial(),so=sponsorData();
- $('#kxSpecialBtn').hidden=!sp&&!so.active;
- if(sp){$('#kxSpecialSub').textContent=sp.name;drawPizza($('#kxSpecialCanvas'),specialPizza(sp),44)}}
-function toggleKx(which){[['Special','#kxSpecialBtn','#kxSpecialWrap'],['Hire','#kxHireBtn','#kxHireWrap']].forEach(([k,b,w])=>{
-  const open=k===which&&$(w).hidden;$(w).hidden=!open;$(b).setAttribute('aria-expanded',open?'true':'false')})}
-$('#kxSpecialBtn').onclick=()=>toggleKx('Special');$('#kxHireBtn').onclick=()=>toggleKx('Hire');
+function renderKitchenExtras(){const kx=$('#kitchenExtras');kx.hidden=step!==0||editingSignature;if(kx.hidden)return;renderHire()}
+function toggleHire(open){const w=$('#kxHireWrap');if(open===undefined)open=w.hidden;w.hidden=!open;$('#kxHireBtn').setAttribute('aria-expanded',open?'true':'false')}
+$('#kxHireBtn').onclick=()=>toggleHire();
+$('#homeNew').onclick=()=>{toggleHire(false);startFresh(null)};
+$('#homeHire').onclick=()=>{startFresh(null);toggleHire(true);setTimeout(()=>{const c=$('#kxHireWrap');if(c.scrollIntoView)c.scrollIntoView({behavior:'smooth',block:'start'})},50)};
 function syncHireVegan(){const m=meetings.find(x=>x.id===$('#hireFor').value);$('#hireVegan').checked=false;$('#hireVeganNote').textContent=m&&m.vegan?' ('+first(m.who)+' is marked vegan)':''}
 $('#hireFor').addEventListener('change',syncHireVegan);
 function placeLabels(p,text){text=(text||'').trim().slice(0,30);if(!text)return 0;p.toppings=p.toppings.filter(t=>t.k!=='label');p.sign={text};return 1;const parts=[];

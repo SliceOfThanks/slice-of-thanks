@@ -19,9 +19,9 @@ Last updated: 2026-10-24. Live code version: v0.4.5 (see releases.json and app_s
 - BD API must be called on sliceofthanks.app (www redirects and the POST becomes a GET, 405). api-0.4.2.
 - Dark mode text softened to #E3D0B8 / muted #BBA088 (prototype and unbox.css). Crew What's new shows 5; See all updates opens view-news.
 - Payments verified 2026-10-24: Whole Pie test member (BD 20) got Special Delivery from BD invoice 3702000002 line i2, credited once; A Slice test member (BD 19) refunded pack never credited.
-- Email provider layer (api-0.5.0, in repo, NOT deployed yet): all sending goes through lib/mail (types.ts, brevo.ts, index.ts). Provider chosen by app_settings email_provider. Waiting on migration email_provider (Stacey must approve in the Supabase prompt), then deploy api with lib/mail files. To add a provider: new lib/mail/<name>.ts, add to PROVIDERS, Supabase secret for its key, change the setting.
+- Email provider layer (api-0.5.0, deployed 2026-10-24): all sending goes through lib/mail (types.ts, brevo.ts, index.ts). Provider chosen by app_settings email_provider; sends.provider records who sent it (sot_mark_sent_via). To add a provider: new lib/mail/<name>.ts, add to PROVIDERS, Supabase secret for its key, change the setting.
 - Login: decided to keep BD's /login (BD handles passwords, reCAPTCHA, reset) and style it with widgets/SOT-Login.html, placed above the Member Login Page widget on /login (page has Disable Default CSS on). Kitchen Settings has Log out (BD /logout). /join is not styled yet. SOT-Login 1.6.0 verified live 2026-10-24: form in card, reCAPTCHA works, login returns to /kitchen. Debug panel at /login?sotdebug=1. Only submit buttons get the big button style (BD has a small lock button by the password box). Click Refresh Live Site after widget changes (BD page cache).
-- v0.4.5: Pizza of the Month (with sponsor card) and Hire Gerald live in the Kitchen (#kitchenExtras, shown on the dough step), opened by two buttons. Crew keeps crew, Treat Jar, tips, What's new.
+- v0.4.6: Today tab renamed Home. Home has Gerald's intro (once per member, saved in members.prefs.met_gerald), a Send a pizza card (Make a new pizza, Hire Gerald), the Pizza of the Month card, and This week (meetings). Kitchen keeps a Hire Gerald button on the dough step. Crew keeps crew, Treat Jar, tips, What's new.
 - Test purchases are made as manual BD invoices marked Paid in BD admin (free). Never ask Stacey to pay real money for tests.
 - Test members: the Whole Pie one has a paid Special Delivery invoice; the A Slice one has a 100 Email Pack invoice that was refunded before any sync (should never be credited).
 - Not verified against a real BD invoice yet. When the first test purchase is made, check purchases and credit_ledger. If BD names the invoice line differently, add a match to app_settings bd_products (both envs).
@@ -33,6 +33,10 @@ Git tags cannot be pushed. Use commit IDs.
 
 ## Next, in order
 1. Scheduled-send worker and retries (pg_cron + pg_net calling the api).
+   Then calendar connections (Calendly, TidyCal) feeding Home > This week, with Stacey's rules:
+   - Pro and Team: each upcoming meeting has a choice to have a pizza ready when it ends (or the Settings default).
+   - A Slice (free): when a meeting ends, Gerald makes the pizza automatically and emails the member that it is waiting; the member opens it and sends it (free sends are never automatic).
+   - Home quick actions stay: Make a new pizza, Hire Gerald, Send the Pizza of the Month.
 2. People tab: CSV import with country and consent per contact, list sends.
 3. Spanish in the Kitchen UI.
 4. SOT-Admin widget: Releases, Subscription Plans, Pizza of the Month. Include a purchases list.

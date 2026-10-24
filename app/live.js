@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.4.5 =====
+/* ===== Slice of Thanks live layer v0.4.6 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -133,6 +133,10 @@ function applySession(s) {
   if (pr.brand_color_1) profile.brand1 = pr.brand_color_1;
   if (pr.brand_color_2) profile.brand2 = pr.brand_color_2;
   if (!profile.sign && pr.display_name) profile.sign = 'Warmly, ' + first(pr.display_name);
+  /* Gerald's intro shows once per member, on every device: the account remembers it */
+  const prefs = s.prefs || {};
+  if (prefs.met_gerald) store.set('metGerald', true);
+  else if (store.get('metGerald', false)) LIVE.call('/profile', { profile: { prefs: { met_gerald: true } } });
   refreshPlan(true);
 }
 const _renderPlanCard = renderPlanCard;
@@ -282,6 +286,12 @@ renderSettings = function () {
   if ($('#liveAddrS') && document.activeElement !== host) { $('#liveAddrS').value = s.profile.mailing_address || ''; $('#liveReply').value = s.profile.reply_to || ''; }
 };
 
+const _geraldOk = $('#geraldOk').onclick;
+$('#geraldOk').onclick = function () {
+  _geraldOk();
+  if (LIVE.session) { LIVE.session.prefs = Object.assign({}, LIVE.session.prefs, { met_gerald: true }); LIVE.call('/profile', { profile: { prefs: { met_gerald: true } } }); }
+};
+
 /* --- Features not switched on yet --- */
 $('#openBulk').onclick = () => { if (!isPro()) { upgrade('bulk'); return; } toast('CSV sends arrive in the next update.'); };
 
@@ -381,7 +391,10 @@ renderToday = function () {
   if (ul && !meetings.length) {
     ul.innerHTML = '';
     const li = document.createElement('li'); li.className = 'meeting'; li.style.gridTemplateColumns = '1fr';
-    li.innerHTML = '<div class="info"><b>No meetings yet</b><span class="muted">Calendly and TidyCal connections arrive in the next update. Until then, tap Kitchen to make a pizza.</span></div>';
+    const pro = LIVE.session && LIVE.session.plan !== 'free';
+    li.innerHTML = '<div class="info"><b>No meetings yet</b><span class="muted">Calendly and TidyCal connections arrive in the next update. Your meetings for the week will show here. ' +
+      (pro ? 'You choose which meetings get a pizza, and Gerald has it ready when each one ends.' : 'After each meeting, Gerald makes a pizza for you and emails you when it is ready to send.') +
+      ' Until then, use Make a new pizza above.</span></div>';
     ul.appendChild(li);
   }
 };

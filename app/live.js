@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.4.7 =====
+/* ===== Slice of Thanks live layer v0.4.8 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {

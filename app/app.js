@@ -659,7 +659,7 @@ const TIPS=['Send it within an hour of the meeting. It lands while they still re
 const ANNOUNCEMENTS=[
  {id:'gift',date:'Oct 23',title:'New for Pro: a gift under the pizza',text:'Hide a discount or coupon code under the pizza. They eat it to reveal the code. Perfect for nudging free trials to upgrade.',demo:{type:'giftUnbox'},label:'Try it'},
  {id:'treats',date:'Oct 23',title:"Potato's Treat Jar",text:'Potato hid easter eggs all over the app. Find them to earn Treats and unlock the Secret Menu, including Potato confetti.',demo:{type:'confetti',value:'potato'},label:'Peek at Potato confetti'},
- {id:'special',date:'Oct 23',title:'Pizza of the Month',text:'Every month Gerald designs a special pizza with its own box, sticker, and confetti. This month: The Haunted Harvest.',demo:{type:'specialPreview'},label:'See it'},
+ {id:'special',date:'Oct 23',title:'Pizza of the Month',text:'Every month Gerald designs a special pizza with its own box, sticker, and confetti. This month: The Haunted Harvest. Find it on Home.',demo:{type:'specialPreview'},label:'See it'},
  {id:'potato',date:'Oct 23',title:'Meet Potato, Head of Delivery',text:'Potato now delivers every pizza on her scooter and barks when your pizza is ready. Gerald has asked her to stop eating the merchandise.',demo:{type:'unbox'},label:'See Potato deliver'},
  {id:'gold',date:'Oct 23',title:'New confetti: Gold sparkles',text:'A little extra shine for big moments, like a signed deal or a retirement.',demo:{type:'confetti',value:'gold'},label:'Try it'},
  {id:'spell',date:'Oct 23',title:'Spell it with toppings',text:'Type a word and watch your toppings drop into letters.',demo:{type:'spell',value:'HELLO'},label:'Try it'},
@@ -1226,7 +1226,7 @@ $('#upSheet').addEventListener('click',e=>{if(e.target.id==='upSheet')closeUp()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#upSheet').hidden)closeUp()});
 refreshPlan(true);
 
-/* ===== Slice of Thanks live layer v0.4.7 =====
+/* ===== Slice of Thanks live layer v0.4.8 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {

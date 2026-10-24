@@ -3,6 +3,7 @@ import { verifyBdToken } from "./auth.ts";
 import { b64url, hmacHex, recipientToken, tokenHash } from "./crypto.ts";
 import { buildEmail, senderLabel } from "./email.ts";
 import { dataUrlToBlob, publitioSignature } from "./publitio.ts";
+import { billingLines, matchProduct } from "./billing.ts";
 
 const SECRET = "abc123DEF456ghi789JKL012mno345PQR678stu9";
 async function sign(payload: object, secret = SECRET) {
@@ -55,4 +56,31 @@ Deno.test("publitio signature and image parsing", async () => {
   assert(dataUrlToBlob("data:image/png;base64,iVBORw0KGgo=") !== null);
   assertEquals(dataUrlToBlob("data:text/html;base64,PGI+"), null);
   assertEquals(dataUrlToBlob("javascript:alert(1)"), null);
+});
+
+const PRODUCTS = [
+  { match: "1,000 email pack", product: "pack_1000" }, { match: "1000 email pack", product: "pack_1000" },
+  { match: "500 email pack", product: "pack_500" }, { match: "100 email pack", product: "pack_100" },
+  { match: "special delivery", product: "special_delivery" },
+];
+Deno.test("product names match, longest first", () => {
+  assertEquals(matchProduct("Digital Product: 1,000 Email Pack", PRODUCTS), "pack_1000");
+  assertEquals(matchProduct("100 Email Pack", PRODUCTS), "pack_100");
+  assertEquals(matchProduct("Special Delivery (one pizza)", PRODUCTS), "special_delivery");
+  assertEquals(matchProduct("The Whole Pie monthly", PRODUCTS), null);
+});
+Deno.test("billing lines: paid and refunded, skips unpaid, old and plan invoices", () => {
+  const now = Date.parse("2026-10-24T00:00:00Z");
+  const api = { status: "success", message: { total: 4, invoices: [
+    { invoice_details: { id: 71, date: "2026-10-20", datepaid: "2026-10-20 10:00:00", status: "Paid", items: [{ description: "500 Email Pack", amount: "15.00", type: "Item" }, { description: "Special Delivery", amount: "2.99" }] } },
+    { invoice_details: { id: 72, date: "2026-10-21", datepaid: "0000-00-00 00:00:00", status: "Unpaid", items: [{ description: "100 Email Pack", amount: "5.00" }] } },
+    { invoice_details: { id: 73, date: "2026-10-01", datepaid: "2026-10-01 09:00:00", status: "Refunded", items: [{ description: "The Whole Pie", amount: "9.00" }, { description: "100 Email Pack", amount: "5.00" }] } },
+    { invoice_details: { id: 9, date: "2025-01-01", datepaid: "2025-01-01 09:00:00", status: "Paid", items: [{ description: "100 Email Pack", amount: "5.00" }] } },
+  ] } };
+  assertEquals(billingLines(api, PRODUCTS, now), [
+    { ref: "71:0", product: "pack_500", status: "paid", amountCents: 1500, paidAt: "2026-10-20T10:00:00.000Z" },
+    { ref: "71:1", product: "special_delivery", status: "paid", amountCents: 299, paidAt: "2026-10-20T10:00:00.000Z" },
+    { ref: "73:1", product: "pack_100", status: "refunded", amountCents: 500, paidAt: "2026-10-01T09:00:00.000Z" },
+  ]);
+  assertEquals(billingLines({ status: "error" }, PRODUCTS, now), []);
 });

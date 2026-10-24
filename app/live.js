@@ -1,6 +1,6 @@
-/* ===== Slice of Thanks live layer v0.3.3 =====
+/* ===== Slice of Thanks live layer v0.4.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
-   Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent and real sends. */
+   Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
   const host = SOTR.host;
   const API = host.getAttribute('data-api') || 'https://cmnclubiarmthibqibuj.supabase.co/functions/v1/api';
@@ -8,7 +8,7 @@ const LIVE = (function () {
   const SIGNUP = host.getAttribute('data-signup-url') || '/join';
   const LOGIN = host.getAttribute('data-login-url') || '/login';
   const UPGRADE = host.getAttribute('data-upgrade-url') || '/join';
-  const SPECIAL = host.getAttribute('data-special-url') || '';
+  const ATTR_URL = { special_delivery: 'data-special-url', pack_100: 'data-pack100-url', pack_500: 'data-pack500-url', pack_1000: 'data-pack1000-url' };
   const SITE = 'https://www.sliceofthanks.app';
   let session = null;
 
@@ -20,7 +20,9 @@ const LIVE = (function () {
     if (r.status === 401) j.code = 'not_signed_in';
     return j;
   }
-  return { API, TOKEN, SIGNUP, LOGIN, UPGRADE, SPECIAL, SITE, call, get session() { return session; }, set session(s) { session = s; } };
+  /* BD Digital Product checkout link: set on the SOT-App widget, or in Supabase app_settings checkout_urls */
+  function checkoutUrl(key) { return host.getAttribute(ATTR_URL[key] || '') || (session && session.checkout && session.checkout[key]) || ''; }
+  return { API, TOKEN, SIGNUP, LOGIN, UPGRADE, SITE, call, checkoutUrl, get session() { return session; }, set session(s) { session = s; } };
 })();
 
 /* --- Remove prototype-only sample data and controls --- */
@@ -134,7 +136,55 @@ renderPlanCard = function () {
   const c = s.credits || {}; const p = el.querySelector('p.muted');
   if (p) p.textContent = 'Emails left this month: ' + (c.monthly || 0) + (c.pack ? ' plus ' + c.pack + ' from email packs' : '') + (c.special_delivery ? '. Special Deliveries: ' + c.special_delivery : '') + '.';
   const bar = el.querySelector('.usage'); if (bar) bar.hidden = true;
+  if (p && c.pack && s.pack_next_expiry) p.textContent += ' Pack emails are used after your monthly ones and last 12 months from purchase.';
+  const row = el.querySelector('.btn-row');
+  if (row && s.plan !== 'free' && !$('#planPacks')) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.id = 'planPacks'; b.textContent = 'Buy more emails'; b.onclick = openPacks;
+    row.insertBefore(b, row.firstChild);
+  }
 };
+
+/* --- Email packs: Pro and Team only. Bought as BD Digital Products, credited by Supabase. --- */
+function goCheckout(key, url) {
+  const c = (LIVE.session && LIVE.session.credits) || {};
+  store.set('checkoutPending', { key, at: Date.now(), pack: c.pack || 0, special: c.special_delivery || 0 });
+  location.href = url;
+}
+function openPacks() {
+  closeUp();
+  const packs = (LIVE.session && LIVE.session.packs) || [];
+  const p = document.createElement('div');
+  p.innerHTML = '<p class="muted" style="margin:0 0 12px">Out of monthly emails or sending a big batch? Packs are used after your monthly emails, last 12 months, and can be refunded within 14 days if you have not used them.</p>';
+  liveSheet('Buy more emails', p, packs.map((k, i) => ({
+    label: Number(k.emails).toLocaleString('en-US') + ' emails, $' + (k.price_cents / 100).toFixed(0), primary: i === 0,
+    run: () => { const u = LIVE.checkoutUrl(k.key); if (!u) { toast('Email packs open soon.'); return; } goCheckout(k.key, u); }
+  })));
+}
+
+/* Back from checkout: ask Supabase to check BD for the payment, a few times while BD finishes */
+let wantSpecial = false;
+let checkTries = 0;
+async function checkPurchases() {
+  const pend = store.get('checkoutPending', null);
+  if (!pend || !LIVE.session) return;
+  if (Date.now() - (pend.at || 0) > 2 * 3600e3) { store.set('checkoutPending', null); return; }
+  const s = await LIVE.call('/purchases/check', {});
+  if (!s || !s.member_id) return;
+  const c = s.credits || {};
+  const gotPack = (c.pack || 0) > (pend.pack || 0);
+  const gotSpecial = (c.special_delivery || 0) > (pend.special || 0);
+  LIVE.session = s; renderPlanCard();
+  if (gotPack || gotSpecial) {
+    store.set('checkoutPending', null); checkTries = 0;
+    if (gotSpecial && (wantSpecial || pend.key === 'special_delivery') && !specialOn) { wantSpecial = false; startSpecial(true); toast('Payment received. Special Delivery is on for this pizza.'); }
+    else toast(gotPack ? 'Payment received. ' + ((c.pack || 0) - (pend.pack || 0)).toLocaleString('en-US') + ' more emails are ready.' : 'Payment received. Your Special Delivery is ready.');
+    burst('gold');
+    return;
+  }
+  if (++checkTries < 6) setTimeout(checkPurchases, 6000);
+  else { checkTries = 0; toast('We have not seen the payment yet. It will show up here as soon as it clears.'); }
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && checkTries === 0) checkPurchases(); });
 goPro = function () { closeUp(); location.href = LIVE.UPGRADE; };
 
 /* --- Special Delivery: $2.99 one time, A Slice only. Unlocks Pro features for one pizza and includes its send. --- */
@@ -154,9 +204,10 @@ function offerSpecial() {
   p.textContent = 'For a one-time $2.99, this pizza gets everything in The Whole Pie: your logo, brand colors, all box styles, Pro confetti and toppings, a gift code, and your own button. The send is included, so it does not use one of your 10 monthly emails.';
   liveSheet('Special Delivery', p, [
     { label: 'Get Special Delivery for $2.99', primary: true, run: () => {
-      if (!LIVE.SPECIAL) { toast('Special Delivery checkout opens soon.'); return; }
+      const u = LIVE.checkoutUrl('special_delivery');
+      if (!u) { toast('Special Delivery checkout opens soon.'); return; }
       store.set('draft', { pizza: cleanPizza(pizza), box: JSON.parse(JSON.stringify(box)), at: Date.now(), special: true });
-      location.href = LIVE.SPECIAL;
+      goCheckout('special_delivery', u);
     } },
     { label: 'Not now', run: closeLiveSheet }
   ]);
@@ -270,7 +321,12 @@ async function liveSend() {
     p.textContent = 'Their country (' + r.region + ') needs a different kind of permission for this pizza. Change "How you know them" to the option that is true for this person. If none is true, ask them in person or by phone first.';
     liveSheet('Permission needed', p, [{ label: 'Got it', primary: true, run: closeLiveSheet }]); return;
   }
-  if (r.code === 'no_credits') { toast(MSG.no_credits); if (!isPro()) upgrade('general'); return; }
+  if (r.code === 'no_credits') {
+    if (specialOn) { toast('Your Special Delivery was already used. Get another to send this pizza.'); offerSpecial(); return; }
+    toast(MSG.no_credits);
+    if (LIVE.session && LIVE.session.plan !== 'free') openPacks(); else upgrade('general');
+    return;
+  }
   toast(MSG[r.code] || MSG.server_error);
 }
 
@@ -294,9 +350,10 @@ $('#sendNow').onclick = () => {
   const d = store.get('draft', null);
   if (d && d.pizza && Date.now() - (d.at || 0) < 7 * 864e5) {
     pizza = d.pizza; box = Object.assign(boxFromProfile(null), d.box); store.set('draft', null);
-    if (d.special && s.credits && s.credits.special_delivery > 0) startSpecial(true);
+    if (d.special && s.credits && s.credits.special_delivery > 0) startSpecial(true); else if (d.special) wantSpecial = true;
     step = 5; saidStep = 5; show('make'); renderStep(); toast(specialOn ? 'Special Delivery is on. Your pizza is ready to send.' : 'Welcome. Your pizza is ready to send.');
   } else { show('today'); }
+  checkPurchases();
 })();
 
 /* --- Today without the sample calendar --- */

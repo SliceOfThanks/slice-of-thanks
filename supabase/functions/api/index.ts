@@ -6,8 +6,9 @@ import { verifyBdToken } from "./lib/auth.ts";
 import { recipientToken, tokenHash } from "./lib/crypto.ts";
 import { buildEmail, SITE } from "./lib/email.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
+import { billingLines, fetchTransactions, type ProductMatch } from "./lib/billing.ts";
 
-const VERSION = "api-0.3.0";
+const VERSION = "api-0.4.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@6ee4e204b57bdb3c50150e9a5fe275383e9b22e9/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -38,6 +39,31 @@ async function member(req: Request) {
   if (!claims) return null;
   const s = await rpc<Record<string, any>>("sot_session", { p: { bd_user_id: claims.uid, bd_sub_id: claims.sub, name: claims.name ?? "", legal_signup: claims.lg === 1, joined: typeof claims.jn === "string" ? claims.jn : "" } });
   return { claims, session: s };
+}
+
+// Credits paid BD Digital Products (email packs, Special Delivery) and takes back refunded ones.
+// Runs when the Kitchen opens (at most every 10 minutes) and right after a member comes back from checkout.
+async function syncBilling(memberId: string, bdUserId: number, minSeconds: number): Promise<{ checked: boolean; changed: boolean }> {
+  if (!env("BD_API_KEY")) return { checked: false, changed: false };
+  const due = await rpc<boolean | null>("sot_billing_claim", { p_member: memberId, p_seconds: minSeconds });
+  if (!due) return { checked: false, changed: false };
+  let changed = false;
+  try {
+    const products = (await rpc<ProductMatch[] | null>("sot_setting", { p_env: "live", p_key: "bd_products" })) ?? [];
+    const tx = await fetchTransactions({ site: env("BD_SITE_URL") || SITE, key: env("BD_API_KEY"), bdUserId });
+    for (const line of billingLines(tx, products)) {
+      if (line.status === "paid") {
+        const r = await rpc<Record<string, any>>("sot_grant_purchase", { p_member: memberId, p_ref: line.ref, p_product: line.product, p_amount_cents: line.amountCents, p_paid_at: line.paidAt });
+        if (r?.granted) changed = true;
+      } else {
+        const r = await rpc<Record<string, any>>("sot_refund_purchase", { p_ref: line.ref });
+        if (r?.changed) changed = true;
+      }
+    }
+  } catch (e) {
+    console.error("billing sync", String(e));
+  }
+  return { checked: true, changed };
 }
 
 async function deliver(sendId: string, pizzaImageUrl?: string) {
@@ -116,7 +142,14 @@ async function route(req: Request, path: string): Promise<Response> {
   if (!m) return json(req, { error: "not_signed_in" }, 401);
   const memberId = m.session.member_id as string;
 
-  if (path === "/session") return json(req, m.session);
+  if (path === "/session") {
+    const b = await syncBilling(memberId, m.claims.uid, 600);
+    return json(req, b.changed ? (await member(req))!.session : m.session);
+  }
+  if (path === "/purchases/check" && req.method === "POST") {
+    const b = await syncBilling(memberId, m.claims.uid, 4);
+    return json(req, { ...(b.changed ? (await member(req))!.session : m.session), billing_checked: b.checked });
+  }
   if (path === "/terms/accept" && req.method === "POST") {
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || null;
     const r = await rpc("sot_accept_terms", { p_member: memberId, p_method: "kitchen_checkbox", p_at: null, p_ip: ip, p_ua: (req.headers.get("user-agent") ?? "").slice(0, 300) || null });

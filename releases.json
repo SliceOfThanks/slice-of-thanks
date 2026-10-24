@@ -155,6 +155,12 @@
       "commit": "048f8339183cd192412890b28c2baffc48cdeeb9",
       "date": "2026-10-24",
       "notes": "Calendly and TidyCal connections (each member connects their own). Home This week with a pizza switch per meeting; Pro and Team send the signature pizza when a picked meeting ends, A Slice gets it waiting on Home. Personal lid message. Subject lines follow the occasion sticker. Slice of Thanks address on every email. api-0.10.2, migration calendar.sql."
+    },
+    {
+      "version": "v0.10.1",
+      "commit": "e535476bf87c3d5c69bdff5d09a4e6e94107e9ee",
+      "date": "2026-10-24",
+      "notes": "Hire Gerald picks from this week's meetings and People or adds someone new; pizza message with a 16 letter limit; Gerald's pizzas get his perfect bake, five slices and chef hat confetti. Gerald wears a chef hat."
     }
   ]
 }

@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.4.0 =====
+/* ===== Slice of Thanks live layer v0.4.1 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -36,6 +36,13 @@ profile.linkLabel = profile.linkLabel || 'Book a follow-up';
   SOTR.querySelectorAll('.signboard .tag').forEach(t => { t.hidden = true; });
   SOTR.querySelectorAll('p.muted').forEach(p => { if (p.textContent.indexOf('The link is a sample') === 0) p.hidden = true; });
 })();
+
+/* --- Real sign in only: the prototype's demo sign in goes to the BD login page --- */
+store.set('account', null);
+$('#gateSignin').onclick = () => {
+  store.set('draft', { pizza: cleanPizza(pizza), box: JSON.parse(JSON.stringify(box)), at: Date.now() });
+  location.href = LIVE.LOGIN;
+};
 
 /* --- Email only for now (text messages are built in but switched off) --- */
 const _renderSend = renderSend;

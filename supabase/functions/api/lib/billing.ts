@@ -52,9 +52,11 @@ export async function fetchTransactions(opts: { site: string; key: string; bdUse
     headers: { "X-Api-Key": opts.key, "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
     body: new URLSearchParams({ user_id: String(opts.bdUserId) }),
     signal: AbortSignal.timeout(6000),
+    redirect: "manual",
   });
   const j = await res.json().catch(() => null);
-  if (!res.ok || !j) throw new Error(`bd_api ${res.status}`);
+  if (res.status >= 300 && res.status < 400) throw new Error(`bd_api redirect to ${res.headers.get("location") ?? "?"}`);
+  if (!res.ok || !j) throw new Error(`bd_api ${res.status} ${String(j?.message ?? "").slice(0, 120)}`);
   // A member with no billing record yet also comes back as an error. Either way nothing is granted; the next check tries again.
   if (j.status && j.status !== "success") throw new Error("bd_api " + String(typeof j.message === "string" ? j.message : j.status).slice(0, 120));
   return j;

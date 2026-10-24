@@ -8,10 +8,12 @@ import { buildEmail, SITE } from "./lib/email.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, fetchTransactions, type ProductMatch } from "./lib/billing.ts";
 
-const VERSION = "api-0.4.1";
+const VERSION = "api-0.4.2";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@6ee4e204b57bdb3c50150e9a5fe275383e9b22e9/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
+// BD's own domain. The www address redirects, and the redirect turns the API POST into a GET (405).
+const BD_API_SITE = "https://sliceofthanks.app";
 
 const env = (k: string) => Deno.env.get(k) ?? "";
 const db = () => createClient(env("SUPABASE_URL"), env("SUPABASE_SERVICE_ROLE_KEY"), { auth: { persistSession: false } });
@@ -50,7 +52,7 @@ async function syncBilling(memberId: string, bdUserId: number, minSeconds: numbe
   let changed = false;
   try {
     const products = (await rpc<ProductMatch[] | null>("sot_setting", { p_env: "live", p_key: "bd_products" })) ?? [];
-    const tx = await fetchTransactions({ site: env("BD_SITE_URL") || SITE, key: env("BD_API_KEY"), bdUserId });
+    const tx = await fetchTransactions({ site: env("BD_SITE_URL") || BD_API_SITE, key: env("BD_API_KEY"), bdUserId });
     for (const line of billingLines(tx, products)) {
       if (line.status === "paid") {
         const r = await rpc<Record<string, any>>("sot_grant_purchase", { p_member: memberId, p_ref: line.ref, p_product: line.product, p_amount_cents: line.amountCents, p_paid_at: line.paidAt });

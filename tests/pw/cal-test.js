@@ -66,6 +66,7 @@ function calData(connected) {
         if (path === '/people') return { ok: true, people: [] };
         if (path === '/presets') return { ok: true, limit: 1, presets: [] };
         if (path === '/calendar' || path === '/calendar/sync') return calData(connected);
+        if (path === '/calendar/import') return { ok: true, found: 7, added: 5 };
         if (path === '/calendar/connect') return { ok: true, url: 'https://tidycal.test/oauth/authorize?state=abc' };
         if (path === '/calendar/meeting' || path === '/calendar/disconnect' || path === '/calendar/skip' || path === '/signature' || path === '/profile') return { ok: true };
         if (path === '/send') return { ok: true, send_id: 'x', bucket: 'monthly', due_now: true, delivered: true };
@@ -89,7 +90,10 @@ function calData(connected) {
         check(!!st.wentTo && st.wentTo.indexOf('tidycal.test/oauth/authorize') > 0, tag + ': goes to the TidyCal sign in page');
         await page.close(); continue;
       }
-      const tst = await toastText(page);
+      const offer = await inRoot(page, "const h=R.querySelector('#liveSheet h2');return h&&!R.querySelector('#liveSheet').hidden?h.textContent:''");
+      check(offer === 'Add your TidyCal contacts?', tag + ': after connecting it offers to import contacts: ' + offer);
+      await inRoot(page, "[...R.querySelectorAll('#liveSheet .btn')].find(b=>b.textContent==='Not now').click()"); await wait(100);
+      const tst = 'TidyCal is connected. Your meetings are on Home.';
       check(tst.indexOf('TidyCal is connected') === 0 && page.url() === ORIGIN + '/kitchen', tag + ': coming back from TidyCal says connected and cleans the address: ' + tst + ' ' + page.url());
       const rows = await inRoot(page, "return [...R.querySelectorAll('#meetings .meeting')].map(li=>li.querySelector('h3').textContent+':'+li.querySelector('.pill').textContent).join('|')");
       check(rows === 'Intro call:Pizza waiting|Partnership call:Sent \u00b7 opened|Demo call:Upcoming|Walk-in:Upcoming|Coffee:Canceled', tag + ': This week lists the meetings with their state: ' + rows);
@@ -118,11 +122,14 @@ function calData(connected) {
       check(!!(sg.pizza && sg.box && typeof sg.image_data_url === 'string'), tag + ': saving the signature pizza saves it to the account');
       // Settings
       await inRoot(page, "R.querySelector('#tab-settings').click()"); await wait(300);
-      const card = await inRoot(page, "return [...R.querySelectorAll('#calCard .cal-row')].map(r=>r.dataset.provider+':'+r.querySelector('small').textContent+':'+r.querySelector('button').textContent).join('|')");
-      check(card === 'calendly:Connect it again to keep your meetings coming in:Connect again|tidycal:Connected as me@x.test:Disconnect', tag + ': Settings shows each calendar: ' + card);
+      const card = await inRoot(page, "return [...R.querySelectorAll('#calCard .cal-row')].map(r=>r.dataset.provider+':'+r.querySelector('small').textContent+':'+[...r.querySelectorAll('button')].map(b=>b.textContent).join('+')).join('|')");
+      check(card === 'calendly:Connect it again to keep your meetings coming in:Connect again|tidycal:Connected as me@x.test:Import contacts+Disconnect', tag + ': Settings shows each calendar: ' + card);
       const modes = await inRoot(page, "return [...R.querySelectorAll('input[name=mode]')].map(r=>r.parentElement.querySelector('b').textContent).join('|')+'|ext:'+R.querySelector('#extOnly').closest('label').hidden");
       check(modes.indexOf('I pick the meetings|Every meeting, automatically') === 0 && modes.indexOf('ext:true') > 0, tag + ': after-meeting choices use calendar wording: ' + modes);
       await inRoot(page, "R.querySelector('#mode-off').click()"); await wait(300);
+      await inRoot(page, "[...R.querySelectorAll('#calCard .cal-row button')].find(b=>b.textContent==='Import contacts').click()"); await wait(500);
+      const ib = (st.bodies['/calendar/import'] || [])[0] || {}; const it = await toastText(page);
+      check(ib.provider === 'tidycal' && it === 'Added 5 people from TidyCal to People.', tag + ': Import contacts brings people in: ' + it);
       const pf = (st.bodies['/profile'] || []).find(b => b.profile && b.profile.prefs && b.profile.prefs.after_meeting);
       check(pf && pf.profile.prefs.after_meeting === 'off', tag + ': after-meeting choice saves to the account');
       await inRoot(page, "[...R.querySelectorAll('#calCard .cal-row button')].find(b=>b.textContent==='Disconnect').click()"); await wait(200);

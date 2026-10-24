@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.11.0 =====
+/* ===== Slice of Thanks live layer v0.12.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -974,7 +974,10 @@ function renderCalendarCard() {
       mk('small', 'muted', on ? 'Connected' + (i.label ? ' as ' + i.label : '') : again ? 'Connect it again to keep your meetings coming in' : 'Not connected'));
     const b = mk('button', 'btn small' + (on ? ' ghost' : ' primary'), on ? 'Disconnect' : (again ? 'Connect again' : 'Connect ' + CAL_NAMES[p])); b.type = 'button';
     b.onclick = () => on ? disconnectCal(p) : connectCal(p, b);
-    row.append(t, b); c.appendChild(row);
+    const btns = mk('div', 'btn-row'); btns.style.margin = '0';
+    if (on) { const im = mk('button', 'btn small', 'Import contacts'); im.type = 'button'; im.onclick = () => importCal(p, im); btns.appendChild(im); }
+    btns.appendChild(b);
+    row.append(t, btns); c.appendChild(row);
   });
   if (calOn()) {
     const r = mk('div', 'btn-row'); const b = mk('button', 'btn small', 'Check for new meetings'); b.type = 'button';
@@ -989,6 +992,22 @@ async function connectCal(p, b) {
   b.disabled = false;
   if (r.url) { location.href = r.url; return; }
   toast(CAL_NAMES[p] + ' is not ready yet. Try again soon.');
+}
+/* Everyone from the calendar goes into People, ready to pick in Hire Gerald and the send step */
+async function importCal(p, btn) {
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Importing...'; }
+  const r = await LIVE.call('/calendar/import', { provider: p }).catch(() => ({}));
+  if (btn) { btn.disabled = false; btn.textContent = label; }
+  if (!r.ok) { toast(r.code === 'needs_reconnect' ? 'Connect ' + CAL_NAMES[p] + ' again, then import.' : 'That import did not finish. Try again in a minute.'); if (r.code === 'needs_reconnect') loadCalendar(); return; }
+  toast(r.added ? 'Added ' + r.added + (r.added === 1 ? ' person' : ' people') + ' from ' + CAL_NAMES[p] + ' to People.' : 'Everyone from ' + CAL_NAMES[p] + ' is already in People.');
+  loadPeople();
+}
+function offerImport(p) {
+  const body = mk('p', 'muted', 'Bring everyone from ' + CAL_NAMES[p] + ' into People, so you can pick them when you or Gerald make a pizza. You choose how you know each person when you send.');
+  liveSheet('Add your ' + CAL_NAMES[p] + ' contacts?', body, [
+    { label: 'Import contacts', primary: true, run: () => { closeLiveSheet(); importCal(p); } },
+    { label: 'Not now', run: closeLiveSheet }]);
 }
 function disconnectCal(p) {
   const body = mk('p', 'muted', 'Your meetings from ' + CAL_NAMES[p] + ' stop showing on Home and no more pizzas go out for them. You can connect again anytime.');
@@ -1027,7 +1046,7 @@ function calStart(s) {
     const p = q.split('_')[0], ok = q.slice(-10) === '_connected';
     try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
     toast(ok ? (CAL_NAMES[p] || 'Your calendar') + ' is connected. Your meetings are on Home.' : 'That did not connect. Try again from Settings > Calendar.');
-    setTimeout(() => show(ok ? 'today' : 'settings'), 50);
+    setTimeout(() => { show(ok ? 'today' : 'settings'); if (ok && CAL_NAMES[p]) setTimeout(() => offerImport(p), 600); }, 50);
   }
   renderCalendarCard();
   loadCalendar();
@@ -1036,6 +1055,6 @@ function calStart(s) {
 renderCalendarCard();
 
 /* Test hook, only when the widget sets data-debug */
-if (host_isDebug()) { window.__SOT_DEBUG = { goSend() { pizza = P_demo(); step = 5; saidStep = 5; show('make'); renderStep(); } }; }
+if (host_isDebug()) { window.__SOT_DEBUG = { toppings() { return pizza.toppings.length; }, goSend() { pizza = P_demo(); step = 5; saidStep = 5; show('make'); renderStep(); } }; }
 function host_isDebug() { return SOTR.host.hasAttribute('data-debug'); }
 function P_demo() { const p = clonePizza(signature); p.baked = true; p.bake = 1; p.tosses = 3; return p; }

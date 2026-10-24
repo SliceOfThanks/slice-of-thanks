@@ -13,7 +13,7 @@ export type EmailInput = {
   unsubscribeAll: string;
   pizzaImageUrl?: string;
   potatoImageUrl?: string;
-  markImageUrl?: string; // the pizza envelope, the Slice of Thanks mark
+  markImageUrl?: string; // the Slice of Thanks text logo
   isTest?: boolean;
   occasion?: string; // the box's occasion sticker; it picks the subject line
 };
@@ -104,7 +104,7 @@ export function buildEmail(i: EmailInput): { subject: string; html: string; text
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fffaef;border:3px solid #3E2416;border-radius:18px">
 <tr><td style="height:14px;background:#D62828;border-radius:14px 14px 0 0"></td></tr>
 <tr><td style="padding:24px 24px 8px;text-align:center">
-${i.markImageUrl ? `<img src="${esc(i.markImageUrl)}" width="64" alt="Slice of Thanks" style="display:block;margin:0 auto 10px;height:auto">` : ""}
+${i.markImageUrl ? `<img src="${esc(i.markImageUrl)}" width="150" alt="Slice of Thanks" style="display:block;margin:0 auto 14px;height:auto">` : ""}
 ${i.potatoImageUrl ? `<img src="${esc(i.potatoImageUrl)}" width="240" alt="Potato the bulldog on her delivery scooter" style="display:block;margin:0 auto 12px;max-width:100%;height:auto">` : ""}
 <p style="margin:0 0 6px;font-size:16px">${esc(t.hi(i.recipientName))}</p>
 <p style="margin:0 0 18px;font-size:20px;font-weight:bold;line-height:1.3">${esc(t.lead(headline))}</p>

@@ -77,6 +77,9 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   check(await inRoot(page, "return R.querySelector('#hireCount').textContent") === '16 of 16 letters.', 'counter counts the letters');
   await inRoot(page, "R.querySelector('#hireBtn').click()"); await wait(200);
   check((await toastText(page)).indexOf('Pick who the pizza is for') === 0, 'asks to pick someone first');
+  const hk = await inRoot(page, "return [[...R.querySelectorAll('#hireKind .chip')].map(c=>c.textContent).join('|'), [...R.querySelectorAll('#hireAmount .chip')].map(c=>c.textContent).join('|')]");
+  check(hk.join(' / ') === 'Business|Personal / Light|Regular|Loaded', 'Gerald asks business or personal and how much topping: ' + hk.join(' / '));
+  await inRoot(page, "[...R.querySelectorAll('#hireAmount .chip')].find(c=>c.textContent==='Loaded').click()"); await wait(100);
   await inRoot(page, "const s=R.querySelector('#hireFor');s.value='c:p2';s.dispatchEvent(new Event('change'))"); await wait(100);
   check(await inRoot(page, "return R.querySelector('#hireVegan').checked && R.querySelector('#hireNew').hidden"), 'picking a vegan person from People turns on vegan');
   await inRoot(page, "const s=R.querySelector('#hireFor');s.value='new';s.dispatchEvent(new Event('change'))"); await wait(100);
@@ -96,8 +99,20 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await page.evaluate(() => { const ov = window.__SOT_ROOT.querySelector('#recipient'); if (ov) ov.hidden = true; });
   await inRoot(page, "R.querySelector('#sendNow').click()"); await wait(900);
   const sb = (st.bodies['/send'] || [])[0] || {};
+  check(sb.pizza && sb.pizza.toppings.length >= 75, 'Loaded Gerald pizza is piled high: ' + (sb.pizza && sb.pizza.toppings.length));
   check(sb.pizza && sb.pizza.toppings.length >= 40, 'Gerald loads the pizza: ' + (sb.pizza && sb.pizza.toppings.length) + ' toppings');
   check(sb.box && sb.box.confetti === 'gerald' && sb.pizza && sb.pizza.byGerald === true && sb.pizza.bakeLevel === 3 && sb.recipient.email === 'rstone@x.test', 'send carries Gerald confetti, his perfect bake and the new person: ' + JSON.stringify({ c: sb.box && sb.box.confetti, g: sb.pizza && sb.pizza.byGerald, l: sb.pizza && sb.pizza.bakeLevel }));
+  // quick picks: Light, Regular, Loaded
+  await inRoot(page, "R.querySelector('#tab-make').click()"); await wait(200);
+  const counts = [];
+  for (const amt of ['Light', 'Regular', 'Loaded']) {
+    await inRoot(page, "R.querySelector('#premadeBox').open=true;[...R.querySelectorAll('#pmAmount .chip')].find(c=>c.textContent===a).click()", amt); await wait(100);
+    await inRoot(page, "[...R.querySelectorAll('#premades .pm')].find(b=>b.querySelector('b').textContent==='Pesto Garden').click()"); await wait(200);
+    counts.push(await page.evaluate(() => window.__SOT_DEBUG.toppings()));
+    if (amt === 'Loaded') await page.locator('#stage canvas').first().screenshot({ path: '../pesto-loaded.png' }).catch(() => {});
+    await inRoot(page, "R.querySelector('#back').click();R.querySelector('#back').click()"); await wait(100);
+  }
+  check(counts[0] < counts[1] && counts[1] < counts[2] && counts[1] >= 30, 'Pesto Garden toppings go Light < Regular < Loaded: ' + counts.join(' < '));
   // a normal pizza never offers Gerald's confetti
   await inRoot(page, "R.querySelector('#tab-make').click()"); await wait(200);
   await page.evaluate(() => window.__SOT_DEBUG.goSend()); await wait(200);
@@ -106,6 +121,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   check(await inRoot(page, "return [...R.querySelectorAll('#confettiChips .chip')].some(c=>c.textContent==='Pizza envelopes')"), 'Pizza envelopes confetti is offered on every pizza');
   await inRoot(page, "[...R.querySelectorAll('#kindChips .chip')].find(c=>c.textContent.trim()==='Personal').click()"); await wait(100);
   await inRoot(page, "R.querySelector('#next').click()"); await wait(200);
+  check(await inRoot(page, "return R.querySelector('#mtgTitle').closest('.field').hidden"), 'personal pizzas do not ask for a meeting');
   await inRoot(page, "R.querySelector('#previewR').click()"); await wait(400);
   check(await inRoot(page, "const i=R.querySelector('#rScootLogo img');return !!i&&i.alt==='Slice of Thanks'"), 'a personal pizza rides under the Slice of Thanks logo');
   await page.evaluate(() => { const ov = window.__SOT_ROOT.querySelector('#recipient'); if (ov) ov.hidden = true; });

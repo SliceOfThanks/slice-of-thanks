@@ -9,9 +9,9 @@ import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
 import { pickProvider } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
-import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
+import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.11.0";
+const VERSION = "api-0.12.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@cb924ffff88269180573543a5e7fe6290ccc6f37/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -81,8 +81,8 @@ async function deliver(sendId: string, pizzaImageUrl?: string) {
     link: `${SITE}/p?t=${encodeURIComponent(token)}`,
     unsubscribeSender: `${SITE}/unsubscribe?t=${encodeURIComponent(token)}&s=sender`,
     unsubscribeAll: `${SITE}/unsubscribe?t=${encodeURIComponent(token)}&s=global`,
-    pizzaImageUrl: pizzaImageUrl ?? snap.image_url ?? undefined, potatoImageUrl: `${ASSETS}/characters/potato-delivery-side-email.png`,
-    markImageUrl: `${ASSETS}/logo/pizza-envelope.png`,
+    pizzaImageUrl: pizzaImageUrl ?? snap.image_url ?? undefined, potatoImageUrl: `${ASSETS}/characters/potato-delivery-side-email-logo.png`,
+    markImageUrl: `${ASSETS}/logo/slice-of-thanks-logo.png`,
   });
   const fromName = (snap.sender?.send_as === "business" && snap.sender?.business) ? snap.sender.business : (snap.sender?.name || "Slice of Thanks");
   // Which service sends is a setting (app_settings email_provider); everything above is ours
@@ -372,6 +372,26 @@ async function route(req: Request, path: string): Promise<Response> {
     if (!isProvider(body.provider)) return json(req, { ok: false, code: "bad_provider" }, 400);
     await rpc("sot_integration_disconnect", { p_member: memberId, p_provider: body.provider });
     return json(req, { ok: true });
+  }
+  // Import everyone from a connected calendar into People
+  if (path === "/calendar/import" && req.method === "POST") {
+    const p = body.provider;
+    if (!isProvider(p)) return json(req, { ok: false, code: "bad_provider" }, 400);
+    const info = await rpc<Record<string, any> | null>("sot_integration_tokens", { p_member: memberId, p_provider: p });
+    let tokens = info?.tokens as Tokens | undefined;
+    if (!info || info.status !== "connected" || !tokens?.access) return json(req, { ok: false, code: "not_connected" });
+    try {
+      if (needsRefresh(tokens)) {
+        tokens = await refreshTokens(p, calCfg(p), tokens.refresh!);
+        await rpc("sot_integration_tokens_update", { p_member: memberId, p_provider: p, p_tokens: tokens });
+      }
+      const people = await listContacts(p, tokens.access, String(info.account ?? ""));
+      return json(req, await rpc("sot_import_contacts", { p_member: memberId, p_source: p, p_items: people }));
+    } catch (e) {
+      console.error("calendar import", p, String(e));
+      if (e instanceof CalendarAuthError) await rpc("sot_integration_synced", { p_member: memberId, p_provider: p, p_ok: false }).catch(() => null);
+      return json(req, { ok: false, code: e instanceof CalendarAuthError ? "needs_reconnect" : "server_error" });
+    }
   }
   if (path === "/calendar/meeting" && req.method === "POST") {
     return json(req, await rpc("sot_meeting_set", { p_member: memberId, p_id: String(body.id ?? ""), p_want: !!body.want }));

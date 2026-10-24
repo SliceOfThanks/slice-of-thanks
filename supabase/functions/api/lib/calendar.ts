@@ -124,3 +124,40 @@ export async function tidycalMeetings(access: string, from: Date, to: Date, fetc
   }
   return out;
 }
+
+// Everyone the member has met through the calendar, for importing into People.
+// TidyCal: the contacts list (100 a page). Calendly has no contacts list, so it is the guests of the past year's meetings.
+export type CalContact = { name?: string; email: string };
+
+export async function listContacts(p: Provider, access: string, account: string, fetchFn?: typeof fetch): Promise<CalContact[]> {
+  const out = new Map<string, CalContact>();
+  const add = (name: unknown, email: unknown) => {
+    const e = String(email ?? "").trim().toLowerCase();
+    if (e && !out.has(e)) out.set(e, { name: name ? String(name) : undefined, email: e });
+  };
+  if (p === "tidycal") {
+    for (let page = 1, last = 1; page <= Math.min(last, 10); page++) {
+      const j = await getJson(`https://tidycal.com/api/contacts?page=${page}`, access, fetchFn);
+      for (const c of j.data ?? []) add(c.name, c.email);
+      last = Number(j.meta?.last_page ?? 1);
+    }
+    return [...out.values()];
+  }
+  const now = Date.now();
+  let url: string | null = `https://api.calendly.com/scheduled_events?${new URLSearchParams({ user: account, min_start_time: new Date(now - 365 * 86_400_000).toISOString(), max_start_time: new Date(now + 30 * 86_400_000).toISOString(), count: "100", sort: "start_time:desc" })}`;
+  let events = 0;
+  for (let pages = 0; url && pages < 3 && events < 120; pages++) {
+    const j: any = await getJson(url, access, fetchFn);
+    for (const e of j.collection ?? []) {
+      if (events >= 120 || !e.uri) break;
+      events++;
+      try {
+        for (const g of (await getJson(`${e.uri}/invitees?count=20`, access, fetchFn)).collection ?? []) add(g.name, g.email);
+      } catch (err) {
+        if (err instanceof CalendarAuthError) throw err;
+      }
+    }
+    url = j.pagination?.next_page ?? null;
+  }
+  return [...out.values()];
+}

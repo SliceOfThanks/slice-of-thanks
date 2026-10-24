@@ -24,8 +24,8 @@ html:has(.sot-u),body:has(.sot-u){background:#FFF3E0!important}
 .sot-u .u-scoot{position:relative;width:270px;max-width:100%;margin:0 auto;animation:sotDrive 1.1s cubic-bezier(.2,.8,.3,1) both}
 .sot-u .u-scoot img{width:100%;height:auto;display:block}
 .sot-u .u-scoot .u-pet{position:absolute;left:12%;top:0;width:34%;height:62%;background:none;border:0;padding:0;cursor:pointer;border-radius:50%;z-index:2}
-.sot-u .u-scoot .u-pet.hop+img{animation:sotHop .7s ease}
-.sot-u .u-scoot-logo{position:absolute;left:40.9%;top:39.1%;width:37.1%;height:33.8%;display:flex;align-items:center;justify-content:center;font:800 .78rem/1.1 var(--body);color:#3E2416;padding:4px;overflow:hidden;word-break:break-word}
+.sot-u .u-scoot .u-pet.hop+img,.sot-u .u-scoot .u-pet.hop~.u-scoot-logo{animation:sotHop .7s ease}
+.sot-u .u-scoot-logo{position:absolute;left:43%;top:41.5%;width:32.5%;height:27%;transform-origin:21.5% 31.5%;display:flex;align-items:center;justify-content:center;font:800 .78rem/1.1 var(--body);color:#3E2416;padding:4px;overflow:hidden;word-break:break-word}
 .sot-u .u-scoot-logo img{max-width:100%;max-height:100%;object-fit:contain}
 .sot-u .u-bark{position:absolute;left:50%;top:-6px;transform:translateX(-50%);background:#fffaef;border:2.5px solid var(--basil);border-radius:14px;padding:4px 10px;font-weight:700;z-index:3}
 @keyframes sotDrive{from{transform:translateX(140%)}to{transform:none}}
@@ -51,7 +51,7 @@ html:has(.sot-u),body:has(.sot-u){background:#FFF3E0!important}
 .sot-u .u-av{width:36px;height:36px;flex:none}
 .sot-u .u-critic{display:flex;align-items:center;gap:10px;line-height:1.3}
 .sot-u .u-msg{padding:40px 10px;font-size:1.05rem}
-@media (prefers-reduced-motion:reduce){.sot-u .u-scoot,.sot-u .u-eat.chomp img,.sot-u .u-scoot .u-pet.hop+img{animation:none}}
+@media (prefers-reduced-motion:reduce){.sot-u .u-scoot,.sot-u .u-eat.chomp img,.sot-u .u-scoot .u-pet.hop+img,.sot-u .u-scoot .u-pet.hop~.u-scoot-logo{animation:none}}
 .sot-u .lid{background:#c99b6b;color:#3a2616;border-radius:12px;min-height:150px;padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden;border:2.5px solid #3E2416;box-shadow:4px 4px 0 #3E2416}
 .sot-u .lid::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 2px,transparent 2px 7px);pointer-events:none}
 .sot-u .lid[data-style="classic"]{background:#fffaf0;color:#D62828}

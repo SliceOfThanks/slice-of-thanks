@@ -340,7 +340,7 @@ handleLogo = function (file) {
 (function settingsExtras() {
   const pb = $('#pBiz'); if (!pb) return;
   const f = document.createElement('div'); f.className = 'field';
-  f.innerHTML = '<label for="liveAddrS">Business mailing address</label><textarea id="liveAddrS" maxlength="300" rows="2"></textarea><small class="muted">Required before your first send. Shown in small print in every email.</small>';
+  f.innerHTML = '<label for="liveAddrS">Your business mailing address (optional)</label><textarea id="liveAddrS" maxlength="300" rows="2"></textarea><small class="muted">Leave it blank and your emails show the Slice of Thanks mailing address. Add yours to show it instead.</small>';
   const r = document.createElement('div'); r.className = 'field';
   r.innerHTML = '<label for="liveReply">Replies go to</label><input type="text" id="liveReply" maxlength="200" inputmode="email">';
   pb.closest('.field').after(f, r);
@@ -409,6 +409,9 @@ async function liveSend() {
   let r;
   try { r = await LIVE.call('/send', buildPayload()); } catch (e) { r = { code: 'server_error' }; }
   btn.disabled = false; btn.textContent = label;
+  if (r.ok && r.delivered === false && r.reason === 'provider_error') {
+    toast('Potato could not deliver this one, and it did not use an email. Try again in a few minutes.'); return;
+  }
   if (r.ok) {
     logSend({ who: box.to, org: '', contact: box.contact, vegan: pizza.vegan }, pizza, box, box.meeting ? 'After ' + box.meeting.toLowerCase() : 'Fresh pizza');
     if (LIVE.session && r.bucket && LIVE.session.credits[r.bucket] !== undefined) LIVE.session.credits[r.bucket]--;

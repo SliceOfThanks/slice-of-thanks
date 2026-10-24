@@ -137,6 +137,18 @@
       "commit": "be1c0b160f1fef3d7b33758b6637669202f45ce4",
       "date": "2026-10-24",
       "notes": "Topping sections fold (Classic open, counts on closed ones). Sprinkle a handful, Undo and Clear move to the top of the Toppings step."
+    },
+    {
+      "version": "v0.9.3",
+      "commit": "86a83aa4d9923c468b57ab0f8ac6d2c366be9a3c",
+      "date": "2026-10-24",
+      "notes": "Bacon drawn as wavy strips with fat stripes."
+    },
+    {
+      "version": "v0.9.4",
+      "commit": "340c4dc686b469a0b3906ec1d882c350443d8289",
+      "date": "2026-10-24",
+      "notes": "Bake levels by time (10 sec quick, 1 min bubbly, 3 min stone-fired, 5 min Gerald's perfect bake with a Treat Jar egg). Business or Personal switch on the box step; personal pizzas drop the business parts and can carry a round photo (Pro). You card in Settings, From field on the send step. api-0.9.0: /photo route, first-name greeting."
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Build status (read this first in a new session)
 
-Last updated: 2026-10-24. Live code version: v0.9.2 (see releases.json and app_settings.code_version).
+Last updated: 2026-10-24. Live code version: v0.9.4 (see releases.json and app_settings.code_version).
 
 ## Done and live
 - Supabase project cmnclubiarmthibqibuj. Edge Function `api` (api-0.4.0, verify_jwt false, own auth). Tables have RLS with no policies.
@@ -58,6 +58,8 @@ Git tags cannot be pushed. Use commit IDs.
 - v0.9.1 (2026-10-24, commit afc140a, app only plus one database change): the pepperoni message dropdown keeps the picked message and copies it into the text box (the panel redraw keeps it too). A second Save as preset button (#presetSaveRow) at the bottom of the box step. Settings: Your box card folds (store boxCardOpen, closed by default, summary line), Dietary needs has Make every new pizza vegan (settings.veganDefault, saved to members.prefs vegan_default; sot_update_profile now accepts it). newPizza, pizzeria classics, Hire Gerald, People quick sends and CSV lists start vegan when it is on. The Calendar card says Calendly and TidyCal arrive next. Tests: pw/settings-test.js plus the other suites pass.
 
 - v0.9.2 (2026-10-24, commit be1c0b1, app only): Toppings step groups are details.tgroup folds (Classic open by default; the selected topping's group opens; closed groups show "N on the pizza" via updateCount and topGroup). The Sprinkle a handful / Undo / Clear row moved to the top of the step.
+- v0.9.3 (2026-10-24, commit 86a83aa, app only): bacon redrawn.
+- v0.9.4 (2026-10-24, commit 340c4dc, api-0.9.0, migration personal_sends.sql): pizza.bakeLevel 0-3 from bake time (bakeLevelFor; early finish uses elapsed time). bakeMarks draws bubbles (1+), crust char (2+), darker edge and oregano (3) in the prototype and shared/pizza-core.js. Gerald's BAKE_LINES lead the receipt; level 3 is always 5 slices. EGGS perfectBake. Box step kind switch (box.kind business/personal, stored as sendKind): personal hides [data-biz] fields, shows the photo upload (Pro, square-cropped JPEG), sends box.personal and box.photo_url after /photo. sot_create_send strips gift/cta/logo for personal, sets sender.business null, send_as person, sender.personal, logo_url = photo. Presets keep kind. Settings has an open You card (name, business, mailing address, reply-to); send step has #fromName. Email greeting uses the first name.
 
 ## Next, in order
 1. Calendar connections (Calendly, TidyCal) feeding Home > This week, with Stacey's rules:

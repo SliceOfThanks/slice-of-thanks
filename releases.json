@@ -71,6 +71,12 @@
       "commit": "50c25bc04516f85f4adf6829837e6c50621f87b6",
       "date": "2026-10-24",
       "notes": "Pizza of the Month and Hire Gerald moved into the Kitchen behind two buttons."
+    },
+    {
+      "version": "v0.4.6",
+      "commit": "02b8b044a1754265d2abf8111de53a91cad5f91d",
+      "date": "2026-10-24",
+      "notes": "Home tab (was Today) with quick starts, Pizza of the Month and This week. Gerald intro once per member. Email provider layer live (api-0.5.0)."
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Build status (read this first in a new session)
 
-Last updated: 2026-10-24. Live code version: v0.4.5 (see releases.json and app_settings.code_version).
+Last updated: 2026-10-24. Live code version: v0.4.6 (see releases.json and app_settings.code_version).
 
 ## Done and live
 - Supabase project cmnclubiarmthibqibuj. Edge Function `api` (api-0.4.0, verify_jwt false, own auth). Tables have RLS with no policies.

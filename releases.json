@@ -245,6 +245,12 @@
       "commit": "7d875d8d89d8552db1ea893bd5a823ca5c16c3a5",
       "date": "2026-10-25",
       "notes": "People filter by last pizza: Opened, Not opened, No pizza yet."
+    },
+    {
+      "version": "v0.14.7",
+      "commit": "fcad56129656611b329432799e3e2c5a70cb4ff7",
+      "date": "2026-10-25",
+      "notes": "Use my signature pizza (Kitchen) and Send it to someone (Settings). Filter chips highlight and toggle off."
     }
   ]
 }

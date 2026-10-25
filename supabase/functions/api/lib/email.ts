@@ -149,3 +149,31 @@ export function buildWaitingEmail(i: { guest: string; meeting: string; link: str
 </td></tr></table></td></tr></table></body></html>`;
   return { subject, html, text: `${lead}\n\nOpen Slice of Thanks: ${i.link}` };
 }
+
+// To the member: Gerald made a birthday or work anniversary pizza today. It went out, or it is waiting on Home.
+// Sent to their reply-to address. It uses no email credit.
+export function buildDateEmail(i: { guest: string; kind: "birthday" | "anniversary"; sent: boolean; reason?: string; link: string }): { subject: string; html: string; text: string } {
+  const who = i.guest || "someone in People";
+  const what = i.kind === "birthday" ? "birthday" : "work anniversary";
+  const subject = i.sent ? `Gerald sent ${who} a ${what} pizza` : `${who}'s ${what} pizza is ready to send`;
+  const why: Record<string, string> = {
+    needs_permission: `It did not go out on its own because there is no permission on file to email ${who}. Choose how you know them when you send it.`,
+    needs_upgrade: "Sending on its own is part of The Whole Pie. On your plan, Gerald makes it and you send it.",
+    no_credits: "You are out of emails this month. Add an email pack to send it.",
+    suppressed: `${who} asked not to get pizzas, so it was not sent.`,
+  };
+  const lead = i.sent
+    ? `It is ${who}'s ${what} today, so Gerald made a pizza and Potato delivered it this morning.`
+    : `It is ${who}'s ${what} today. Gerald made a pizza and it is waiting on Home for you to send.` + (i.reason && why[i.reason] ? " " + why[i.reason] : "");
+  const button = i.sent ? "See it in Slice of Thanks" : "Send it now";
+  const html = `<!doctype html><html><body style="margin:0;background:#FFF3E0;font-family:Arial,Helvetica,sans-serif;color:#3E2416">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF3E0"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fffaef;border:3px solid #3E2416;border-radius:18px">
+<tr><td style="height:14px;background:#D62828;border-radius:14px 14px 0 0"></td></tr>
+<tr><td style="padding:24px;text-align:center">
+<p style="margin:0 0 18px;font-size:18px;font-weight:bold;line-height:1.4">${esc(lead)}</p>
+<a href="${esc(i.link)}" style="display:inline-block;background:#D62828;color:#FFF3E0;text-decoration:none;font-weight:bold;font-size:17px;padding:14px 28px;border-radius:999px;border:2px solid #3E2416">${esc(button)}</a>
+<p style="margin:16px 0 0;font-size:12px;color:#6b4a3a">You get this because Gerald never forgets a date is on in Settings. Turn it off there any time.</p>
+</td></tr></table></td></tr></table></body></html>`;
+  return { subject, html, text: `${lead}\n\n${button}: ${i.link}` };
+}

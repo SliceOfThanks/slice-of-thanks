@@ -1001,7 +1001,7 @@ renderSettings = function () { _renderSettingsP(); renderPresetCard(); foldSetti
   }
   store.set('owner', s.member_id);
   applySession(s);
-  loadPeople(); loadPresets(); calStart(s);
+  loadPeople(); loadPresets(); calStart(s); loadDates();
   if (s.needs_terms) setTimeout(() => askTerms(() => {}), 600);
   const d = store.get('draft', null);
   if (d && d.pizza && Date.now() - (d.at || 0) < 7 * 864e5) {
@@ -1011,6 +1011,75 @@ renderSettings = function () { _renderSettingsP(); renderPresetCard(); foldSetti
   } else { show('today'); }
   checkPurchases();
 })();
+
+/* --- Gerald never forgets a date: Settings card saved to the account, and date pizzas on Home > This week --- */
+let dates = { upcoming: [], waiting: [], sent: [], settings: {}, loaded: false };
+saveDatesPrefs = function () {
+  store.set('datesPrefs', datesPrefs);
+  if (LIVE.TOKEN) LIVE.call('/profile', { profile: { prefs: { dates: datesPrefs, tz: myTz() } } }).then(() => loadDates()).catch(() => toast(MSG.server_error));
+};
+async function loadDates() {
+  if (!LIVE.TOKEN) return;
+  const r = await LIVE.call('/dates').catch(() => null);
+  if (!r || !r.ok) return;
+  dates = { upcoming: Array.isArray(r.upcoming) ? r.upcoming : [], waiting: Array.isArray(r.waiting) ? r.waiting : [], sent: Array.isArray(r.sent) ? r.sent : [],
+    settings: r.settings || {}, tz: r.tz || null, today: r.today || new Date().toISOString().slice(0, 10), loaded: true };
+  if (r.settings && r.settings.mode) { datesPrefs = Object.assign(datesPrefs, r.settings); store.set('datesPrefs', datesPrefs); }
+  /* The 8 AM time follows the member: save their time zone the first time, and when it changes */
+  const tz = myTz(); if (tz && r.tz !== tz) LIVE.call('/profile', { profile: { prefs: { tz } } });
+  if (!$('#view-settings').hidden) foldSettings();
+  if (!views.today.hidden) renderToday();
+}
+const KIND_WORD = { birthday: 'birthday', anniversary: 'work anniversary' };
+function dateWhen(iso) { const d = new Date(iso + 'T12:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+const DATE_WHY = { needs_permission: 'It did not go out on its own: there is no permission on file to email them.', needs_upgrade: 'Sending on its own is part of The Whole Pie.',
+  no_credits: 'You were out of emails this morning.', suppressed: 'They asked not to get pizzas.', server_error: 'Something went wrong on our side this morning.' };
+function datePreview(w) { const p = w.payload || {}; const b = Object.assign(boxFromProfile(null), p.box || {}); b.note = fillNote(b.note || '', { name: w.contact.name }); b.to = w.contact.name; return { p: p.pizza, b }; }
+function dateRow(w) {
+  const li = mk('li', 'meeting'); li.style.gridTemplateColumns = '1fr';
+  const info = mk('div', 'info'), name = w.contact.name || 'Someone', today = w.occurs_on === dates.today;
+  info.append(mk('b', '', (today ? 'Today: ' : dateWhen(w.occurs_on) + ': ') + name + "'s " + KIND_WORD[w.kind]),
+    mk('span', 'muted', 'Gerald made ' + ((w.payload && w.payload.pizza && w.payload.pizza.name) || 'a pizza') + '. It is waiting for you to send.' + (w.note && DATE_WHY[w.note] ? ' ' + DATE_WHY[w.note] : '')));
+  const row = mk('div', 'row');
+  const send = mk('button', 'btn small primary', 'Send it'); send.type = 'button'; send.onclick = () => dateSend(w, send);
+  const see = mk('button', 'btn small', 'See it'); see.type = 'button'; see.onclick = () => { const { p, b } = datePreview(w); if (p) openRecipient(p, b); };
+  const skip = mk('button', 'btn small ghost', 'Skip'); skip.type = 'button';
+  skip.onclick = async () => { await LIVE.call('/dates/skip', { id: w.id }).catch(() => null); toast('Skipped. Gerald will try again next year.'); loadDates(); };
+  row.append(send, see, skip); info.appendChild(row); li.appendChild(info); return li;
+}
+async function dateSend(w, btn, basis) {
+  if (!w.contact.has_consent && !basis) {
+    const p = document.createElement('div'); p.className = 'field';
+    p.innerHTML = '<label for="dateBasis">How you know ' + esc(first(w.contact.name)) + '</label><select id="dateBasis">' + BASIS_OPTIONS + '</select>';
+    liveSheet('Send ' + first(w.contact.name) + "'s pizza", p, [{ label: 'Send it', primary: true, run: () => { const v = $('#dateBasis').value; closeLiveSheet(); dateSend(w, btn, v); } }]);
+    return;
+  }
+  let img = ''; try { img = pizzaImage(w.payload.pizza, false); } catch (e) { img = ''; }
+  const label = btn.textContent; btn.disabled = true; btn.textContent = 'Sending...';
+  let r; try { r = await LIVE.call('/dates/send', { id: w.id, basis: basis || undefined, image_data_url: img.length < 1900000 ? img : '' }); } catch (e) { r = { code: 'server_error' }; }
+  btn.disabled = false; btn.textContent = label;
+  if (r && r.ok) {
+    if (LIVE.session && r.bucket && LIVE.session.credits[r.bucket] !== undefined) LIVE.session.credits[r.bucket]--;
+    toast('Potato is on her way to ' + first(w.contact.name) + '.'); burst('envelopes'); loadDates(); loadPeople(); return;
+  }
+  sendProblem(r || {}, () => dateSend(w, btn, basis));
+}
+function upcomingRow(u) {
+  const li = mk('li', 'meeting'); li.style.gridTemplateColumns = '1fr';
+  const info = mk('div', 'info');
+  const yrs = u.years ? ' (' + u.years + (u.years === 1 ? ' year)' : ' years)') : '';
+  info.append(mk('b', '', dateWhen(u.on_day) + ': ' + u.name + "'s " + KIND_WORD[u.kind] + yrs),
+    mk('span', 'muted', (u.days_away === 0 ? 'Today. ' : u.days_away === 1 ? 'Tomorrow. ' : 'In ' + u.days_away + ' days. ') +
+      (datesPrefs.mode === 'off' ? 'Turn on Gerald never forgets a date in Settings and he will have a pizza ready.' : datesPrefs.mode === 'auto' ? 'Gerald sends a pizza at 8 AM that day.' : 'Gerald has a pizza waiting for you at 8 AM that day.')));
+  if (datesPrefs.mode === 'off') {
+    const row = mk('div', 'row'), b = mk('button', 'btn small', 'Turn it on'); b.type = 'button';
+    b.onclick = () => { show('settings'); const c = $('#datesCard'); if (c) { openFold(c); c.scrollIntoView({ block: 'start' }); } };
+    row.appendChild(b); info.appendChild(row);
+  }
+  li.appendChild(info); return li;
+}
+const _show2 = show;
+show = function (v) { _show2(v); if (v === 'today' && dates.loaded) loadDates(); };
 
 /* --- Calendars: each member connects their own Calendly or TidyCal. Meetings show on Home > This week. ---
    The Whole Pie and Pizza Party: a picked meeting gets the signature pizza sent when it ends.
@@ -1227,3 +1296,16 @@ renderCalendarCard();
 if (host_isDebug()) { window.__SOT_DEBUG = { toppings() { return pizza.toppings.length; }, box() { return { style: box.style, note: box.note, sticker: box.sticker }; }, goSend() { pizza = P_demo(); step = 5; saidStep = 5; show('make'); renderStep(); } }; }
 function host_isDebug() { return SOTR.host.hasAttribute('data-debug'); }
 function P_demo() { const p = clonePizza(signature); p.baked = true; p.bake = 1; p.tosses = 3; return p; }
+
+/* Date pizzas go at the top of Home > This week. Runs after the calendar's version, which rebuilds the list. */
+const _renderTodayD = renderToday;
+renderToday = function () {
+  _renderTodayD();
+  const ul = $('#meetings'); if (!ul || !dates.loaded) return;
+  const done = new Set(dates.waiting.map(w => w.contact.id + w.kind).concat(dates.sent.map(x => x.name + x.kind)));
+  const rows = dates.waiting.map(dateRow)
+    .concat(dates.sent.filter(x => x.occurs_on === dates.today).map(x => { const li = mk('li', 'meeting'); li.style.gridTemplateColumns = '1fr'; const i = mk('div', 'info');
+      i.append(mk('b', '', 'Sent today: ' + x.name + "'s " + KIND_WORD[x.kind] + ' pizza'), mk('span', 'muted', 'Gerald made it and Potato delivered it this morning.')); li.appendChild(i); return li; }))
+    .concat(dates.upcoming.filter(u => !(u.days_away === 0 && (done.has(u.contact_id + u.kind) || done.has(u.name + u.kind)))).map(upcomingRow));
+  rows.slice().reverse().forEach(li => ul.insertBefore(li, ul.firstChild));
+};

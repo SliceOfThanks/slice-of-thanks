@@ -4,14 +4,15 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifyBdToken } from "./lib/auth.ts";
 import { recipientToken, tokenHash } from "./lib/crypto.ts";
-import { buildEmail, buildWaitingEmail, SITE } from "./lib/email.ts";
+import { buildDateEmail, buildEmail, buildWaitingEmail, SITE } from "./lib/email.ts";
+import { dateBox, datePizza, type DateKind } from "./lib/gerald.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, deleteBdUser, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
 import { pickProvider } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.14.0";
+const VERSION = "api-0.15.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -194,6 +195,40 @@ async function meetingEnded(m: Record<string, any>) {
   if (r.due_now && !r.duplicate) await deliver(id, sig.image_url).catch((e) => console.error("meeting deliver", String(e)));
 }
 
+// Gerald never forgets a date: a birthday or work anniversary came up at 8 AM the member's time.
+// Sends on its own when the member chose that, their plan has automations, and there is permission on file. Otherwise it waits on Home.
+async function dateDue(d: Record<string, any>) {
+  const kind = d.kind as DateKind, c = d.contact ?? {};
+  const pizza = datePizza(kind, { name: c.name, vegan: c.vegan }, !!d.vegan_default);
+  const box = dateBox(kind, d.style ?? "heartfelt", d.signature_box, d.member_name, c.years, !!d.auto);
+  const payload = { pizza, box };
+  const notice = async (sent: boolean, reason?: string) => {
+    const to = String(d.reply_to ?? "").trim();
+    if (!to || to.indexOf("@") < 1) return;
+    const mail = buildDateEmail({ guest: c.name ?? "", kind, sent, reason, link: SITE + "/kitchen" });
+    const provider = pickProvider(await rpc("sot_setting", { p_env: "live", p_key: "email_provider" }).catch(() => null));
+    const r = await provider.send({ from: { name: "Slice of Thanks", email: SENDER_EMAIL }, to: { email: to }, subject: mail.subject, html: mail.html, text: mail.text, tags: ["member_notice"] }, env(provider.secret));
+    if (!r.ok) console.error("date notice", r.error);
+  };
+  const why = d.mode !== "auto" ? undefined : !d.auto ? "needs_upgrade" : !d.has_consent ? "needs_permission" : undefined;
+  if (d.mode !== "auto" || why) {
+    await rpc("sot_date_result", { p_id: d.id, p_state: "waiting", p_note: why ?? null, p_payload: payload, p_send: null });
+    return notice(false, why);
+  }
+  const { sendId, r } = await createSend(d.member_id, "live", {
+    pizza, box, recipient: { name: c.name ?? "", email: c.email, company: c.company ?? "", role: c.role ?? "", vegan: !!c.vegan, country: c.country ?? "" },
+    consent: null, send_type: "one_to_one", label: kind === "birthday" ? "Birthday pizza" : "Work anniversary pizza",
+  }, "dates", `date:${d.id}`);
+  if (!r.ok) {
+    await rpc("sot_date_result", { p_id: d.id, p_state: "waiting", p_note: r.code ?? "not_sent", p_payload: payload, p_send: null });
+    return notice(false, r.code);
+  }
+  const id = r.send_id ?? sendId;
+  await rpc("sot_date_result", { p_id: d.id, p_state: "sent", p_note: null, p_payload: payload, p_send: id });
+  if (r.due_now && !r.duplicate) await deliver(id).catch((e) => console.error("date deliver", String(e)));
+  return notice(true);
+}
+
 async function route(req: Request, path: string): Promise<Response> {
   const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
 
@@ -281,8 +316,18 @@ async function route(req: Request, path: string): Promise<Response> {
         await rpc("sot_meeting_result", { p_id: mt.id, p_state: "ready", p_note: "server_error", p_send: null }).catch(() => null);
       }
     }
-    if (stuck || delivered || failed || synced || ended) console.log("worker", JSON.stringify({ stuck, delivered, failed, synced, ended }));
-    return json(req, { ok: true, stuck, delivered, failed, synced, ended });
+    // Birthdays and work anniversaries due at 8 AM local time. Every claimed one is handled, so none is left half done.
+    let dates = 0;
+    if (Date.now() - started < 52_000) {
+      for (const d of (await rpc<Record<string, any>[]>("sot_dates_due", { p_limit: 10 }).catch((e) => { console.error("dates due", String(e)); return []; })) ?? []) {
+        try { await dateDue(d); dates++; } catch (e) {
+          console.error("date pizza", d.id, String(e));
+          await rpc("sot_date_result", { p_id: d.id, p_state: "waiting", p_note: "server_error", p_payload: null, p_send: null }).catch(() => null);
+        }
+      }
+    }
+    if (stuck || delivered || failed || synced || ended || dates) console.log("worker", JSON.stringify({ stuck, delivered, failed, synced, ended, dates }));
+    return json(req, { ok: true, stuck, delivered, failed, synced, ended, dates });
   }
 
   // Member routes
@@ -410,6 +455,32 @@ async function route(req: Request, path: string): Promise<Response> {
   }
   if (path === "/calendar/skip" && req.method === "POST") {
     return json(req, await rpc("sot_meeting_done", { p_member: memberId, p_id: String(body.id ?? ""), p_send: null }));
+  }
+  // Gerald never forgets a date: this week's dates and pizzas waiting on Home
+  if (path === "/dates" && req.method === "GET") {
+    return json(req, { ok: true, ...(await rpc<Record<string, unknown>>("sot_dates", { p_member: memberId })) });
+  }
+  if (path === "/dates/skip" && req.method === "POST") {
+    return json(req, await rpc("sot_date_done", { p_member: memberId, p_id: String(body.id ?? ""), p_send: null }));
+  }
+  // Send a waiting date pizza. The app sends the picture, and how the member knows the person when there is no permission on file.
+  if (path === "/dates/send" && req.method === "POST") {
+    const dp = await rpc<Record<string, any> | null>("sot_date_get", { p_member: memberId, p_id: String(body.id ?? "") });
+    if (!dp || !dp.payload) return json(req, { ok: false, code: "not_found" });
+    if (dp.state !== "waiting" && dp.state !== "pending") return json(req, { ok: false, code: "already_done" });
+    const c = dp.contact ?? {};
+    const basis = ["permission", "relationship", "one_to_one"].includes(body.basis) ? body.basis : null;
+    const { sendId, r } = await createSend(memberId, m.session.env, {
+      pizza: dp.payload.pizza, box: dp.payload.box, recipient: { name: c.name ?? "", email: c.email, company: c.company ?? "", role: c.role ?? "", vegan: !!c.vegan, country: c.country ?? "" },
+      consent: basis ? { basis, method: "Chosen when sending a date pizza" } : null, send_type: "one_to_one",
+      label: dp.kind === "birthday" ? "Birthday pizza" : "Work anniversary pizza",
+    }, "dates", `date-home:${dp.id}`);
+    if (!r.ok || r.duplicate) return json(req, r);
+    await rpc("sot_date_done", { p_member: memberId, p_id: dp.id, p_send: r.send_id ?? sendId });
+    const imageUrl = await uploadPizza(body.image_data_url, `pizza-${sendId}`);
+    if (imageUrl) await rpc("sot_set_send_image", { p_send: sendId, p_url: imageUrl }).catch(() => null);
+    if (!r.due_now) return json(req, r);
+    return json(req, { ...r, ...(await deliver(sendId, imageUrl)) });
   }
   // The signature pizza is kept on the account so it can go out when a meeting ends
   if (path === "/signature" && req.method === "POST") {

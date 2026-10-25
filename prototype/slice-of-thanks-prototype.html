@@ -866,6 +866,17 @@ body.is-free .pro-tag{display:inline-block}
       <label class="radio"><input type="radio" name="mode" value="off" id="mode-off"><span><b>Do nothing</b><small>Make pizzas only when you open the app.</small></span></label>
       <label class="check"><input type="checkbox" id="extOnly"> Only for meetings with people outside my company</label>
     </div>
+    <div class="card" id="datesCard">
+      <h2>Gerald never forgets a date</h2>
+      <p class="muted" style="font-size:.9rem;margin:0">On someone's birthday or work anniversary, Gerald makes them a pizza at 8 AM your time and lets you know. Add dates to people in People or in your CSV.</p>
+      <label class="radio"><input type="radio" name="datesMode" value="off" id="dates-off"><span><b>Off</b><small>No date pizzas.</small></span></label>
+      <label class="radio"><input type="radio" name="datesMode" value="wait" id="dates-wait"><span><b>Have it waiting for me</b><small>Gerald makes the pizza and emails you. You send it from Home with one tap.</small></span></label>
+      <label class="radio"><input type="radio" name="datesMode" value="auto" id="dates-auto"><span><b>Send it automatically<span class="pro-tag">Pro</span></b><small>It goes out at 8 AM. If there is no permission on file to email someone, it waits for you instead.</small></span></label>
+      <label class="check"><input type="checkbox" id="datesBday"> Birthdays</label>
+      <label class="check"><input type="checkbox" id="datesAnniv"> Work anniversaries</label>
+      <div class="field"><label>Gerald writes the note</label><div class="chips" id="datesStyle"></div></div>
+      <small class="muted" id="datesTz"></small>
+    </div>
     <div class="card" id="sigCard">
       <h2>Your signature pizza</h2>
       <div class="sig"><canvas id="sigCanvas" aria-label="Your signature pizza"></canvas><div style="display:flex;flex-direction:column;gap:8px;min-width:0"><h3 id="sigName"></h3><p class="muted" style="font-size:.9rem">This is the one that goes out when you pick "Send my signature pizza" or turn on automatic sending.</p><div><button class="btn small" id="editSig">Edit signature pizza</button></div></div></div>
@@ -1043,6 +1054,7 @@ const PRO_INFO={
  general:['Make every pizza look like your business','Your logo, your colors, and your own button on every pizza you send.'],
  logo:['Put your logo on the box','Your logo goes on the lid of every pizza, and it can burst out as confetti.'],
  brand:['Use your brand colors','Your colors on the box and in the confetti.'],
+ dates:['Send date pizzas on their own','On birthdays and work anniversaries, Gerald sends the pizza at 8 AM without you lifting a finger. On A Slice, it waits for you to send.'],
  topper:['Top the box','Add a Christmas tree, string lights, a pumpkin, a heart and more to the lid. Seasonal toppers show up in their month, and a few work all year.'],
  style:['Unlock 7 more box styles','Fancy gold, Midnight gold, Plaid, Floral, Picnic, Spring garden, and Hearts.'],
  confetti:['Unlock Pro confetti','Gold sparkles, confetti in your brand colors, and your logo bursting out of the box.'],
@@ -1701,6 +1713,22 @@ function renderBoxCard(){const open=store.get('boxCardOpen',false);$('#boxCard')
 $('#boxCardHead').onclick=()=>{store.set('boxCardOpen',!store.get('boxCardOpen',false));renderBoxCard()};
 $('#veganDefault').addEventListener('change',e=>{settings.veganDefault=e.target.checked;store.set('settings',settings);if(step<=1&&!pizza.toppings.length&&pizza.vegan!==settings.veganDefault){pizza.vegan=settings.veganDefault;pizza.cheese=swapCheese(cheeseKey(pizza),pizza.vegan);(pizza.cheeseDabs||[]).forEach(d=>d.k=swapCheese(d.k,pizza.vegan))}
  toast(settings.veganDefault?'Every new pizza starts vegan now.':'New pizzas are no longer vegan by default.')});
+/* Gerald never forgets a date: Settings card. The live app saves it to the account and does the sending. */
+let datesPrefs=Object.assign({mode:'off',birthdays:true,anniversaries:true,style:'heartfelt'},store.get('datesPrefs',{}));
+function myTz(){try{return Intl.DateTimeFormat().resolvedOptions().timeZone||''}catch(e){return''}}
+function saveDatesPrefs(){store.set('datesPrefs',datesPrefs)}
+function datesSummary(){return datesPrefs.mode==='off'?'Off':(datesPrefs.mode==='auto'?'Sends on its own':'Waiting for you')+' at 8 AM, '+[datesPrefs.birthdays?'birthdays':'',datesPrefs.anniversaries?'work anniversaries':''].filter(Boolean).join(' and ')}
+function renderDatesCard(){const c=$('#datesCard');if(!c)return;
+ if(datesPrefs.mode==='auto'&&!isPro())datesPrefs.mode='wait';
+ ['off','wait','auto'].forEach(k=>{const r=$('#dates-'+k);r.checked=datesPrefs.mode===k});
+ $('#datesBday').checked=datesPrefs.birthdays!==false;$('#datesAnniv').checked=datesPrefs.anniversaries!==false;
+ makeChips($('#datesStyle'),GERALD_DATA.noteStyles,()=>datesPrefs.style,v=>{datesPrefs.style=v;saveDatesPrefs()});
+ const tz=myTz();$('#datesTz').textContent='8 AM in your time zone'+(tz?' ('+tz.split('_').join(' ')+')':'')+'.'}
+{
+ document.querySelectorAll('input[name="datesMode"]').forEach(r=>r.addEventListener('change',e=>{const v=e.target.value;
+  if(v==='auto'&&!isPro()){renderDatesCard();upgrade('dates');return}datesPrefs.mode=v;saveDatesPrefs();foldSettings()}));
+ $('#datesBday').addEventListener('change',e=>{datesPrefs.birthdays=e.target.checked;saveDatesPrefs();foldSettings()});
+ $('#datesAnniv').addEventListener('change',e=>{datesPrefs.anniversaries=e.target.checked;saveDatesPrefs();foldSettings()})}
 /* Settings cards fold to their heading and a one-line summary, so the page stays short. Open or closed is remembered per card. */
 function autoFold(card,key,sum){if(!card)return;const h=card.querySelector(':scope > h2');if(!h)return;card.classList.add('afold');
  let sm=card.querySelector(':scope > .afold-sum');if(!sm){sm=document.createElement('small');sm.className='muted afold-sum';h.after(sm)}sm.textContent=sum||'';
@@ -1713,6 +1741,7 @@ function foldSettings(){
  const mc=$('#meetCard'),r=mc&&mc.querySelector('input[name="mode"]:checked'),rb=r&&r.parentElement.querySelector('b');
  autoFold(mc,'meet',rb?rb.firstChild.textContent.trim():'Choose what happens after a meeting');
  autoFold($('#sigCard'),'sig',($('#sigName')&&$('#sigName').textContent)||'The pizza that goes out after meetings');
+ renderDatesCard();autoFold($('#datesCard'),'dates',datesSummary());
  autoFold($('#dietCard'),'diet',$('#veganDefault').checked?'Every new pizza starts vegan':'Vegan is off by default')
  ;['#meetCard','#dietCard'].forEach(q=>{const c=$(q);if(c&&!c.dataset.fl){c.dataset.fl='1';c.addEventListener('change',()=>setTimeout(foldSettings))}})}
 function renderSettings(){tokenChips();renderBoxCard();$('#veganDefault').checked=!!settings.veganDefault;

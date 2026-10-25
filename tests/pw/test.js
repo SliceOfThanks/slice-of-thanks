@@ -256,9 +256,13 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     check(st.visited.includes('/account/upgrade'), 'Change plan goes to BD upgrade page');
     await page.goto(ORIGIN + '/kitchen'); await wait(1200);
     await inRoot(page, "R.querySelector('#tab-settings').click()"); await wait(600);
-    await inRoot(page, "[...R.querySelectorAll('#liveBilling button')].find(b=>b.textContent.indexOf('Update card')===0).click()"); await wait(800);
-    check(await inRoot(page, "const f=R.querySelector('#liveSheet iframe');return !!f&&!R.querySelector('#liveSheet').hidden"), 'Update card opens BD secure billing inside the app');
-    check(new URL(page.url()).pathname === '/kitchen', 'Update card keeps the member in the app');
+    await page.evaluate(() => { window.__opened = []; window.open = (u) => { window.__opened.push(u); return {}; }; });
+    await inRoot(page, "R.querySelector('#liveBilling > h2').click()"); await wait(100);
+    await inRoot(page, "[...R.querySelectorAll('#liveBilling button')].find(b=>b.textContent.indexOf('Update card')===0).click()"); await wait(300);
+    check((await inRoot(page, "return R.querySelector('#liveSheet h2').textContent")) === 'Card and billing address', 'Update card explains the secure billing page');
+    await inRoot(page, "[...R.querySelectorAll('#liveSheet .btn')].find(b=>b.textContent==='Open secure billing').click()"); await wait(300);
+    const opened = await page.evaluate(() => window.__opened);
+    check(opened.length === 1 && opened[0].indexOf('/account/billing') >= 0 && new URL(page.url()).pathname === '/kitchen', 'BD billing opens in a new tab and the app stays open: ' + opened);
     await ctx.close();
   }
 

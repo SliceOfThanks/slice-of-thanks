@@ -1428,7 +1428,7 @@ $('#upSheet').addEventListener('click',e=>{if(e.target.id==='upSheet')closeUp()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#upSheet').hidden)closeUp()});
 refreshPlan(true);
 
-/* ===== Slice of Thanks live layer v0.13.2 =====
+/* ===== Slice of Thanks live layer v0.13.3 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -1543,7 +1543,7 @@ function liveSheet(title, bodyEl, actions) {
   const row = document.createElement('div'); row.className = 'btn-row';
   actions.forEach(a => { const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'btn' + (a.primary ? ' primary' : ''); btn.textContent = a.label; btn.onclick = a.run; row.appendChild(btn); });
   const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'btn ghost'; cancel.textContent = 'Cancel'; cancel.onclick = () => { back.hidden = true; };
-  row.appendChild(cancel); sh.appendChild(row); back.appendChild(sh); back.hidden = false;
+  if (actions.length) row.appendChild(cancel); sh.appendChild(row); back.appendChild(sh); back.hidden = false;
   return back;
 }
 /* Sheets fit the visible screen. On some phones and site layouts a fixed overlay is measured from the page
@@ -1763,60 +1763,25 @@ function renderBilling() {
   const last = billing && billing.invoices && billing.invoices[0];
   autoFold(c, 'billing', last ? 'Last payment ' + shortDate(last.paidAt || last.date) + ', ' + money(last.totalCents) + '. Invoices, card and billing address.' : 'Invoices, card and billing address');
 }
-/* Card and billing address: BD's own billing page, shown inside the app and dressed in our colors.
-   Same site, so we can hide BD's header, sidebar and footer. Only parts showing when the page loads are hidden,
-   so BD's add-card window (hidden until opened) still works. */
-const CARD_CSS = 'html,body{background:#FFF3E0!important;color:#3E2416;font-family:"Work Sans",Arial,sans-serif!important}' +
-  'body{padding:10px!important;margin:0!important;min-height:0!important}.sot-card-area{margin:0!important;padding:0!important;width:auto!important;max-width:none!important;float:none!important}' +
-  '.sot-card-area *{font-family:"Work Sans",Arial,sans-serif}.sot-card-area h1,.sot-card-area h2,.sot-card-area h3{font-family:Shrikhand,Georgia,serif!important;font-weight:400!important;color:#3E2416!important}' +
-  '.sot-card-area .panel,.sot-card-area .well,.sot-card-area .card,.sot-card-area .tab-content,.sot-card-area .box{background:#FFFAF2!important;border:2.5px solid #3E2416!important;border-radius:16px!important;box-shadow:3px 3px 0 #3E2416!important}' +
-  '.btn,button.btn,a.btn{border:2.5px solid #3E2416!important;border-radius:999px!important;font-weight:700!important;box-shadow:3px 3px 0 #3E2416!important;background:#FFFAF2!important;color:#3E2416!important;text-shadow:none!important}' +
-  '.btn-success,.btn-primary,.btn-info,.btn-default.active{background:#D62828!important;color:#FFF3E0!important}' +
-  '.nav-tabs{border:0!important}.nav-tabs>li>a{border:2px solid #3E2416!important;border-radius:999px!important;margin:0 6px 6px 0!important;color:#3E2416!important;background:#FFFAF2!important;font-weight:700}' +
-  '.nav-tabs>li.active>a{background:#F5C04E!important}table{background:#FFFAF2}a{color:#C21F1F}' +
-  '.modal-content{border:3px solid #3E2416!important;border-radius:18px!important;background:#FFFAF2!important;box-shadow:5px 5px 0 #3E2416!important}' +
-  'input,select,textarea{border:2px solid #3E2416!important;border-radius:10px!important}';
-function tidyCardFrame(fr) {
-  let doc;
-  try { doc = fr.contentDocument; } catch (e) { doc = null; }
-  if (!doc || !doc.body) return false;
-  const st = doc.createElement('style'); st.textContent = CARD_CSS; doc.head.appendChild(st);
-  const fl = doc.createElement('link'); fl.rel = 'stylesheet'; fl.href = 'https://fonts.googleapis.com/css2?family=Shrikhand&family=Work+Sans:wght@400;600;700&display=swap'; doc.head.appendChild(fl);
-  const btn = [...doc.querySelectorAll('a,button')].find(x => (x.textContent || '').includes('Add New Credit Card'));
-  if (!btn) return true;
-  let area = btn;
-  while (area.parentElement && area.parentElement !== doc.body && !(area.textContent || '').includes('Payment History')) area = area.parentElement;
-  if (area === doc.body) return true;
-  area.classList.add('sot-card-area');
-  const win = fr.contentWindow;
-  const shown = el => { const cs = win.getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden'; };
-  const keep = el => /modal|popup|fancybox|overlay|dialog/i.test((el.id || '') + ' ' + (typeof el.className === 'string' ? el.className : ''));
-  for (let el = area; el && el !== doc.body; el = el.parentElement) {
-    [...(el.parentElement ? el.parentElement.children : [])].forEach(sib => {
-      if (sib === el || ['SCRIPT', 'STYLE', 'LINK', 'NOSCRIPT'].includes(sib.tagName) || keep(sib) || !shown(sib)) return;
-      sib.style.setProperty('display', 'none', 'important');
-    });
-    const par = el.parentElement;
-    if (par && par !== doc.body) ['margin', 'padding'].forEach(k => par.style.setProperty(k, '0', 'important'));
-  }
-  return true;
-}
+/* Card and billing address: BD's secure billing page opens in a new tab, where its card form works as BD built it.
+   The app stays open in this tab and refreshes the Billing card when the member comes back.
+   (v0.13.0 to v0.13.2 showed the page inside the app; BD's add-card form would not open there.) */
+let cardTabOpen = false;
 function openCardSheet() {
   const url = bdLink('billing', '/account/billing');
-  const wrap = document.createElement('div');
-  const note = document.createElement('p'); note.className = 'muted'; note.style.margin = '0 0 8px';
-  note.textContent = 'Add a new card or change your billing address. This is our secure checkout, so your card number never touches the app.';
-  const fr = document.createElement('iframe'); fr.title = 'Card and billing address'; fr.src = url;
-  fr.style.cssText = 'width:100%;height:calc(90vh - 230px);min-height:320px;border:2.5px solid #3E2416;border-radius:14px;background:#FFF3E0;display:block';
-  fr.onload = () => { if (!tidyCardFrame(fr)) { closeLiveSheet(); location.href = url; } };
-  const alt = document.createElement('a'); alt.href = url; alt.target = '_blank'; alt.rel = 'noopener'; alt.className = 'muted'; alt.style.fontSize = '.85rem';
-  alt.textContent = 'Trouble with this window? Open billing in a new tab.';
-  wrap.append(note, fr, alt);
-  const back = liveSheet('Card and billing address', wrap, [{ label: 'Done', primary: true, run: () => { closeLiveSheet(); loadBilling(true); } }]);
-  const sh = back.querySelector('.sheet'); sh.style.maxWidth = '760px'; sh.style.overflowY = 'hidden';
-  /* The billing page scrolls inside its window; the sheet around it stays still */
-  setTimeout(() => { const room = (parseFloat(sh.style.maxHeight) || innerHeight * 0.9) - (sh.scrollHeight - fr.offsetHeight) - 4; fr.style.height = Math.max(260, room) + 'px'; }, 30);
+  const p = document.createElement('div');
+  p.innerHTML = '<p style="margin:0 0 8px">Your card and billing address are kept on our secure checkout, so your card number never touches the app.</p>' +
+    '<ol class="muted" style="margin:0 0 4px 18px;padding:0;font-size:.92rem"><li>Tap Open secure billing. It opens in a new tab.</li><li>Use Add New Credit Card or Billing Address there.</li><li>Come back to this tab. Your Billing card updates on its own.</li></ol>';
+  liveSheet('Card and billing address', p, [{ label: 'Open secure billing', primary: true, run: () => {
+    const w = window.open(url, '_blank');
+    if (!w) { location.href = url; return; }
+    try { w.opener = null; } catch (e) {}
+    cardTabOpen = true; closeLiveSheet(); toast('Billing opened in a new tab. Come back here when you are done.');
+  } }]);
 }
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && cardTabOpen) { cardTabOpen = false; loadBilling(true); }
+});
 async function loadBilling(force) {
   if (!LIVE.session) return;
   if (!force && billing && Date.now() - billingAt < 60000) { renderBilling(); return; }

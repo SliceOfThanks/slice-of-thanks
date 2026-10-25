@@ -87,12 +87,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     // Card and billing address opens inside the app
     await inRoot(page, "R.querySelector('#tab-settings')&&R.querySelector('#tab-settings').click()"); await wait(300);
     await page.clock.runFor(500); await wait(300);
+    await page.evaluate(() => { window.__opened = []; window.open = (u) => { window.__opened.push(u); return {}; }; });
     const clicked = await inRoot(page, "const b=[...R.querySelectorAll('button')].find(x=>x.textContent==='Update card or billing address');if(b)b.click();return !!b");
     check(clicked, plan + ': card button is there');
-    await wait(800);
-    const fr = await inRoot(page, "const f=R.querySelector('#liveSheet iframe');if(!f)return null;const d=f.contentDocument;return [d.documentElement.className, !!d.querySelector('.sot-card-area #addCard'), getComputedStyle(d.querySelector('#bdHead')).display, getComputedStyle(d.querySelector('#addCard')).visibility, (d.querySelector('#cardPop').style.display='block', getComputedStyle(d.querySelector('#cardPop')).display), getComputedStyle(d.querySelector('#bdSide')).display]");
-    check(fr && fr[1] && fr[2] === 'none' && fr[3] === 'visible' && fr[4] === 'block' && fr[5] === 'none', plan + ': card page opens in the app with BD header hidden: ' + JSON.stringify(fr));
-    check(!st.visited.includes('/account/billing') || true, 'stays on the app page');
+    await wait(300);
+    await inRoot(page, "[...R.querySelectorAll('#liveSheet .btn')].find(b=>b.textContent==='Open secure billing').click()"); await wait(300);
+    check((await page.evaluate(() => window.__opened)).length === 1 && await inRoot(page, "return R.querySelector('#liveSheet').hidden"), plan + ': secure billing opens in a new tab');
     check(await page.evaluate(() => location.pathname) === '/kitchen', plan + ': still on the app page');
     if (plan === 'pro') await page.screenshot({ path: '../card-sheet.png' });
     // Account card: Log out and Delete my account sit together at the bottom of Settings
@@ -110,6 +110,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
       check(st.calls.includes('/account/delete') && st.bodies['/account/delete'][0].confirm === 'DELETE', 'free: delete is sent with the confirm word');
       const done = await inRoot(page, "return R.querySelector('#liveSheet h2').textContent");
       check(done === 'Account deleted', 'free: shows Account deleted: ' + done);
+      check(!(await inRoot(page, "return [...R.querySelectorAll('#liveSheet .btn')].some(b=>b.textContent==='Cancel')")), 'free: Account deleted has no Cancel button');
     }
     await page.close();
   }

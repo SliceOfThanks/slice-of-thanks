@@ -239,6 +239,12 @@
       "commit": "f37a29954be03e11f0449abd21958220a0fb6aa3",
       "date": "2026-10-25",
       "notes": "Send step Pick from People: search, tag filter, pick fills the send fields, send to everyone with a tag (Pro)."
+    },
+    {
+      "version": "v0.14.6",
+      "commit": "7d875d8d89d8552db1ea893bd5a823ca5c16c3a5",
+      "date": "2026-10-25",
+      "notes": "People filter by last pizza: Opened, Not opened, No pizza yet."
     }
   ]
 }

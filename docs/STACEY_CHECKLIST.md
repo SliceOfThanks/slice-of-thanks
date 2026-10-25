@@ -21,6 +21,11 @@
    2. Click Raw. Select all and copy.
    3. In BD admin, edit the SOT-Join widget. Replace everything in it with the copy and save.
 
+3b. Re-paste the Login widget in BD (show password eye)
+   1. Open github.com/SliceOfThanks/slice-of-thanks/blob/main/widgets/SOT-Login.html
+   2. Click Raw. Select all and copy.
+   3. In BD admin, edit the SOT-Login widget. Replace everything in it with the copy and save.
+
 4. Hide the Pizza Party plan in BD
    1. In BD admin, open Membership Plans and edit Pizza Party.
    2. Turn off the settings that show it on the sign up page and the upgrade page, and save.

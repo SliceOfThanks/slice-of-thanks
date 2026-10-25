@@ -1,4 +1,4 @@
-<!-- SOT-Login: Slice of Thanks look for the BD /login page. Version 1.6.1
+<!-- SOT-Login: Slice of Thanks look for the BD /login page. Version 1.7.0
      Place it in the /login page content ABOVE the BD Member Login Page widget.
      BD still does the login, reCAPTCHA, password reset and redirect. This widget only styles it,
      moves BD's form into the Slice of Thanks card, and adds the links around it. -->
@@ -53,6 +53,10 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 .sot-login-foot{text-align:center;display:flex;flex-direction:column;gap:8px}
 .sot-login-foot a{color:var(--sot-tomato-text);font-weight:700}
 .sot-login-foot .sot-muted{color:var(--sot-muted)}
+.sot-pw{position:relative;display:block}
+.sot-pw input{padding-right:52px !important}
+.sot-eye{position:absolute;top:50%;right:8px;transform:translateY(-50%);width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--sot-ink);cursor:pointer;border-radius:10px;padding:0}
+.sot-eye:focus-visible{outline:3px solid var(--sot-mustard)}
 </style>
 <div class="sot-login" id="sot-login">
   <a class="sot-login-head" href="/kitchen"><span class="sot-slice">Slice of</span><span class="sot-thanks">Thanks</span><span class="sot-tag">Thank-you pizzas, made fresh after every meeting</span></a>
@@ -117,6 +121,35 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
       if (KEEP.indexOf((ins[i].name || '').toLowerCase()) < 0) { ins[i].style.setProperty('display', 'none', 'important'); }
     }
   }
+  /* An eye button inside each password box shows or hides what was typed */
+  var EYE_OPEN = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M2 12c2.6-4.7 6-7 10-7s7.4 2.3 10 7c-2.6 4.7-6 7-10 7s-7.4-2.3-10-7z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3.2" fill="currentColor"/></svg>';
+  var EYE_SHUT = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M2 12c2.6-4.7 6-7 10-7s7.4 2.3 10 7c-2.6 4.7-6 7-10 7s-7.4-2.3-10-7z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3.2" fill="currentColor"/><line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
+  function addEyes(slot) {
+    var pws = slot.querySelectorAll('input[type=password]');
+    for (var i = 0; i < pws.length; i++) {
+      var pw = pws[i];
+      if (pw.getAttribute('data-sot-eye')) { continue; }
+      pw.setAttribute('data-sot-eye', '1');
+      var wrap = document.createElement('span');
+      wrap.className = 'sot-pw';
+      pw.parentNode.insertBefore(wrap, pw);
+      wrap.appendChild(pw);
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'sot-eye'; b.innerHTML = EYE_OPEN;
+      b.setAttribute('aria-label', 'Show password'); b.setAttribute('aria-pressed', 'false');
+      b.onclick = (function (input, btn) {
+        return function () {
+          var show = input.type === 'password';
+          input.type = show ? 'text' : 'password';
+          btn.innerHTML = show ? EYE_SHUT : EYE_OPEN;
+          btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+          btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+          input.focus();
+        };
+      })(pw, b);
+      wrap.appendChild(b);
+    }
+  }
   function fields(slot) {
     var out = [];
     var ins = slot.querySelectorAll('input, textarea, select');
@@ -172,6 +205,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
     if (box) {
       slot.appendChild(box);
       hideExtraFields(slot);
+      addEyes(slot);
       slot.setAttribute('data-done', '1');
       slot.style.display = '';
       hideTitles(shell);

@@ -12,7 +12,7 @@ Status: draft for Stacey to approve. Nothing here is built yet.
 
 ## What they see
 1. A welcome screen the first time the Kitchen opens. Gerald and Potato say hello, and the screen says: "Your 14 days of The Whole Pie start now. No card needed."
-2. A "Get set up" checklist card at the top of Home: "3 of 8 done". Each step has a Do it button that opens the right screen, and every step can be skipped. The card folds away and can be dismissed. Progress is saved to the account.
+2. A "Get set up" checklist card at the top of Home: "3 of 9 done". Each step has a Do it button that opens the right screen, and every step can be skipped. The card folds away and can be dismissed. Progress is saved to the account.
 3. Finishing the checklist plays confetti and finds a Treat Jar egg: "Fully set up, +20 Treats".
 
 ## Steps on the Pro trial (and paid Whole Pie)
@@ -26,7 +26,7 @@ Status: draft for Stacey to approve. Nothing here is built yet.
 8. Turn on Gerald never forgets a date. Pick sends on its own or waits for you, and pick a note style.
 9. Your birthday, month and day only, optional. Slice of Thanks sends you Gerald's Birthday Special (docs/MEMBER_BIRTHDAY_PLAN.md).
 
-Optional extras after the 8 steps:
+Optional extras after the 9 steps:
 - Make a box preset with your button and a gift code.
 - Try Send to a group with a small list.
 

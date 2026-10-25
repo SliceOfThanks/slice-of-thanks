@@ -2,7 +2,7 @@
 
 ## A. Do these now, in this order
 
-1. Run the date pizzas database change in Supabase
+1. DONE: Run the date pizzas database change in Supabase
    1. Open github.com/SliceOfThanks/slice-of-thanks/blob/main/supabase/migrations/dates.sql
    2. Click Raw. Select all and copy.
    3. In Supabase, open SQL Editor and click New query.
@@ -55,7 +55,7 @@
 
 ## D. Before launch tonight
 
-1. After Claude releases date pizzas, paste the launch test prompt into ChatGPT (Claude sends it) about 2 hours before 11 PM. Send Claude the results.
+1. Paste docs/CHATGPT_LAUNCH_TEST.md into ChatGPT (agent mode) about 2 hours before 11 PM. Send Claude the results.
 2. Delete the test people from People.
 3. Check email packs and Special Delivery with a $0 manual invoice in BD (never a real payment).
 4. Later, with the birthday gift feature: add one line to the privacy policy saying Slice of Thanks keeps a member's birthday (month and day only) to send a birthday gift.

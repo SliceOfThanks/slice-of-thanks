@@ -203,6 +203,12 @@
       "commit": "e62e499994891d60348013ac0f7e797e46af0938",
       "date": "2026-10-25",
       "notes": "Account card links to BD name and email and password pages. Brand theme hides the BD account sidebar."
+    },
+    {
+      "version": "v0.14.0",
+      "commit": "55527407881005b54c4d1ff8965025fb0944c66b",
+      "date": "2026-10-25",
+      "notes": "Tags, birthdays and anniversaries in People. Select people or a tag and send to the group. Gerald makes each person their own pizza with its own picture. Preview the first 3. Save a CSV to People."
     }
   ]
 }

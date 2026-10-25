@@ -685,6 +685,7 @@ body.is-free .pro-tag{display:inline-block}
     </div>
     <div class="inline"><input type="text" id="peopleSearch" placeholder="Search by name, company or tag" aria-label="Search people"><button class="btn small" id="addPersonBtn">Add person</button></div>
     <div class="field" style="gap:6px"><label>Filter by tag</label><div class="chips" id="tagFilter" aria-label="Show people with a tag"></div></div>
+    <div class="field" style="gap:6px"><label>Filter by last pizza</label><div class="chips" id="openFilter" aria-label="Show people by whether they opened their last pizza"></div></div>
     <div class="btn-row" id="peopleTools"><button class="btn small" type="button" id="selectMode">Select people</button><button class="btn small" type="button" id="selectAll" hidden>Select all shown</button><button class="btn small primary" type="button" id="sendTagged" hidden></button></div>
     <div class="card" id="addPerson" hidden>
       <h3>Add a person</h3>
@@ -2142,19 +2143,23 @@ function splitTags(t){const out=[];String(t||'').split(/[,;|]/).forEach(x=>{x=x.
 function allTags(){const m={};contacts.forEach(c=>(c.tags||[]).forEach(t=>{const k=t.toLowerCase();m[k]=m[k]||{t,n:0};m[k].n++}));return Object.values(m).sort((a,b)=>b.n-a.n||a.t.localeCompare(b.t))}
 /* Saving a person's tags or dates. The live app sends it to the server. */
 function savePersonFields(c,patch){Object.assign(c,patch)}
-let peopleSel=null,tagF='',tagOpen=null;
+let peopleSel=null,tagF='',tagOpen=null,openF='';
+/* Last pizza: opened, not opened yet, or none sent */
+function openState(c){const l=c.history[0];return l?(l.opened?'opened':'not'):'new'}
 function shownPeople(){const q=$('#peopleSearch').value.trim().toLowerCase();
- return contacts.filter(c=>(!tagF||(c.tags||[]).some(t=>t.toLowerCase()===tagF.toLowerCase()))&&(!q||c.name.toLowerCase().includes(q)||c.company.toLowerCase().includes(q)||(c.tags||[]).some(t=>t.toLowerCase().includes(q))))}
+ return contacts.filter(c=>(!openF||openState(c)===openF)&&(!tagF||(c.tags||[]).some(t=>t.toLowerCase()===tagF.toLowerCase()))&&(!q||c.name.toLowerCase().includes(q)||c.company.toLowerCase().includes(q)||(c.tags||[]).some(t=>t.toLowerCase().includes(q))))}
 function renderPeopleTools(){const tags=allTags();const tf=$('#tagFilter');
  if(tagF&&!tags.some(x=>x.t.toLowerCase()===tagF.toLowerCase()))tagF='';
  tf.hidden=false;if(tags.length)makeChips(tf,[['','Everyone']].concat(tags.map(x=>[x.t,x.t+' ('+x.n+')'])),()=>tagF,v=>{tagF=v;renderPeople()});
  else tf.innerHTML='<small class="muted">Filter by tag: no tags yet. Tap + Tag on anyone to add one.</small>';
+ const cnt=k=>contacts.filter(c=>openState(c)===k).length;
+ makeChips($('#openFilter'),[['','Everyone'],['opened','Opened ('+cnt('opened')+')'],['not','Not opened ('+cnt('not')+')'],['new','No pizza yet ('+cnt('new')+')']],()=>openF,v=>{openF=v;renderPeople()});
  $('#selectMode').textContent=peopleSel?'Stop selecting':'Select people';$('#selectAll').hidden=!peopleSel;
  const st=$('#sendTagged'),n=tagF?shownPeople().length:0;st.hidden=!tagF||!n;st.textContent='Send to everyone tagged '+tagF+' ('+n+')';
  const bar=$('#selBar');bar.hidden=!peopleSel;if(peopleSel){const k=peopleSel.size;$('#selCount').textContent=k+' selected';$('#selSend').disabled=!k;$('#selTag').disabled=!k}}
 function renderPeople(){
  renderPeopleTools();const ul=$('#peopleList');ul.innerHTML='';const list=shownPeople();
- if(!list.length){const li=document.createElement('li');li.className='muted';li.textContent=contacts.length?'No one matches that search.':'No one here yet. Add a person or upload a CSV.';ul.appendChild(li);return}
+ if(!list.length){const li=document.createElement('li');li.className='muted';li.textContent=contacts.length?'No one matches these filters.':'No one here yet. Add a person or upload a CSV.';ul.appendChild(li);return}
  list.forEach(c=>{const li=document.createElement('li');const l=c.history[0],picking=!!peopleSel,on=picking&&peopleSel.has(c.id);
   li.className='person'+(selContact===c.id&&!picking?' open':'')+(picking?' pick':'')+(on?' picked':'');
   const dates=[c.birthday?'Birthday '+fmtDate(c.birthday):'',c.anniversary?'Work anniversary '+fmtDate(c.anniversary):''].filter(Boolean).join(' · ');

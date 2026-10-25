@@ -1,4 +1,4 @@
-// Send step Pick from People: search by name, filter by tag, pick fills the send fields, send to everyone tagged. Usage: node pick-test.js /path/to/app.js
+// People filter by last pizza (opened, not opened, none). Send step Pick from People: search by name, filter by tag, pick fills the send fields, send to everyone tagged. Usage: node pick-test.js /path/to/app.js
 const { chromium } = require('playwright');
 const fs = require('fs');
 const APP = fs.readFileSync(process.argv[2], 'utf8');
@@ -43,8 +43,8 @@ const inRoot = (page, fn, arg) => page.evaluate(([f, a]) => (new Function('R', '
 const toastText = page => inRoot(page, "const t=R.querySelector('#toast');return t&&!t.hidden?t.textContent:''");
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const PEOPLE = [
-  { id: 'p1', name: 'Ann Lee', email: 'ann@x.test', company: 'Acme', country: 'CA', tags: ['client', 'holiday list'], has_consent: true, history: [] },
-  { id: 'p2', name: 'Bo Diaz', email: 'bo@x.test', company: 'Beta', tags: ['client'], vegan: true, has_consent: false, history: [] },
+  { id: 'p1', name: 'Ann Lee', email: 'ann@x.test', company: 'Acme', country: 'CA', tags: ['client', 'holiday list'], has_consent: true, history: [{ pizza: { size: 1, toppings: [] }, at: '2026-10-24T10:00:00Z', status: 'delivered', opened: true, label: 'Pizza' }] },
+  { id: 'p2', name: 'Bo Diaz', email: 'bo@x.test', company: 'Beta', tags: ['client'], vegan: true, has_consent: false, history: [{ pizza: { size: 1, toppings: [] }, at: '2026-10-24T10:00:00Z', status: 'delivered', opened: false, label: 'Pizza' }] },
   { id: 'p3', name: 'Cy Park', email: 'cy@x.test', company: 'Cora', tags: [], has_consent: false, history: [] },
 ];
 (async () => {
@@ -60,6 +60,16 @@ const PEOPLE = [
     await page.setViewportSize({ width: 402, height: 874 });
     await page.goto(ORIGIN + '/kitchen'); await wait(1500);
     await inRoot(page, "R.querySelector('#tab-people').click()"); await wait(500);
+    const of = await inRoot(page, "return [...R.querySelectorAll('#openFilter .chip')].map(c=>c.textContent).join('|')");
+    check(of === 'Everyone|Opened (1)|Not opened (1)|No pizza yet (1)', plan + ': last pizza filter shows counts: ' + of);
+    const pick = async lab => { await inRoot(page, "[...R.querySelectorAll('#openFilter .chip')].find(c=>c.textContent.indexOf(a)===0).click()".replace('a)', JSON.stringify(lab) + ')')); await wait(150); return inRoot(page, "return [...R.querySelectorAll('#peopleList li.person')].map(li=>li.textContent.indexOf('Ann Lee')>=0?'Ann':li.textContent.indexOf('Bo Diaz')>=0?'Bo':li.textContent.indexOf('Cy Park')>=0?'Cy':'?').join('|')"); };
+    check((await pick('Opened')) === 'Ann', plan + ': Opened shows Ann');
+    check((await pick('Not opened')) === 'Bo', plan + ': Not opened shows Bo');
+    check((await pick('No pizza yet')) === 'Cy', plan + ': No pizza yet shows Cy');
+    await inRoot(page, "const s=[...R.querySelectorAll('#tagFilter .chip')].find(c=>c.textContent.indexOf('client')===0);s.click()"); await wait(150);
+    check((await inRoot(page, "return R.querySelector('#peopleList').textContent")).indexOf('No one matches these filters') >= 0, plan + ': tag and last pizza filters combine');
+    check((await pick('Not opened')) === 'Bo', plan + ': client and Not opened shows Bo');
+    await pick('Everyone'); await inRoot(page, "[...R.querySelectorAll('#tagFilter .chip')].find(c=>c.textContent==='Everyone').click()"); await wait(150);
     await page.evaluate(() => window.__SOT_DEBUG.goSend()); await wait(300);
     check(await inRoot(page, "const w=R.querySelector('#pickWrap');return !!w&&!w.hidden&&w.offsetParent!==null"), plan + ': Pick from People shows on the Send step');
     const tags = await inRoot(page, "return [...R.querySelectorAll('#pickTag option')].map(o=>o.textContent).join('|')");

@@ -251,6 +251,12 @@
       "commit": "fcad56129656611b329432799e3e2c5a70cb4ff7",
       "date": "2026-10-25",
       "notes": "Use my signature pizza (Kitchen) and Send it to someone (Settings). Filter chips highlight and toggle off."
+    },
+    {
+      "version": "v0.15.0",
+      "commit": "92c5ec441c7cb7e1252b8add669b8f5e2833b6dc",
+      "date": "2026-10-25",
+      "notes": "More signature pizzas (1/10/20), premade business and personal ones, Kitchen picker. api-0.16.0, signatures.sql."
     }
   ]
 }

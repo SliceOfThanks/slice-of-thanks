@@ -233,6 +233,12 @@
       "commit": "796f062101912050264003a5557422ba322efd09",
       "date": "2026-10-25",
       "notes": "Kitchen Start over (tap twice). Billing steps say tap Back to the Kitchen. Dates card hidden until dates.sql is applied."
+    },
+    {
+      "version": "v0.14.5",
+      "commit": "f37a29954be03e11f0449abd21958220a0fb6aa3",
+      "date": "2026-10-25",
+      "notes": "Send step Pick from People: search, tag filter, pick fills the send fields, send to everyone with a tag (Pro)."
     }
   ]
 }

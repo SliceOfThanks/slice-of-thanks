@@ -185,6 +185,12 @@
       "commit": "011b3e7fa05daf782751fc217fff6967fd872e30",
       "date": "2026-10-25",
       "notes": "Billing window in brand colors with the add-card window working. Sheets fit the screen. Settings cards fold. Presets get Preview and Use it."
+    },
+    {
+      "version": "v0.13.2",
+      "commit": "1b91a8c68fc134f453452a71b9a6fee6db509e33",
+      "date": "2026-10-25",
+      "notes": "Browser data cleared when a different member signs in, on Log out and on Delete. Billing window scrolls once."
     }
   ]
 }

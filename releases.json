@@ -269,6 +269,12 @@
       "commit": "b45623a17cfc2244c1a33773a61669b84c4fae0b",
       "date": "2026-10-25",
       "notes": "Send step: Send to Someone new or Someone in People toggle."
+    },
+    {
+      "version": "v0.15.3",
+      "commit": "fb2c0755c5fd14b96ad845bb539104b485230830",
+      "date": "2026-10-25",
+      "notes": "Settings You card: Save button and Saved message."
     }
   ]
 }

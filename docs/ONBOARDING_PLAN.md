@@ -24,6 +24,7 @@ Status: draft for Stacey to approve. Nothing here is built yet.
 6. Add your people: upload a CSV, or add three people with birthdays and tags.
 7. Connect your calendar: Calendly or TidyCal. Choose "send my signature pizza after meetings" or "I pick the meetings".
 8. Turn on Gerald never forgets a date. Pick sends on its own or waits for you, and pick a note style.
+9. Your birthday, month and day only, optional. Slice of Thanks sends you Gerald's Birthday Special (docs/MEMBER_BIRTHDAY_PLAN.md).
 
 Optional extras after the 8 steps:
 - Make a box preset with your button and a gift code.
@@ -37,6 +38,7 @@ Optional extras after the 8 steps:
 5. Add your people, by adding them one at a time with birthdays.
 6. Try Hire Gerald: let him make a pizza for someone.
 7. Turn on Gerald never forgets a date. On A Slice, pizzas wait for you to send.
+8. Your birthday, month and day only, optional.
 
 Each Pro step a free member sees shows one line on what it does, with a "Try it with The Whole Pie" button.
 

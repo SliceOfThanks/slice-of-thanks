@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.15.0 =====
+/* ===== Slice of Thanks live layer v0.15.1 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -1546,3 +1546,39 @@ function renderSigList() {
 PRO_INFO.signatures = ['Keep more signature pizzas', 'Save up to 10 signature pizzas, business and personal, and send any of them in one tap. Pizza Party keeps 20.'];
 const _renderSettingsSigs = renderSettings;
 renderSettings = function () { _renderSettingsSigs(); renderSigList(); };
+
+/* --- Send to a group: start the box from a box preset --- */
+let bulkPreset = null;
+function renderBulkPreset() {
+  const anchor = $('#bulkBiz'); if (!anchor) return;
+  const card = anchor.closest('.card'); if (!card) return;
+  let f = $('#bulkPresetRow');
+  if (!f) {
+    f = document.createElement('div'); f.className = 'field'; f.id = 'bulkPresetRow';
+    f.innerHTML = '<label for="bulkPresetSel">Start from a box preset</label><select id="bulkPresetSel"></select><small id="bulkPresetHelp"></small>';
+    const h = card.querySelector('h3'); card.insertBefore(f, h ? h.nextSibling : card.firstChild);
+    f.querySelector('#bulkPresetSel').addEventListener('change', e => {
+      const pr = presets.find(x => x.id === e.target.value);
+      if (!pr) { bulkPreset = null; renderBulk(); return; }
+      const b = presetBox(pr);
+      bulkPreset = { id: pr.id, name: pr.name, linkLabel: b.linkLabel, link: b.link, reward: b.reward };
+      bulk.style = b.style || bulk.style; bulk.sticker = b.sticker || bulk.sticker; bulk.confetti = b.confetti || bulk.confetti;
+      if (b.note) bulk.note = b.note; bulk.sign = b.sign || '';
+      renderBulk(); toast('The box is set from "' + pr.name + '". Change anything below.');
+    });
+  }
+  const sel = $('#bulkPresetSel');
+  sel.innerHTML = '<option value="">' + (presets.length ? 'Choose a preset' : 'No presets yet') + '</option>';
+  presets.forEach(pr => { const o = document.createElement('option'); o.value = pr.id; o.textContent = pr.name; sel.appendChild(o); });
+  sel.disabled = !presets.length; sel.value = bulkPreset && presets.some(x => x.id === bulkPreset.id) ? bulkPreset.id : '';
+  $('#bulkPresetHelp').textContent = presets.length ? 'Sets the sticker, confetti, box style, note and sign-off for everyone on the list.' : 'Save a box as a preset on the Box step in the Kitchen, then pick it here.';
+}
+const _renderBulkP = renderBulk;
+renderBulk = function () { _renderBulkP(); renderBulkPreset(); };
+/* A preset's button and gift go on every box in the list */
+const _bulkBoxP = bulkBox;
+bulkBox = function (r) {
+  const b = _bulkBoxP(r);
+  if (bulkPreset) { if (bulkPreset.link) { b.link = bulkPreset.link; b.linkLabel = bulkPreset.linkLabel; } if (bulkPreset.reward && bulkPreset.reward.code) b.reward = bulkPreset.reward; }
+  return b;
+};

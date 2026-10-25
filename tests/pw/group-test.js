@@ -56,7 +56,7 @@ const PEOPLE = [
     if (b) (st.bodies[path] = st.bodies[path] || []).push(b);
     if (path === '/session') { const s = session('pro', { monthly: 200 }, {}); s.features = { automations: true, csv_import: true }; return s; }
     if (path === '/people') return { ok: true, people: PEOPLE };
-    if (path === '/presets') return { ok: true, limit: 10, presets: [] };
+    if (path === '/presets') return { ok: true, limit: 10, presets: [{ id: 'pr1', name: 'Holiday thanks', data: { style: 'plaid', sticker: 'Happy Holidays', confetti: 'stars', note: 'Happy holidays, [first name]! Thanks from all of us.', sign: 'The Lawfecta team', linkLabel: 'Book a call', link: 'https://x.test/book', reward: { text: '20% off', code: 'CHEERS20' } } }] };
     if (path === '/calendar') return { ok: true, integrations: [], meetings: [] };
     if (path === '/people/import') return { ok: true, added: 1, updated: 1, skipped: 0 };
     if (path === '/send/bulk') return { ok: true, results: (b.rows || []).map(r => ({ i: r.i, ok: true })) };
@@ -88,6 +88,12 @@ const PEOPLE = [
   check(vibes[0] === 'Mix it up' && vibes.includes('Big Win') && vibes.includes('Birthday Bash'), 'Vibes: Mix it up plus Reserve vibes');
   await inRoot(page, "[...R.querySelectorAll('#bulkMsg .chip')].find(c=>c.textContent==='Same for everyone').click()"); await wait(100);
   await inRoot(page, "const t=R.querySelector('#bulkMsgText');t.value='HAPPY HOLIDAYS';t.dispatchEvent(new Event('input'));t.dispatchEvent(new Event('change'))"); await wait(150);
+  // Box preset sets the box for everyone
+  const opts = await inRoot(page, "return [...R.querySelectorAll('#bulkPresetSel option')].map(o=>o.textContent).join('|')");
+  check(opts === 'Choose a preset|Holiday thanks', 'Group send lists box presets: ' + opts);
+  await inRoot(page, "const s=R.querySelector('#bulkPresetSel');s.value='pr1';s.dispatchEvent(new Event('change'))"); await wait(200);
+  const setTo = await inRoot(page, "return [R.querySelector('#bulkNote').value, R.querySelector('#bulkSign').value, [...R.querySelectorAll('#bulkStyle .chip')].find(c=>c.getAttribute('aria-pressed')==='true').textContent, R.querySelector('#bulkPresetSel').value].join(' / ')");
+  check(setTo === 'Happy holidays, [first name]! Thanks from all of us. / The Lawfecta team / Plaid / pr1', 'Picking a preset fills the box: ' + setTo);
   // Preview the first 3 (two here), then send: each person gets the pizza from the preview, with its own picture
   await inRoot(page, "R.querySelector('#bulkPreview').click()"); await wait(400);
   const pv = await inRoot(page, "const s=R.querySelector('#prev3Sheet');return [s&&!s.hidden, s.querySelectorAll('canvas').length, s.querySelector('h2').textContent, [...s.querySelectorAll('.prev3 b')].map(b=>b.textContent).join('|'), s.querySelector('.prev3 small').textContent]");
@@ -99,6 +105,8 @@ const PEOPLE = [
   const sent = (st.bodies['/send/bulk'] || [])[0] || { rows: [] };
   check(sent.rows.length === 2 && sent.rows.every(r => (r.image_data_url || '').indexOf('data:image') === 0), 'Each Gerald pizza goes with its own picture');
   check(sent.rows.every(r => r.pizza.sign && r.pizza.sign.text === 'HAPPY HOLIDAYS') && names.indexOf(sent.rows[0].pizza.name) >= 0, 'Sent pizzas match the preview: ' + sent.rows.map(r => r.pizza.name).join('|'));
+  const bx = sent.rows[0].box || {};
+  check(bx.style === 'plaid' && bx.sticker === 'Happy Holidays' && bx.confetti === 'stars' && bx.note.indexOf('Happy holidays, Ann!') === 0 && bx.cta_url === 'https://x.test/book' && bx.gift && bx.gift.code === 'CHEERS20', 'Each box is sent from the preset: ' + JSON.stringify({ s: bx.style, n: bx.note, c: bx.cta_url, g: bx.gift }));
   check(sent.rows[0].consent === undefined && sent.rows[1].consent && sent.rows[1].consent.method === 'Picked in People for a group send', 'Permission on file is kept; others use the choice on the screen');
   // Tapping a tag on a card filters to that tag; tapping it again clears the filter
   await inRoot(page, "[...R.querySelectorAll('#tagFilter .chip')].find(c=>c.textContent==='Everyone').click()"); await wait(100);

@@ -1573,7 +1573,7 @@ $('#upSheet').addEventListener('click',e=>{if(e.target.id==='upSheet')closeUp()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#upSheet').hidden)closeUp()});
 refreshPlan(true);
 
-/* ===== Slice of Thanks live layer v0.15.4 =====
+/* ===== Slice of Thanks live layer v0.15.5 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -3179,6 +3179,38 @@ bulkBox = function (r) {
   if (bulkPreset) { if (bulkPreset.link) { b.link = bulkPreset.link; b.linkLabel = bulkPreset.linkLabel; } if (bulkPreset.reward && bulkPreset.reward.code) b.reward = bulkPreset.reward; }
   return b;
 };
+
+/* --- Confetti never gets stuck: it is placed on the visible screen (like the sheets), a failed frame clears it,
+   and a timer clears anything left after the longest burst --- */
+function fitConfetti() {
+  const el = cfx; if (!el) return;
+  el.style.transform = ''; el.style.width = ''; el.style.height = '';
+  const vv = window.visualViewport, r = el.getBoundingClientRect();
+  const top = vv ? vv.offsetTop : 0, left = vv ? vv.offsetLeft : 0, h = vv ? vv.height : innerHeight, w = vv ? vv.width : innerWidth;
+  const dx = left - r.left, dy = top - r.top;
+  if (Math.abs(dx) > 1 || Math.abs(dy) > 1 || Math.abs(r.height - h) > 1 || Math.abs(r.width - w) > 1) {
+    el.style.transform = 'translate(' + dx + 'px,' + dy + 'px)'; el.style.width = w + 'px'; el.style.height = h + 'px';
+  }
+}
+function clearConfetti() {
+  if (cRaf) { cancelAnimationFrame(cRaf); cRaf = 0; }
+  cparts = [];
+  try { const c = cfx.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cfx.width, cfx.height); } catch (e) { /* ignore */ }
+}
+let confettiTimer = 0;
+const _burstC = burst;
+burst = function (kind) {
+  fitConfetti();
+  _burstC(kind);
+  clearTimeout(confettiTimer);
+  confettiTimer = setTimeout(clearConfetti, FALLING.includes(kind) ? 16000 : 9000);
+};
+const _cFrameC = cFrame;
+cFrame = function () {
+  try { _cFrameC(); } catch (e) { clearConfetti(); }
+};
+document.addEventListener('visibilitychange', () => { if (document.hidden) clearConfetti(); });
+window.addEventListener('scroll', () => { if (cparts.length) fitConfetti(); }, { passive: true });
 
 })();
 

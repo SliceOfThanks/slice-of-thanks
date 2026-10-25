@@ -73,6 +73,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   check(await inRoot(page, "return R.querySelector('#confettiChips').offsetParent!==null"), 'Tapping Confetti opens it');
   await inRoot(page, "[...R.querySelectorAll('#confettiChips .chip')].find(c=>c.textContent.indexOf('Pizza slices')===0).click()"); await wait(100);
   const cv = await inRoot(page, "return R.querySelector('#confettiChips').closest('.field').querySelector('.cf-val').textContent");
+  // Confetti always clears: draw some, then check the canvas is empty once the burst is over
+  const painted = () => inRoot(page, "const c=R.querySelector('#confetti');const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0;for(let i=3;i<d.length;i+=40)if(d[i])n++;return n");
+  await inRoot(page, "[...R.querySelectorAll('#confettiChips .chip')].find(c=>c.textContent.indexOf('Stars')===0).click()"); await wait(300);
+  check((await painted()) > 0, 'Stars confetti draws on screen');
+  await wait(9500);
+  check((await painted()) === 0, 'Confetti is gone after the burst, nothing left on screen');
   check(cv === 'Pizza slices', 'The row shows the new choice: ' + cv);
   if (process.env.SHOT) { await inRoot(page, "const r=R.querySelector('#styleChips').closest('.field').getBoundingClientRect();window.scrollTo(0,scrollY+r.top-300)"); await wait(200); await page.screenshot({ path: process.env.SHOT }); }
   await inRoot(page, "R.querySelector('#confettiChips').closest('.field').querySelector('.cf-head').click()"); await wait(100);

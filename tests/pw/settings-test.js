@@ -70,6 +70,9 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await inRoot(page, "R.querySelector('#liveYouSave').click()"); await wait(200);
   check((await toastText(page)).indexOf('does not look right') >= 0, 'A bad reply-to email is caught');
   await inRoot(page, "const r=R.querySelector('#liveReply');r.value='hello@lawfecta.test';r.dispatchEvent(new Event('input'))"); await wait(900);
+  const sw = await inRoot(page, "return ['#brand1','#brand2'].map(id=>{const r=R.querySelector(id).getBoundingClientRect();return Math.round(r.width)+'x'+Math.round(r.height)}).join(',')");
+  check(sw.split(',').every(x => parseInt(x) >= 40), 'Brand color pickers show as swatches: ' + sw);
+  if (process.env.SHOT) { await inRoot(page, "const r=R.querySelector('#brand1').getBoundingClientRect();window.scrollTo(0,scrollY+r.top-200)"); await wait(200); await page.screenshot({ path: process.env.SHOT }); }
   const cal = await inRoot(page, "return [...R.querySelectorAll('#view-settings p.muted')].map(p=>p.textContent).join('|')");
   check(cal.indexOf('prototype') < 0 && cal.indexOf('Connect the calendar you book meetings with') >= 0, 'Calendar card has live wording');
   await inRoot(page, "const v=R.querySelector('#veganDefault');v.checked=true;v.dispatchEvent(new Event('change'))"); await wait(300);

@@ -205,7 +205,9 @@ textarea{min-height:92px;resize:vertical}
 .hand{font-family:var(--hand);font-size:1.35rem;line-height:1.15}
 .hand.signboard{text-align:right;font-weight:700}
 .upload{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.upload input{position:absolute;width:1px;height:1px;opacity:0}
+.upload input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.swatch{display:inline-flex;flex-direction:column;align-items:center;gap:4px;font-size:.8rem;font-weight:700;color:var(--muted)}
+.swatch input[type=color]{width:56px;height:44px;padding:3px;border:2px solid var(--edge);border-radius:12px;background:var(--surface);cursor:pointer}
 .upload .thumb{width:44px;height:44px;border-radius:10px;background:var(--sunk);border:2px solid var(--line);display:grid;place-items:center;overflow:hidden;font-size:.7rem;color:var(--muted)}
 .upload .thumb img{max-width:100%;max-height:100%;object-fit:contain}
 .msg{background:var(--sunk);border:2px dashed var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:.92rem;white-space:pre-wrap;word-break:break-word}
@@ -893,7 +895,7 @@ body.is-free .pro-tag{display:inline-block}
       <button class="fold-head" type="button" id="boxCardHead" aria-expanded="false" aria-controls="boxCardBody"><span><h2>Your box</h2><small class="muted" id="boxCardSum"></small></span><span class="fold-ic" aria-hidden="true">▾</span></button>
       <div class="fold-body" id="boxCardBody" hidden>
       <div class="field"><label>Logo<span class="pro-tag">Pro</span></label><div class="upload"><span class="thumb" id="logoThumb2">None</span><label class="btn small" for="logoFile2">Upload logo</label><input type="file" id="logoFile2" accept="image/*"></div></div>
-      <div class="field"><label>Brand colors<span class="pro-tag">Pro</span></label><div class="upload"><input type="color" id="brand1" value="#1f4e79" aria-label="Brand color 1"><input type="color" id="brand2" value="#f1ad2d" aria-label="Brand color 2"><small class="muted">Used for your box and brand color confetti.</small></div></div>
+      <div class="field"><label>Brand colors<span class="pro-tag">Pro</span></label><div class="upload"><label class="swatch">Color 1<input type="color" id="brand1" value="#1f4e79" aria-label="Brand color 1"></label><label class="swatch">Color 2<input type="color" id="brand2" value="#f1ad2d" aria-label="Brand color 2"></label></div><small class="muted">Tap a color to change it. Your colors are used on your box and in Brand color confetti.</small></div>
       <div class="field"><label for="pNote">Default thank-you note</label><textarea id="pNote" maxlength="280"></textarea><div class="chips tokens" data-for="pNote" aria-label="Add a detail that changes for each person"></div><small>Tap a detail to add it. Each person gets their own.</small></div>
       <div class="two">
         <div class="field"><label for="pLinkLabel">Next-step button<span class="pro-tag">Pro</span></label><input type="text" id="pLinkLabel" maxlength="30"></div>

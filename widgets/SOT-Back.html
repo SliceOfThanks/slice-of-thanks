@@ -1,4 +1,6 @@
-<!-- SOT-Back: a Back to the Kitchen bar on BD's account pages (billing, manage account, password). Version 1.0.0
+<!-- SOT-Back: a Back to the Kitchen bar on BD's account pages (billing, manage account, password). Version 1.1.0
+     On Change Membership Plan (/account/upgrade) it also shows the member's current plan and what each plan includes,
+     and marks Pizza Party as coming soon so nobody can switch to it yet.
      Paste at the very end of BD's Footer - Scripts widget. It only shows on addresses that start with /account.
      The app opens these pages in a new tab, so the button closes that tab and the member lands back in the Kitchen.
      If the browser will not close the tab, it opens the Kitchen instead. -->
@@ -6,6 +8,13 @@
 #sot-back { position: sticky; top: 0; z-index: 9999; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px; background: #FFF3E0; border-bottom: 2.5px solid #3E2416; font-family: 'Work Sans', Arial, sans-serif; }
 #sot-back a { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: 2.5px solid #3E2416; border-radius: 999px; box-shadow: 3px 3px 0 #3E2416; background: #D62828; color: #FFF3E0 !important; font-weight: 700; font-size: 15px; text-decoration: none !important; }
 #sot-back a:active { transform: translate(3px, 3px); box-shadow: none; }
+#sot-plan-now, .sot-feat { font-family: 'Work Sans', Arial, sans-serif; color: #3E2416; }
+#sot-plan-now { margin: 0 0 16px; padding: 14px 16px; background: #FFFAF2; border: 2.5px solid #3E2416; border-radius: 18px; box-shadow: 4px 4px 0 #3E2416; }
+#sot-plan-now b { font-family: 'Shrikhand', Georgia, serif; font-weight: 400; font-size: 20px; }
+.sot-feat { margin: 10px 4px 4px 22px; padding: 0; font-size: 15px; line-height: 1.45; text-align: left; }
+.sot-feat li { margin: 0 0 4px; }
+.sot-feat-lead { margin: 10px 4px 0; font-weight: 700; font-size: 15px; }
+.sot-soon { opacity: .6; }
 #sot-back span { font-family: 'Shrikhand', Georgia, serif; color: #3E2416; font-size: 18px; }
 </style>
 <script>
@@ -19,7 +28,72 @@
     try { window.close(); } catch (x) {}
     setTimeout(function () { location.href = '/kitchen'; }, 300);
   };
-  var go = function () { document.body.insertBefore(bar, document.body.firstChild); };
+  var PLANS = [
+    { key: 'pizza party', name: 'Pizza Party', soon: true, lead: 'Coming soon. Team seats are still being built.', list: [
+      'Everything in The Whole Pie', '3 seats, extra seats $8 each', '1,000 emails a month, shared by the team'] },
+    { key: 'whole pie', name: 'The Whole Pie', lead: 'Everything in A Slice, plus:', list: [
+      '250 emails a month, and email packs when you need more',
+      'Your logo and brand colors on the box, and logo confetti',
+      '7 more box styles, Pro confetti, Pro toppings and box toppers',
+      "All 10 pizzeria classics and Gerald's Reserve pizzas",
+      'Let Gerald do the whole box, with the note in your style',
+      'A gift code they reveal by eating the pizza',
+      'Your own button, like Book a follow-up',
+      'Connect Calendly or TidyCal and send pizzas after meetings on their own',
+      'Gerald sends birthday and work anniversary pizzas on his own',
+      'Send to a whole list, from People or a CSV upload',
+      'No Made with Slice of Thanks line on your pizzas'] },
+    { key: 'a slice', name: 'A Slice', lead: 'Free forever:', list: [
+      '10 emails a month',
+      'Make a pizza and send it to one person at a time',
+      'Hire Gerald, the Head Chef, to make a pizza for you',
+      'Kraft and Classic boxes, classic toppings and confetti',
+      'People with tags, birthdays and work anniversaries',
+      'Gerald never forgets a date: birthday and anniversary pizzas wait for you to send',
+      'Pizza of the Month and the Treat Jar',
+      'Special Delivery: Pro features on one pizza for $2.99'] }
+  ];
+  var planOf = function (t) {
+    t = String(t || '').toLowerCase();
+    for (var i = 0; i < PLANS.length; i++) { if (t.indexOf(PLANS[i].key) !== -1) return PLANS[i]; }
+    return null;
+  };
+  var listEl = function (pl) {
+    var box = document.createElement('div');
+    var lead = document.createElement('p'); lead.className = 'sot-feat-lead'; lead.textContent = pl.lead; box.appendChild(lead);
+    var ul = document.createElement('ul'); ul.className = 'sot-feat';
+    for (var i = 0; i < pl.list.length; i++) { var li = document.createElement('li'); li.textContent = pl.list[i]; ul.appendChild(li); }
+    box.appendChild(ul);
+    return box;
+  };
+  var plansPage = function () {
+    if (location.pathname.indexOf('/account/upgrade') !== 0 || document.getElementById('sot-plan-now')) return;
+    var radios = document.querySelectorAll('input[type="radio"]');
+    /* innerText skips this script and its styles, which also name every plan */
+    var text = String(document.body.innerText || '').toLowerCase();
+    var offered = [], form = null;
+    for (var i = 0; i < radios.length; i++) {
+      var r = radios[i], card = r, pl = null;
+      /* the plan card: the biggest box around this radio that holds no other radio */
+      while (card.parentElement && card.parentElement !== r.form && card.parentElement !== document.body && card.parentElement.querySelectorAll('input[type="radio"]').length === 1) card = card.parentElement;
+      pl = planOf(card.textContent);
+      if (!pl) continue;
+      offered.push(pl.key);
+      if (!form) form = r.form || card;
+      card.appendChild(listEl(pl));
+      if (pl.soon) { r.disabled = true; card.className += ' sot-soon'; }
+    }
+    if (!form) return;
+    /* The current plan is the one BD names on the page but does not offer as a choice */
+    var cur = null;
+    for (var j = 0; j < PLANS.length; j++) { if (offered.indexOf(PLANS[j].key) === -1 && text.indexOf(PLANS[j].key) !== -1) { cur = PLANS[j]; break; } }
+    if (!cur) return;
+    var now = document.createElement('div'); now.id = 'sot-plan-now';
+    var h = document.createElement('div'); h.innerHTML = 'Your plan now: <b></b>'; h.lastChild.textContent = cur.name; now.appendChild(h);
+    now.appendChild(listEl(cur));
+    form.parentNode.insertBefore(now, form);
+  };
+  var go = function () { plansPage(); document.body.insertBefore(bar, document.body.firstChild); };
   if (document.body) go(); else document.addEventListener('DOMContentLoaded', go);
 })();
 </script>

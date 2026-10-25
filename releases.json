@@ -281,6 +281,12 @@
       "commit": "c9ba945cac07e7ddf898b4184884cb2c7f7e99d6",
       "date": "2026-10-25",
       "notes": "Box step folds, more holidays, clearer thank-you line, monthly Gerald's tips."
+    },
+    {
+      "version": "v0.15.5",
+      "commit": "6794840f59c4c66fc226b3e727ede25b005ca40a",
+      "date": "2026-10-25",
+      "notes": "Confetti never gets stuck."
     }
   ]
 }

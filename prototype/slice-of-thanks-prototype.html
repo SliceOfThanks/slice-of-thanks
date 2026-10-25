@@ -100,6 +100,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .pill.ok{background:var(--ok-bg);color:var(--ok-ink)}
 .p-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.p-tag{font-size:.74rem;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--sunk);border:1.5px solid var(--edge);color:var(--ink)}
 .p-tag button{all:unset;cursor:pointer;margin-left:6px;font-weight:700}
+button.p-tag{cursor:pointer;font-family:inherit}button.p-tag:hover{background:var(--mustard)}button.p-tag.on{background:var(--mustard)}button.p-tag:focus-visible{outline:3px solid var(--mustard);outline-offset:2px}
 .person.pick{cursor:pointer}.person.picked{outline:3px solid var(--mustard);outline-offset:2px}.p-check{width:22px;height:22px;accent-color:var(--tomato);flex:0 0 auto;margin-top:2px}
 .quick-tags{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:12px;background:var(--sunk);border:2px dashed var(--edge)}
 .sel-bar{position:sticky;bottom:12px;z-index:5;background:var(--surface);border:2.5px solid var(--edge);border-radius:18px;box-shadow:4px 4px 0 var(--shade);padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
@@ -2122,10 +2123,12 @@ function renderPeople(){
   li.className='person'+(selContact===c.id&&!picking?' open':'')+(picking?' pick':'')+(on?' picked':'');
   const dates=[c.birthday?'Birthday '+fmtDate(c.birthday):'',c.anniversary?'Work anniversary '+fmtDate(c.anniversary):''].filter(Boolean).join(' · ');
   li.innerHTML='<div class="p-top">'+(picking?'<input type="checkbox" class="p-check" aria-label="Select '+esc(c.name)+'"'+(on?' checked':'')+'>':'')+'<div style="flex:1"><h3>'+esc(c.name)+'</h3><div class="p-meta">'+esc(c.company||'No company')+'</div>'+(c.vegan?'<span class="vegan-tag">🌱 Vegan</span>':'')+
-   ((c.tags||[]).length?'<div class="p-tags">'+c.tags.map(t=>'<span class="p-tag">'+esc(t)+'</span>').join('')+'</div>':'')+'</div>'+
+   ((c.tags||[]).length?'<div class="p-tags">'+c.tags.map(t=>'<button type="button" class="p-tag'+(tagF&&tagF.toLowerCase()===t.toLowerCase()?' on':'')+'" data-tag="'+esc(t)+'" title="Show everyone tagged '+esc(t)+'">'+esc(t)+'</button>').join('')+'</div>':'')+'</div>'+
    '<span class="pill '+(l?(l.opened?'ok':'wait'):'')+'">'+(l?(l.opened?'Opened':'Not opened'):'New')+'</span></div>'+
    '<div class="p-last">'+(l?'Last pizza: '+esc(l.date)+' · '+esc(l.pizza.name):'No pizzas sent yet')+(c.history.length>1?' · '+c.history.length+' sent':'')+(dates?'<br>'+esc(dates):'')+'</div>'+
    (picking?'':'<div class="btn-row"><button class="btn small primary" data-act="send">'+(c.history.length?'Send another pizza':'Send a pizza')+'</button><button class="btn small" data-act="toggle">'+(selContact===c.id?'Close':'History and notes')+'</button><button class="btn small ghost" data-act="tag" aria-expanded="'+(tagOpen===c.id)+'">'+(tagOpen===c.id?'Done tagging':'+ Tag')+'</button></div>');
+  /* Tap a tag on any card to show everyone with that tag */
+  li.querySelectorAll('.p-tag[data-tag]').forEach(b=>b.onclick=e=>{e.stopPropagation();const t=b.dataset.tag;tagF=tagF&&tagF.toLowerCase()===t.toLowerCase()?'':t;tagOpen=null;renderPeople();const f=$('#tagFilter');if(f)f.scrollIntoView({behavior:'smooth',block:'center'})});
   if(picking){li.onclick=()=>{peopleSel.has(c.id)?peopleSel.delete(c.id):peopleSel.add(c.id);renderPeople()};ul.appendChild(li);return}
   if(tagOpen===c.id)li.appendChild(quickTagEl(c));
   if(selContact===c.id)li.appendChild(detailEl(c));

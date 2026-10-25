@@ -100,6 +100,13 @@ const PEOPLE = [
   check(sent.rows.length === 2 && sent.rows.every(r => (r.image_data_url || '').indexOf('data:image') === 0), 'Each Gerald pizza goes with its own picture');
   check(sent.rows.every(r => r.pizza.sign && r.pizza.sign.text === 'HAPPY HOLIDAYS') && names.indexOf(sent.rows[0].pizza.name) >= 0, 'Sent pizzas match the preview: ' + sent.rows.map(r => r.pizza.name).join('|'));
   check(sent.rows[0].consent === undefined && sent.rows[1].consent && sent.rows[1].consent.method === 'Picked in People for a group send', 'Permission on file is kept; others use the choice on the screen');
+  // Tapping a tag on a card filters to that tag; tapping it again clears the filter
+  await inRoot(page, "[...R.querySelectorAll('#tagFilter .chip')].find(c=>c.textContent==='Everyone').click()"); await wait(100);
+  await inRoot(page, "[...R.querySelectorAll('#peopleList .p-tag')].find(b=>b.textContent==='holiday list').click()"); await wait(200);
+  const f1 = await inRoot(page, "return [[...R.querySelectorAll('#peopleList .person h3')].map(h=>h.textContent).join('|'), R.querySelector('#tagFilter .chip[aria-pressed=true]').textContent]");
+  check(f1[0] === 'Ann Lee' && f1[1].indexOf('holiday list') === 0, 'Tapping a tag on a card filters: ' + f1.join(' / '));
+  await inRoot(page, "[...R.querySelectorAll('#peopleList .p-tag')].find(b=>b.textContent==='holiday list').click()"); await wait(200);
+  check((await inRoot(page, "return R.querySelectorAll('#peopleList .person').length")) === 3, 'Tapping it again shows everyone');
   // Quick tags right on a card: add an existing tag, add a new one, remove one
   await inRoot(page, "[...R.querySelectorAll('#tagFilter .chip')].find(c=>c.textContent==='Everyone').click()"); await wait(100);
   const cy = "[...R.querySelectorAll('#peopleList .person')].find(li=>li.querySelector('h3').textContent==='Cy Park')";

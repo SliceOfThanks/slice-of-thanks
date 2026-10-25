@@ -191,6 +191,12 @@
       "commit": "1b91a8c68fc134f453452a71b9a6fee6db509e33",
       "date": "2026-10-25",
       "notes": "Browser data cleared when a different member signs in, on Log out and on Delete. Billing window scrolls once."
+    },
+    {
+      "version": "v0.13.3",
+      "commit": "d056360174a5806bb6a3d2d9f886bc100dce586c",
+      "date": "2026-10-25",
+      "notes": "Card and billing address opens BD secure billing in a new tab; Billing card refreshes on return. Final sheets have no Cancel."
     }
   ]
 }

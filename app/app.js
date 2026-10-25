@@ -122,9 +122,9 @@ function renderPlanCard(){const el=$('#planCard');if(!el)return;const pro=isPro(
       :'<p class="muted" style="margin:4px 0">Pizzas sent this month: '+n+' of 10</p><div class="usage" role="img" aria-label="'+n+' of 10 pizzas sent"><span style="width:'+Math.min(100,n*10)+'%"></span></div>')+
   '<button class="linkish" type="button" id="planCompare" aria-expanded="false">Compare plans</button><div class="plan-cols" id="planCols" hidden>'+col('A Slice, free',!pro,['10 emails a month','Kraft and Classic boxes','Classic toppings and confetti','Special Delivery, $2.99 for Pro on one pizza'])+
   col('The Whole Pie, $9/mo or $90/yr',pro,['Your logo and brand colors','All box styles and Pro confetti','Gift codes and your own button','250 emails a month, 14-day free trial'])+
-  col('Pizza Party, $29/mo or $290/yr',false,['Everything in The Whole Pie','3 seats, extra seats $8 each','1,000 emails a month, shared','14-day free trial'])+'</div>'+
+  col('Pizza Party (team plan), coming soon',false,['Everything in The Whole Pie','3 seats, extra seats $8 each','1,000 emails a month, shared','14-day free trial'])+'</div>'+
   '<div class="btn-row">'+(pro?'<button class="btn small" id="planBilling" type="button">Manage billing</button>'
-     :'<button class="btn small primary" id="planUp" type="button">Upgrade to The Whole Pie</button>')+'<button class="btn small" id="planTeam" type="button">Set up a team</button></div>';
+     :'<button class="btn small primary" id="planUp" type="button">Upgrade to The Whole Pie</button>')+'</div>';
  const on=(id,f)=>{const b=$('#'+id);if(b)b.onclick=f};
  on('planCompare',()=>{const c=$('#planCols'),b=$('#planCompare');c.hidden=!c.hidden;b.setAttribute('aria-expanded',String(!c.hidden));b.textContent=c.hidden?'Compare plans':'Hide plans'});on('planUp',()=>upgrade('general'));on('planBilling',()=>toast('In the real app this opens your billing in Brilliant Directories.'));
  on('planTeam',()=>toast('In the real app this starts a Team plan and lets you invite people.'))}
@@ -1922,7 +1922,8 @@ function openPlans() {
   const plans = [
     ['free', 'A Slice', 'Free. 10 emails a month, Kraft and Classic boxes.', 'checkout_free', '/checkout/10'],
     ['pro', 'The Whole Pie', '$9 a month or $90 a year. 250 emails a month, your logo, gift codes and your own button. 14-day free trial.', 'checkout_pro', '/checkout/12'],
-    ['team', 'Pizza Party', '$29 a month or $290 a year. 3 seats and 1,000 shared emails a month. 14-day free trial.', 'checkout_team', '/checkout/11']
+    /* Pizza Party (team seats) opens after launch: it is listed, without a checkout */
+    ['team', 'Pizza Party', 'Team plan with shared seats. Coming soon.', '', '']
   ];
   const p = document.createElement('div');
   plans.forEach(([k, name, desc]) => {

@@ -375,7 +375,8 @@ function openPlans() {
   const plans = [
     ['free', 'A Slice', 'Free. 10 emails a month, Kraft and Classic boxes.', 'checkout_free', '/checkout/10'],
     ['pro', 'The Whole Pie', '$9 a month or $90 a year. 250 emails a month, your logo, gift codes and your own button. 14-day free trial.', 'checkout_pro', '/checkout/12'],
-    ['team', 'Pizza Party', '$29 a month or $290 a year. 3 seats and 1,000 shared emails a month. 14-day free trial.', 'checkout_team', '/checkout/11']
+    /* Pizza Party (team seats) opens after launch: it is listed, without a checkout */
+    ['team', 'Pizza Party', 'Team plan with shared seats. Coming soon.', '', '']
   ];
   const p = document.createElement('div');
   plans.forEach(([k, name, desc]) => {

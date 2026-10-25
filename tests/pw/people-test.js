@@ -100,10 +100,10 @@ const PEOPLE = [{ id: 'p1', name: 'Jordan Reyes', email: 'jordan@brightline.test
     await page.evaluate(([csv]) => { const R = window.__SOT_ROOT; const inp = R.querySelector('#csvFile'); const dt = new DataTransfer(); dt.items.add(new File([csv], 'list.csv', { type: 'text/csv' })); inp.files = dt.files; inp.dispatchEvent(new Event('change')); }, [rows.join('\n')]);
     await wait(500);
     const summary = await inRoot(page, "return R.querySelector('#listSummary').textContent");
-    check(summary === '62 people loaded. 61 ready, 1 missing an email or still sample rows.', 'List loads and needs an email: ' + summary);
-    await inRoot(page, "R.querySelector('#bulkSend').click()"); await wait(1500);
+    check(summary === '62 people loaded. 61 getting a pizza, 1 missing an email or still sample rows.', 'List loads and needs an email: ' + summary);
+    await inRoot(page, "R.querySelector('#bulkSend').click()"); for (let t = 0; t < 60 && await inRoot(page, "return R.querySelector('#bulkResult').hidden || R.querySelector('#bulkSend').disabled"); t++) await wait(500);
     const batches = st.bodies['/send/bulk'] || [];
-    check(batches.length === 2 && batches[0].rows.length === 50 && batches[1].rows.length === 11, 'Rows go up in batches of 50: ' + batches.map(b => b.rows.length).join(','));
+    check(batches.length === 7 && batches[0].rows.length === 10 && batches[6].rows.length === 1 && batches.every(b => b.rows.every(r => (r.image_data_url || '').indexOf('data:image') === 0)), 'Gerald pizzas go up 10 at a time, each with its own picture: ' + batches.map(b => b.rows.length).join(','));
     const all = batches.flatMap(b => b.rows);
     const r3 = all.find(r => r.recipient.email === 'p3@list.test'), r4 = all.find(r => r.recipient.email === 'p4@list.test'), r0 = all.find(r => r.recipient.email === 'p0@list.test'), r5 = all.find(r => r.recipient.email === 'p5@list.test');
     check(r3.recipient.country === 'GB' && r0.recipient.country === 'US', 'Country column wins, default fills the rest');
@@ -117,11 +117,11 @@ const PEOPLE = [{ id: 'p1', name: 'Jordan Reyes', email: 'jordan@brightline.test
     // Sample CSV download: every column, and its example rows never send
     const [dl] = await Promise.all([page.waitForEvent('download'), inRoot(page, "R.querySelector('#copyHeader').click()")]);
     const sample = require('fs').readFileSync(await dl.path(), 'utf8');
-    check(dl.suggestedFilename() === 'slice-of-thanks-list.csv' && sample.indexOf('First,Last,Email,Company,Role,Country,Consent,Vegan') === 0, 'Sample CSV downloads with every column');
+    check(dl.suggestedFilename() === 'slice-of-thanks-list.csv' && sample.indexOf('First,Last,Email,Company,Role,Country,Consent,Vegan,Birthday,Anniversary,Tags,Message') === 0, 'Sample CSV downloads with every column');
     await page.evaluate(([csv]) => { const R = window.__SOT_ROOT; const inp = R.querySelector('#csvFile'); const dt = new DataTransfer(); dt.items.add(new File([csv], 'list.csv', { type: 'text/csv' })); inp.files = dt.files; inp.dispatchEvent(new Event('change')); }, [sample]);
     await wait(400);
     const s2 = await inRoot(page, "return R.querySelector('#listSummary').textContent");
-    check(s2 === '2 people loaded. 0 ready, 2 missing an email or still sample rows.', 'Unchanged sample rows are not sent: ' + s2);
+    check(s2 === '2 people loaded. 0 getting a pizza, 2 missing an email or still sample rows.', 'Unchanged sample rows are not sent: ' + s2);
     await inRoot(page, "R.querySelector('#bulkBack').click()"); await wait(200);
     const ppl = await inRoot(page, "return R.querySelectorAll('#peopleList .person').length");
     await inRoot(page, "R.querySelector('#openBulk').click()"); await wait(200);
@@ -132,9 +132,9 @@ const PEOPLE = [{ id: 'p1', name: 'Jordan Reyes', email: 'jordan@brightline.test
     await inRoot(page, "[...R.querySelectorAll('#bulkWhen .chip, #bulkWhen button')].find(b=>b.textContent==='Schedule it').click()"); await wait(200);
     const dtype = await inRoot(page, "return R.querySelector('#bulkDate').type");
     check(dtype === 'datetime-local', 'Schedule uses a date and time picker');
-    await inRoot(page, "R.querySelector('#bulkSend').click()"); await wait(1500);
-    const later = (st.bodies['/send/bulk'] || []).slice(2);
-    check(later.length === 2 && !!later[0].scheduled_for && new Date(later[0].scheduled_for) > Date.now(), 'Scheduled list sends a future time');
+    await inRoot(page, "R.querySelector('#bulkSend').click()"); for (let t = 0; t < 60 && await inRoot(page, "return R.querySelector('#bulkResult').hidden || R.querySelector('#bulkSend').disabled"); t++) await wait(500);
+    const later = (st.bodies['/send/bulk'] || []).slice(7);
+    check(later.length === 7 && !!later[0].scheduled_for && new Date(later[0].scheduled_for) > Date.now(), 'Scheduled list sends a future time');
   }
   await browser.close();
   console.log(failures ? failures + ' FAILED' : 'ALL PASSED');

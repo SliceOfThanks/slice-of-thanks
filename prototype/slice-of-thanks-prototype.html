@@ -98,6 +98,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .meeting .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .pill{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 9px;border-radius:999px;background:var(--sunk);color:var(--muted)}
 .pill.ok{background:var(--ok-bg);color:var(--ok-ink)}
+.p-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.p-tag{font-size:.74rem;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--sunk);border:1.5px solid var(--edge);color:var(--ink)}
+.p-tag button{all:unset;cursor:pointer;margin-left:6px;font-weight:700}
+.person.pick{cursor:pointer}.person.picked{outline:3px solid var(--mustard);outline-offset:2px}.p-check{width:22px;height:22px;accent-color:var(--tomato);flex:0 0 auto;margin-top:2px}
+.sel-bar{position:sticky;bottom:12px;z-index:5;background:var(--surface);border:2.5px solid var(--edge);border-radius:18px;box-shadow:4px 4px 0 var(--shade);padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.sel-bar[hidden]{display:none}#selCount{font-weight:700}
+.mdy{display:flex;gap:6px}.mdy select{flex:1;min-width:0}.mdy input{width:5.2em;flex:0 0 auto}
+.prev3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.prev3>div{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;min-width:0}
+.prev3 canvas{width:100%;max-width:150px;height:auto}.prev3 b{font-size:.85rem;line-height:1.2}.prev3 small{font-size:.75rem;color:var(--muted)}
+@media(max-width:420px){.prev3{grid-template-columns:1fr}.prev3>div{flex-direction:row;text-align:left}.prev3 canvas{width:90px}}
 .vegan-tag{display:inline-block;margin-top:4px;font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--ok-bg);color:var(--ok-ink);border:1.5px solid var(--ok-ink)}
 .pill.wait{background:var(--warn-bg);color:var(--warn-ink)}
 .mode-line{font-size:.9rem;color:var(--muted)}
@@ -667,10 +676,12 @@ body.is-free .pro-tag{display:inline-block}
     <div class="section-head"><h2>People</h2><span class="tag">Mini CRM</span></div>
     <p class="muted">Everyone you've sent a pizza to. Open someone to see their history, jot notes, or send another pizza with a new message.</p>
     <div class="card">
-      <div class="g-head"><span class="g-av"></span><div><h3>Send to a whole list</h3><p class="muted" style="font-size:.9rem">Upload a CSV of clients for holidays or client appreciation. Everyone on it gets added here too.</p></div></div>
+      <div class="g-head"><span class="g-av"></span><div><h3>Send to a group</h3><p class="muted" style="font-size:.9rem">Tap Select people below, send to everyone with a tag, or upload a CSV. Gerald makes each person their own pizza.</p></div></div>
       <div class="btn-row"><button class="btn small" id="openBulk">Upload a CSV</button><span class="tag">Pro</span></div>
     </div>
-    <div class="inline"><input type="text" id="peopleSearch" placeholder="Search by name or company" aria-label="Search people"><button class="btn small" id="addPersonBtn">Add person</button></div>
+    <div class="inline"><input type="text" id="peopleSearch" placeholder="Search by name, company or tag" aria-label="Search people"><button class="btn small" id="addPersonBtn">Add person</button></div>
+    <div class="chips" id="tagFilter" aria-label="Show people with a tag"></div>
+    <div class="btn-row" id="peopleTools"><button class="btn small" type="button" id="selectMode">Select people</button><button class="btn small" type="button" id="selectAll" hidden>Select all shown</button><button class="btn small primary" type="button" id="sendTagged" hidden></button></div>
     <div class="card" id="addPerson" hidden>
       <h3>Add a person</h3>
       <div class="two">
@@ -681,10 +692,13 @@ body.is-free .pro-tag{display:inline-block}
         <div class="field"><label for="npContact">Email or phone</label><input type="text" id="npContact"></div>
       </div>
       <div class="field"><label for="npCompany">Company</label><input type="text" id="npCompany"></div>
+      <div class="field"><label for="npTags">Tags</label><input type="text" id="npTags" maxlength="200" placeholder="Like client, holiday list"><small>Separate tags with commas. Use them to send to a whole group at once.</small></div>
+      <div class="two"><div class="field"><label>Birthday</label><div class="mdy" id="npBday"></div></div><div class="field"><label>Work anniversary</label><div class="mdy" id="npAnniv"></div></div></div>
       <label class="check"><input type="checkbox" id="npVegan"> Vegan</label>
       <div class="btn-row"><button class="btn primary small" id="savePerson">Save</button><button class="btn ghost small" id="cancelPerson">Cancel</button></div>
     </div>
     <ul class="people" id="peopleList"></ul>
+    <div class="sel-bar" id="selBar" hidden><span id="selCount"></span><div class="btn-row"><button class="btn small primary" type="button" id="selSend">Send pizzas</button><button class="btn small" type="button" id="selTag">Add a tag</button><button class="btn small ghost" type="button" id="selDone">Done</button></div></div>
   </section>
 
   <!-- GERALD -->
@@ -751,14 +765,16 @@ body.is-free .pro-tag{display:inline-block}
   <!-- BULK SEND -->
   <section id="view-bulk" hidden>
     <div><button class="linkish" id="bulkBack">Back to People</button></div>
-    <div class="section-head"><h2>Send to a list</h2><span class="tag">Pro feature</span></div>
-    <p class="muted">Upload a list and send a pizza to everyone on it. Good for holidays, client appreciation, or following up after an event.</p>
+    <div class="section-head"><h2>Send to a group</h2><span class="tag">Pro feature</span></div>
+    <p class="muted">Send a pizza to a group from People or a CSV list. Good for holidays, client appreciation, or following up after an event.</p>
 
     <div class="card">
-      <h3>1. Upload your list</h3>
+      <h3>1. Who gets a pizza</h3>
+      <p class="muted" id="listFrom" hidden></p>
       <div class="btn-row"><label class="btn small" for="csvFile">Upload a CSV</label><input type="file" id="csvFile" accept=".csv,text/csv" class="sr"><button class="btn small" id="sampleCsv">Use a sample list</button><button class="btn small ghost" id="copyHeader">Copy column headers</button></div>
       <small class="muted">Columns Slice of Thanks looks for: Name, Email or Phone, Company, and Vegan (yes or no). Extra columns are ignored.</small>
       <p id="listSummary" class="muted"></p>
+      <div class="btn-row" id="saveListRow" hidden><button class="btn small" type="button" id="saveList">Save these people to People</button></div>
       <div class="table-wrap" id="tableWrap" hidden><table id="listTable"></table></div>
     </div>
 
@@ -766,6 +782,10 @@ body.is-free .pro-tag{display:inline-block}
       <h3>2. Choose the pizza</h3>
       <div class="chips" id="bulkMode"></div>
       <p class="muted" id="bulkModeHelp" style="font-size:.9rem"></p>
+      <div id="bulkGerald">
+        <div class="field"><label>Gerald's vibe</label><div class="chips" id="bulkVibe"></div><small>Mix it up gives everyone a different style.</small></div>
+        <div class="field"><label>Message in pepperoni</label><div class="chips" id="bulkMsg"></div><input type="text" id="bulkMsgText" maxlength="16" placeholder="Like THANK YOU" hidden><small id="bulkMsgHelp"></small></div>
+      </div>
     </div>
 
     <div class="card">
@@ -800,7 +820,7 @@ body.is-free .pro-tag{display:inline-block}
       <div class="progress" id="bulkProgress" hidden><span id="bulkBar"></span></div>
       <p class="muted" id="bulkResult" hidden></p>
       <div class="btn-col">
-        <button class="btn" id="bulkPreview">Preview the first pizza</button>
+        <button class="btn" id="bulkPreview">Preview the first 3</button>
         <button class="btn primary" id="bulkSend">Send pizzas</button>
       </div>
       <small class="muted">Prototype only. Nothing is emailed. Free plans send up to 5 at a time; Pro sends up to 500.</small>
@@ -1839,7 +1859,7 @@ $('#hireBtn').onclick=()=>{
 const SAMPLE_CSV='Name,Email,Company,Vegan\nJordan Reyes,jordan@brightlinelegal.example,Brightline Legal,no\nPriya Shah,priya@shahortiz.example,Shah & Ortiz LLP,yes\n'+
  'Marcus Lee,marcus@harborparalegal.example,Harbor Paralegal Services,no\nDana Whitfield,dana@whitfieldlaw.example,Whitfield Law Group,no\n'+
  'Sam Okafor,,Okafor Consulting,no\nElena Ruiz,elena@ruizmediation.example,Ruiz Mediation,yes\nChris Tan,(909) 555-0177,Tan Family Law,no';
-let bulk={rows:[],mode:'unique',sticker:'Happy Holidays',confetti:'snow',style:'classic',when:'now',sending:false,
+let bulk={rows:[],from:'',vibe:'mix',msg:'first',msgText:'',mode:'unique',sticker:'Happy Holidays',confetti:'snow',style:'classic',when:'now',sending:false,
  note:'Hi {first}, thank you for a great year working together. Here is a little holiday pizza from all of us. Wishing you and everyone at {company} a happy holiday season.',sign:''};
 function parseCSV(txt){const rows=[];let row=[],f='',q=false;
  for(let i=0;i<txt.length;i++){const ch=txt[i];
@@ -1851,15 +1871,19 @@ function loadList(txt){
  const h=data[0].map(x=>x.trim().toLowerCase());
  const find=keys=>h.findIndex(x=>keys.some(k=>x===k||x.includes(k)));
  const iName=find(['full name','name']),iFirst=find(['first']),iLast=find(['last']),iEmail=find(['email','e-mail']),iPhone=find(['phone','mobile','cell']),
-  iCo=find(['company','organization','firm','business']),iVeg=find(['vegan','diet']);
+  iCo=find(['company','organization','firm','business']),iVeg=find(['vegan','diet']),iTags=find(['tags','tag','group']),iMsg=find(['message','pepperoni']),iBday=find(['birthday','birth']),iAnn=find(['anniversary','start date','hire date']);
  if(iName<0&&iFirst<0){toast('Could not find a Name column. Check the header row.');return}
  bulk.rows=data.slice(1).map(r=>{const g=i=>i>=0?(r[i]||'').trim():'';
   const name=iName>=0&&!h[iName].includes('first')&&!h[iName].includes('last')?g(iName):(g(iFirst)+' '+g(iLast)).trim();
   const contact=g(iEmail)||g(iPhone);const veg=/^(y|yes|true|1|vegan)$/i.test(g(iVeg));
   const ok=!!name&&(/.+@.+\..+/.test(contact)||/^[\d\s()+.-]{7,}$/.test(contact));
-  return{name,contact,company:g(iCo),vegan:veg,ok}});
- let added=0;bulk.rows.forEach(r=>{if(r.name&&!findContact(r.name)){addContact({name:r.name,company:r.company,contact:r.contact,vegan:r.vegan});added++}});
- renderBulk();toast('Loaded '+bulk.rows.length+' people.'+(added?' Added '+added+' new to People.':''))}
+  return{name,contact,company:g(iCo),vegan:veg,tags:splitTags(g(iTags)),message:g(iMsg).slice(0,16),birthday:parseDateText(g(iBday)),anniversary:parseDateText(g(iAnn)),include:true,ok}});
+ bulk.from='';
+ renderBulk();toast('Loaded '+bulk.rows.length+' people. Tap Save these people to People to keep them.')}
+/* Save a CSV list to People. The live app sends it to the server. */
+function saveListToPeople(){let added=0,updated=0;bulk.rows.filter(r=>r.name).forEach(r=>{const c=findContact(r.name);if(c){savePersonFields(c,{tags:splitTags((c.tags||[]).concat(r.tags||[]).join(',')),birthday:r.birthday||c.birthday||'',anniversary:r.anniversary||c.anniversary||''});updated++}else{addContact({name:r.name,company:r.company,contact:r.contact,vegan:r.vegan,tags:r.tags,birthday:r.birthday,anniversary:r.anniversary});added++}});
+ toast('Saved to People: '+added+' new'+(updated?', '+updated+' updated':'')+'.')}
+$('#saveList').onclick=()=>saveListToPeople();
 $('#csvFile').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const fr=new FileReader();fr.onload=()=>loadList(String(fr.result));fr.readAsText(f);e.target.value=''});
 $('#sampleCsv').onclick=()=>loadList(SAMPLE_CSV);
 $('#copyHeader').onclick=()=>{try{navigator.clipboard.writeText('Name,Email,Phone,Company,Vegan').then(()=>toast('Column headers copied. Paste them into row 1 of your spreadsheet.'),()=>toast('Headers: Name, Email, Phone, Company, Vegan'))}catch(e){toast('Headers: Name, Email, Phone, Company, Vegan')}};
@@ -1867,17 +1891,42 @@ $('#bulkBack').onclick=()=>show('people');
 $('#feedMore').onclick=()=>show('news');$('#newsBack').onclick=()=>show('gerald');
 function merge(t,r){return fillNote(t,r)}
 function bulkBox(r){return{style:bulk.style,sticker:bulk.sticker,confetti:bulk.confetti,tone:'playful',note:merge(bulk.note,r),sign:bulk.sign,to:r.name,contact:r.contact,meeting:bulk.sticker,linkLabel:profile.linkLabel,link:profile.link,method:'email',reward:Object.assign({text:'',code:'',link:'',exp:''},profile.reward||{})}}
-function bulkPizza(r){const vg=r.vegan||!!settings.veganDefault;if(bulk.mode==='signature'){const p=clonePizza(signature);if(vg){veganize(p)}return p}
- return geraldPizza(['classic','fancy','fun'][Math.abs(r.name.length)%3],first(r.name),vg)}
+const BULK_VIBES=[['mix','Mix it up'],['classic','Gerald Classic'],['fancy',"Chef's Choice"],['fun','Happy Accident'],['over','The Whole Pantry']];
+function bulkVibes(){return BULK_VIBES.concat(GERALD_DATA.reserve.map(r=>[r.id,r.name]))}
+function bulkTopic(r){const t=bulk.msg==='column'?(r.message||first(r.name)):bulk.msg==='same'?(bulk.msgText||first(r.name)):first(r.name);return String(t||'').trim().slice(0,16)}
+/* Each person's pizza is made once and kept, so the preview is exactly what they get */
+function bulkPizza(r){const vg=r.vegan||!!settings.veganDefault,i=Math.max(0,bulk.rows.indexOf(r));
+ const vibe=bulk.vibe==='mix'?['classic','fancy','fun','over'][i%4]:bulk.vibe,key=[bulk.mode,vibe,bulkTopic(r),vg,topAmount()].join('|');
+ if(r._p&&r._k===key)return r._p;
+ let p;if(bulk.mode==='signature'){p=clonePizza(signature);if(vg){veganize(p)}}else p=geraldPizza(vibe,bulkTopic(r),vg);
+ r._p=p;r._k=key;return p}
+function bulkGood(){return bulk.rows.filter(r=>r.ok&&r.include!==false)}
+function openPreview3(){const rows=bulkGood().slice(0,3);if(!rows.length)return;
+ let back=$('#prev3Sheet');if(!back){back=document.createElement('div');back.id='prev3Sheet';back.className='sheet-back';back.setAttribute('role','dialog');back.setAttribute('aria-modal','true');$('#bulkPreview').closest('section').appendChild(back)}
+ back.innerHTML='<div class="sheet"><h2>The first '+rows.length+' pizzas</h2><p class="muted" style="margin:0">Tap one to see it the way they will.</p><div class="prev3"></div><div class="btn-row"><button class="btn primary" type="button" id="prev3Close">Looks good</button></div></div>';
+ const g=back.querySelector('.prev3');
+ rows.forEach(r=>{const p=bulkPizza(r),d=document.createElement('div'),cv=document.createElement('canvas');drawPizza(cv,clonePizza(p),150);
+  const t=document.createElement('div');t.innerHTML='<b></b><br><small></small><br><button class="btn small" type="button">See it</button>';t.querySelector('b').textContent=first(r.name)+': '+p.name;t.querySelector('small').textContent=bulkTopic(r)?'"'+bulkTopic(r)+'" in pepperoni':'';
+  t.querySelector('button').onclick=()=>{back.hidden=true;openRecipient(p,bulkBox(r))};d.append(cv,t);g.appendChild(d)});
+ back.querySelector('#prev3Close').onclick=()=>{back.hidden=true};back.hidden=false}
 function renderBulk(){tokenChips();
  if(!bulk.sign)bulk.sign=profile.sign;
- const good=bulk.rows.filter(r=>r.ok),bad=bulk.rows.length-good.length,veg=good.filter(r=>r.vegan).length;
- $('#listSummary').textContent=bulk.rows.length?bulk.rows.length+' people loaded. '+good.length+' ready'+(bad?', '+bad+' missing an email or phone.':'.'):'No list yet. Upload a CSV or try the sample list.';
+ const good=bulkGood(),bad=bulk.rows.filter(r=>!r.ok).length,off=bulk.rows.filter(r=>r.ok&&r.include===false).length,veg=good.filter(r=>r.vegan).length;
+ $('#listFrom').hidden=!bulk.from;$('#listFrom').textContent=bulk.from?'From People: '+bulk.from+'. You can also upload a CSV instead.':'';
+ $('#saveListRow').hidden=!bulk.rows.length||!!bulk.from;
+ $('#listSummary').textContent=bulk.rows.length?bulk.rows.length+' people loaded. '+good.length+' getting a pizza'+(off?', '+off+' left out':'')+(bad?', '+bad+' missing an email or phone.':'.'):'No list yet. Pick people in People, or upload a CSV.';
  const tw=$('#tableWrap'),tb=$('#listTable');tw.hidden=!bulk.rows.length;tb.innerHTML='';
- if(bulk.rows.length){const hr=document.createElement('tr');['Name','Email or phone','Company','Vegan','Status'].forEach(t=>{const th=document.createElement('th');th.textContent=t;hr.appendChild(th)});tb.appendChild(hr);
-  bulk.rows.forEach(r=>{const tr=document.createElement('tr');[r.name,r.contact||'Missing',r.company,r.vegan?'Yes':'No',r.ok?'Ready':'Skipped'].forEach((t,i)=>{const td=document.createElement('td');td.textContent=t;if((i===1&&!r.contact)||(i===4&&!r.ok))td.className='bad';tr.appendChild(td)});tb.appendChild(tr)})}
+ if(bulk.rows.length){const hr=document.createElement('tr');['Send','Name','Email or phone','Company','Tags','Status'].forEach(t=>{const th=document.createElement('th');th.textContent=t;hr.appendChild(th)});tb.appendChild(hr);
+  bulk.rows.forEach(r=>{const tr=document.createElement('tr'),cb=document.createElement('td'),ck=document.createElement('input');ck.type='checkbox';ck.checked=r.ok&&r.include!==false;ck.disabled=!r.ok;ck.setAttribute('aria-label','Send to '+r.name);ck.onchange=()=>{r.include=ck.checked;renderBulk()};cb.appendChild(ck);tr.appendChild(cb);
+   [r.name,r.contact||'Missing',r.company,(r.tags||[]).join(', '),!r.ok?'Skipped':r.include===false?'Left out':'Ready'].forEach((t,i)=>{const td=document.createElement('td');td.textContent=t;if((i===1&&!r.contact)||(i===4&&!r.ok))td.className='bad';tr.appendChild(td)});tb.appendChild(tr)})}
  makeChips($('#bulkMode'),[['unique','Gerald makes each one unique'],['signature','My signature pizza for everyone']],()=>bulk.mode,v=>{bulk.mode=v;renderBulk()});
- $('#bulkModeHelp').textContent=bulk.mode==='unique'?'Gerald builds a different pizza for each person with their name spelled in pepperoni. Vegan contacts get vegan pizzas.':'Everyone gets your signature pizza. Vegan contacts get a vegan version automatically.';
+ $('#bulkModeHelp').textContent=bulk.mode==='unique'?'Gerald makes a different pizza for each person, with its own picture in their email. Vegan contacts get vegan pizzas.':'Everyone gets your signature pizza. Vegan contacts get a vegan version automatically.';
+ $('#bulkGerald').hidden=bulk.mode!=='unique';
+ makeChips($('#bulkVibe'),bulkVibes(),()=>bulk.vibe,v=>{bulk.vibe=v;renderBulk()});
+ makeChips($('#bulkMsg'),[['first','Their first name'],['column','The Message column'],['same','Same for everyone']],()=>bulk.msg,v=>{bulk.msg=v;renderBulk()});
+ $('#bulkMsgText').hidden=bulk.msg!=='same';$('#bulkMsgText').value=bulk.msgText;
+ const noMsg=bulk.msg==='column'?bulk.rows.filter(r=>r.ok&&!r.message).length:0;
+ $('#bulkMsgHelp').textContent=bulk.msg==='column'?'From the Message column of your CSV, up to 16 letters.'+(noMsg?' '+noMsg+' without one get their first name.':''):bulk.msg==='same'?'Up to 16 letters, like THANK YOU or CHEERS.':"Each pizza spells the person's first name.";
  fillOccasions($('#bulkStickerSel'),bulk.sticker);
  bulk.confetti=okConf(bulk.confetti);makeChips($('#bulkConfetti'),seasonConfetti(),()=>bulk.confetti,v=>{bulk.confetti=v;burst(v)});
  makeChips($('#bulkStyle'),Object.entries(STYLES),()=>bulk.style,v=>{bulk.style=v;renderBulkBox()});
@@ -1897,9 +1946,11 @@ $('#logoRemove3').onclick=()=>{profile.logo=null;saveProfile();renderThumbs();re
 $('#bulkBiz').addEventListener('input',e=>{profile.business=e.target.value;saveProfile();renderBulkBox()});
 $('#bulkSign').addEventListener('input',e=>{bulk.sign=e.target.value;renderBulkBox()});
 $('#bulkDate').addEventListener('input',()=>renderBulk());
-$('#bulkPreview').onclick=()=>{const r=bulk.rows.find(x=>x.ok);if(r)openRecipient(bulkPizza(r),bulkBox(r))};
+$('#bulkPreview').onclick=()=>openPreview3();
+$('#bulkMsgText').addEventListener('input',e=>{bulk.msgText=e.target.value.slice(0,16)});
+$('#bulkMsgText').addEventListener('change',()=>renderBulk());
 $('#bulkSend').onclick=()=>{
- const good=bulk.rows.filter(r=>r.ok);if(!good.length||bulk.sending)return;bulk.sending=true;
+ const good=bulkGood();if(!good.length||bulk.sending)return;bulk.sending=true;
  $('#bulkProgress').hidden=false;$('#bulkResult').hidden=true;$('#bulkSend').disabled=true;let i=0;
  const tick=setInterval(()=>{i++;$('#bulkBar').style.width=(i/good.length*100)+'%';
   if(i>=good.length){clearInterval(tick);bulk.sending=false;const veg=good.filter(r=>r.vegan).length,skip=bulk.rows.length-good.length;
@@ -2009,7 +2060,7 @@ function cFrame(){cRaf=0;const c=cfx.getContext('2d'),W=innerWidth,H=innerHeight
 let contacts=[],selContact=null,qs={vegan:!!settings.veganDefault,mode:'gerald',sticker:'Following Up',confetti:'classic',topic:'',note:'',built:null};
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function findContact(n){n=(n||'').trim().toLowerCase();return contacts.find(c=>c.name.toLowerCase()===n)}
-function addContact(o){const c={id:'c'+Math.random().toString(36).slice(2,8),name:o.name,company:o.company||'',contact:o.contact||'',vegan:!!o.vegan,notes:'',history:[]};contacts.push(c);return c}
+function addContact(o){const c={id:'c'+Math.random().toString(36).slice(2,8),name:o.name,company:o.company||'',contact:o.contact||'',vegan:!!o.vegan,tags:o.tags||[],birthday:o.birthday||'',anniversary:o.anniversary||'',notes:'',history:[]};contacts.push(c);return c}
 function todayStr(){return new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})}
 function logSend(person,p,b,label){bumpSend();if(!person.who||!person.who.trim())return;let c=findContact(person.who);
  if(!c)c=addContact({name:person.who.trim(),company:person.org,contact:person.contact,vegan:person.vegan});if(!c.contact&&person.contact)c.contact=person.contact;
@@ -2031,19 +2082,65 @@ function hintFor(c){const l=c.history[0];if(!l)return'No pizzas yet. Send a firs
  return l.opened?'They opened your last pizza. Good time for a follow-up pizza.':'Your last pizza has not been opened yet. A second pizza by text can give them a nudge.'}
 function resetQs(c){qs={vegan:!!settings.veganDefault,mode:c&&c.history.length?'same':'gerald',sticker:'Following Up',confetti:'classic',topic:'',
  note:c?'Hi '+first(c.name)+', following up on our conversation. One more slice of thanks from me.':'',built:null}}
+/* ---------- People: tags, birthdays, select and send to a group ---------- */
+const MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+/* Dates are YYYY-MM-DD, with 0000 when the year is not known */
+function fmtDate(v){if(!v)return'';const y=+v.slice(0,4),m=+v.slice(5,7),d=+v.slice(8,10);if(!m||!d)return'';return MONTH_NAMES[m-1].slice(0,3)+' '+d+(y?', '+y:'')}
+function mkDate(y,m,d){m=+m;d=+d;y=+y||0;if(!(m>=1&&m<=12&&d>=1&&d<=[31,29,31,30,31,30,31,31,30,31,30,31][m-1]))return'';if(y&&y<100)y+=y>40?1900:2000;return String(y).padStart(4,'0')+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0')}
+/* CSV dates: 1985-03-14, 03/14/1985, 3/14, 14 March, Mar 14 1985 */
+function parseDateText(t){t=String(t||'').trim();if(!t)return'';let m;
+ if((m=t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)))return mkDate(m[1],m[2],m[3]);
+ if((m=t.match(/^(\d{1,2})[\/.-](\d{1,2})(?:[\/.-](\d{2,4}))?$/)))return mkDate(m[3]||0,m[1],m[2]);
+ const mi=MONTH_NAMES.findIndex(x=>t.toLowerCase().includes(x.slice(0,3).toLowerCase()));if(mi<0)return'';
+ const nums=(t.match(/\d+/g)||[]).map(Number),day=nums.find(n=>n>=1&&n<=31),yr=nums.find(n=>n>31);return day?mkDate(yr||0,mi+1,day):''}
+function dateField(el,v){el.innerHTML='';const ms=document.createElement('select'),ds=document.createElement('select'),yi=document.createElement('input');
+ ms.setAttribute('aria-label','Month');ds.setAttribute('aria-label','Day');yi.setAttribute('aria-label','Year (optional)');yi.placeholder='Year';yi.inputMode='numeric';yi.maxLength=4;
+ ms.innerHTML='<option value="">Month</option>'+MONTH_NAMES.map((x,i)=>'<option value="'+(i+1)+'">'+x+'</option>').join('');
+ ds.innerHTML='<option value="">Day</option>'+Array.from({length:31},(_,i)=>'<option>'+(i+1)+'</option>').join('');
+ if(v){ms.value=String(+v.slice(5,7));ds.value=String(+v.slice(8,10));if(+v.slice(0,4))yi.value=String(+v.slice(0,4))}
+ el.append(ms,ds,yi);return el}
+function readDate(el){const[ms,ds,yi]=el.querySelectorAll('select,input');return ms&&ds&&ms.value&&ds.value?mkDate(yi.value,ms.value,ds.value):''}
+function splitTags(t){const out=[];String(t||'').split(/[,;|]/).forEach(x=>{x=x.trim().slice(0,30);if(x&&!out.some(y=>y.toLowerCase()===x.toLowerCase()))out.push(x)});return out.slice(0,20)}
+function allTags(){const m={};contacts.forEach(c=>(c.tags||[]).forEach(t=>{const k=t.toLowerCase();m[k]=m[k]||{t,n:0};m[k].n++}));return Object.values(m).sort((a,b)=>b.n-a.n||a.t.localeCompare(b.t))}
+/* Saving a person's tags or dates. The live app sends it to the server. */
+function savePersonFields(c,patch){Object.assign(c,patch)}
+let peopleSel=null,tagF='';
+function shownPeople(){const q=$('#peopleSearch').value.trim().toLowerCase();
+ return contacts.filter(c=>(!tagF||(c.tags||[]).some(t=>t.toLowerCase()===tagF.toLowerCase()))&&(!q||c.name.toLowerCase().includes(q)||c.company.toLowerCase().includes(q)||(c.tags||[]).some(t=>t.toLowerCase().includes(q))))}
+function renderPeopleTools(){const tags=allTags();const tf=$('#tagFilter');
+ if(tagF&&!tags.some(x=>x.t.toLowerCase()===tagF.toLowerCase()))tagF='';
+ tf.hidden=!tags.length;if(tags.length)makeChips(tf,[['','Everyone']].concat(tags.map(x=>[x.t,x.t+' ('+x.n+')'])),()=>tagF,v=>{tagF=v;renderPeople()});
+ $('#selectMode').textContent=peopleSel?'Stop selecting':'Select people';$('#selectAll').hidden=!peopleSel;
+ const st=$('#sendTagged'),n=tagF?shownPeople().length:0;st.hidden=!tagF||!n;st.textContent='Send to everyone tagged '+tagF+' ('+n+')';
+ const bar=$('#selBar');bar.hidden=!peopleSel;if(peopleSel){const k=peopleSel.size;$('#selCount').textContent=k+' selected';$('#selSend').disabled=!k;$('#selTag').disabled=!k}}
 function renderPeople(){
- const q=$('#peopleSearch').value.trim().toLowerCase(),ul=$('#peopleList');ul.innerHTML='';
- const list=contacts.filter(c=>!q||c.name.toLowerCase().includes(q)||c.company.toLowerCase().includes(q));
- if(!list.length){const li=document.createElement('li');li.className='muted';li.textContent='No one matches that search.';ul.appendChild(li);return}
- list.forEach(c=>{const li=document.createElement('li');li.className='person'+(selContact===c.id?' open':'');const l=c.history[0];
-  li.innerHTML='<div class="p-top"><div><h3>'+esc(c.name)+'</h3><div class="p-meta">'+esc(c.company||'No company')+'</div>'+(c.vegan?'<span class="vegan-tag">🌱 Vegan</span>':'')+'</div>'+
+ renderPeopleTools();const ul=$('#peopleList');ul.innerHTML='';const list=shownPeople();
+ if(!list.length){const li=document.createElement('li');li.className='muted';li.textContent=contacts.length?'No one matches that search.':'No one here yet. Add a person or upload a CSV.';ul.appendChild(li);return}
+ list.forEach(c=>{const li=document.createElement('li');const l=c.history[0],picking=!!peopleSel,on=picking&&peopleSel.has(c.id);
+  li.className='person'+(selContact===c.id&&!picking?' open':'')+(picking?' pick':'')+(on?' picked':'');
+  const dates=[c.birthday?'Birthday '+fmtDate(c.birthday):'',c.anniversary?'Work anniversary '+fmtDate(c.anniversary):''].filter(Boolean).join(' · ');
+  li.innerHTML='<div class="p-top">'+(picking?'<input type="checkbox" class="p-check" aria-label="Select '+esc(c.name)+'"'+(on?' checked':'')+'>':'')+'<div style="flex:1"><h3>'+esc(c.name)+'</h3><div class="p-meta">'+esc(c.company||'No company')+'</div>'+(c.vegan?'<span class="vegan-tag">🌱 Vegan</span>':'')+
+   ((c.tags||[]).length?'<div class="p-tags">'+c.tags.map(t=>'<span class="p-tag">'+esc(t)+'</span>').join('')+'</div>':'')+'</div>'+
    '<span class="pill '+(l?(l.opened?'ok':'wait'):'')+'">'+(l?(l.opened?'Opened':'Not opened'):'New')+'</span></div>'+
-   '<div class="p-last">'+(l?'Last pizza: '+esc(l.date)+' · '+esc(l.pizza.name):'No pizzas sent yet')+(c.history.length>1?' · '+c.history.length+' sent':'')+'</div>'+
-   '<div class="btn-row"><button class="btn small primary" data-act="send">'+(c.history.length?'Send another pizza':'Send a pizza')+'</button><button class="btn small" data-act="toggle">'+(selContact===c.id?'Close':'History and notes')+'</button></div>';
+   '<div class="p-last">'+(l?'Last pizza: '+esc(l.date)+' · '+esc(l.pizza.name):'No pizzas sent yet')+(c.history.length>1?' · '+c.history.length+' sent':'')+(dates?'<br>'+esc(dates):'')+'</div>'+
+   (picking?'':'<div class="btn-row"><button class="btn small primary" data-act="send">'+(c.history.length?'Send another pizza':'Send a pizza')+'</button><button class="btn small" data-act="toggle">'+(selContact===c.id?'Close':'History and notes')+'</button></div>');
+  if(picking){li.onclick=()=>{peopleSel.has(c.id)?peopleSel.delete(c.id):peopleSel.add(c.id);renderPeople()};ul.appendChild(li);return}
   if(selContact===c.id)li.appendChild(detailEl(c));
   li.querySelector('[data-act=send]').onclick=()=>{selContact=c.id;resetQs(c);renderPeople();setTimeout(()=>{const el=$('#qsTopic');if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.focus()}},60)};
   li.querySelector('[data-act=toggle]').onclick=()=>{selContact=selContact===c.id?null:c.id;resetQs(c);renderPeople()};
   ul.appendChild(li)})}
+$('#selectMode').onclick=()=>{peopleSel=peopleSel?null:new Set();selContact=null;renderPeople()};
+$('#selectAll').onclick=()=>{if(!peopleSel)return;const shown=shownPeople(),all=shown.every(c=>peopleSel.has(c.id));shown.forEach(c=>all?peopleSel.delete(c.id):peopleSel.add(c.id));renderPeople()};
+$('#selDone').onclick=()=>{peopleSel=null;renderPeople()};
+$('#selSend').onclick=()=>{if(peopleSel&&peopleSel.size)groupSend(contacts.filter(c=>peopleSel.has(c.id)),peopleSel.size+' people you picked')};
+$('#sendTagged').onclick=()=>{if(tagF)groupSend(shownPeople(),'everyone tagged '+tagF)};
+$('#selTag').onclick=()=>{if(!peopleSel||!peopleSel.size)return;const t=prompt('Tag to add to '+peopleSel.size+' people');const tags=splitTags(t);if(!tags.length)return;
+ contacts.filter(c=>peopleSel.has(c.id)).forEach(c=>savePersonFields(c,{tags:splitTags((c.tags||[]).concat(tags).join(','))}));toast('Tagged '+peopleSel.size+' people "'+tags.join(', ')+'".');renderPeople()};
+/* Send to a group: the people go to the group screen, where Gerald makes each one their own pizza */
+function groupSend(list,from){if(!isPro()){upgrade('bulk');return}
+ bulk.rows=list.map(c=>{const w=(c.name||'').trim().split(/\s+/);return{id:c.id,name:c.name,contact:c.contact,company:c.company||'',role:c.role||'',vegan:!!c.vegan,tags:c.tags||[],first:w[0]||'',last:w.slice(1).join(' '),message:'',hasConsent:!!c.hasConsent,country:c.country||'',include:true,fromPeople:true,
+  ok:!!c.name&&/.+@.+\..+/.test(c.contact||'')}});
+ bulk.from=from;peopleSel=null;show('bulk');renderBulk();window.scrollTo(0,0)}
 function detailEl(c){
  const d=document.createElement('div');d.style.cssText='display:flex;flex-direction:column;gap:12px';
  d.innerHTML='<p class="hint">'+esc(hintFor(c))+'</p>'+(c.contact?'<p class="p-meta">'+esc(c.contact)+'</p>':'')+
@@ -2055,6 +2152,8 @@ function detailEl(c){
   '<div class="two"><div class="field"><label for="qsSticker">Occasion sticker</label><select id="qsSticker"></select></div><div class="field"><label for="qsConfetti">Confetti</label><select id="qsConfetti"></select></div></div>'+
   '<div class="btn-row"><button class="btn small" id="qsPreview">Preview</button><button class="btn small primary" id="qsSend">Send to '+esc(first(c.name))+'</button></div></div>'+
   (c.history.length?'<h3>History</h3><ul class="hist" id="qsHist"></ul>':'')+
+  '<div class="field"><label for="pTags">Tags</label><input type="text" id="pTags" maxlength="200" placeholder="Like client, holiday list"><small>Separate tags with commas.</small></div>'+
+  '<div class="two"><div class="field"><label>Birthday</label><div class="mdy" id="pBday"></div></div><div class="field"><label>Work anniversary</label><div class="mdy" id="pAnniv"></div></div></div>'+
   '<div class="field"><label for="pNotes">Notes</label><textarea id="pNotes" placeholder="Anything to remember about '+esc(first(c.name))+'"></textarea></div>';
  const q=s=>d.querySelector(s);
  fillQuick(q('#qsQuick'),c.name,24);q('#qsQuick').addEventListener('change',e=>{if(e.target.value){qs.topic=e.target.value;q('#qsTopic').value=qs.topic;qs.built=null;e.target.value=''}});
@@ -2074,6 +2173,8 @@ function detailEl(c){
   li.innerHTML='<span class="d">'+esc(h.date)+'</span><span class="t"><b>'+esc(h.pizza.name)+'</b>'+esc(h.label)+'</span>';
   const bt=document.createElement('button');bt.className='btn small';bt.textContent='See it';bt.onclick=()=>openRecipient(h.pizza,h.box);li.appendChild(bt);hl.appendChild(li)})}
  q('#pNotes').value=c.notes;q('#pNotes').addEventListener('input',e=>c.notes=e.target.value);
+ const pt=q('#pTags');pt.value=(c.tags||[]).join(', ');pt.addEventListener('change',()=>{savePersonFields(c,{tags:splitTags(pt.value)});pt.value=c.tags.join(', ');renderPeopleTools()});
+ [['#pBday','birthday'],['#pAnniv','anniversary']].forEach(([sel,k])=>{const el=dateField(q(sel),c[k]||'');el.addEventListener('change',()=>{const v=readDate(el);if(v!==(c[k]||''))savePersonFields(c,{[k]:v})})});
  return d}
 function qsBuild(c){if(qs.built)return qs.built;const topic=(qs.topic||'').trim(),last=c.history[0];let p;
  if(qs.mode==='same'&&last){p=clonePizza(last.pizza);const n=c.history.length+1;p.name=last.pizza.name.replace(/ \(Round [^)]+\)$/,'')+' (Round '+(['','','Two','Three','Four','Five'][n]||n)+')'}
@@ -2084,14 +2185,14 @@ function qsBuild(c){if(qs.built)return qs.built;const topic=(qs.topic||'').trim(
  const b=boxFromProfile({who:c.name,contact:c.contact,title:qs.sticker});b.note=qs.note;b.sticker=qs.sticker;b.confetti=qs.confetti==='gerald'&&!p.byGerald?'classic':qs.confetti;
  qs.built={p,b};return qs.built}
 $('#peopleSearch').addEventListener('input',renderPeople);
-$('#addPersonBtn').onclick=()=>{$('#addPerson').hidden=false;$('#npFirst').focus()};
+$('#addPersonBtn').onclick=()=>{$('#addPerson').hidden=false;dateField($('#npBday'),'');dateField($('#npAnniv'),'');$('#npFirst').focus()};
 /* First and last name, so [first name] and [last name] in notes fill in */
 ['#npFirst','#npLast'].forEach(x=>$(x).addEventListener('input',()=>{$('#npName').value=($('#npFirst').value.trim()+' '+$('#npLast').value.trim()).trim()}));
 $('#cancelPerson').onclick=()=>{$('#addPerson').hidden=true};
 $('#savePerson').onclick=()=>{const n=$('#npName').value.trim();if(!n){$('#npFirst').focus();toast('Add a first name first.');return}
  if(findContact(n)){toast(n+' is already in People.');return}
- const c=addContact({name:n,contact:$('#npContact').value.trim(),company:$('#npCompany').value.trim(),vegan:$('#npVegan').checked});
- ['#npName','#npFirst','#npLast','#npContact','#npCompany'].forEach(s=>$(s).value='');$('#npVegan').checked=false;$('#addPerson').hidden=true;selContact=c.id;resetQs(c);renderPeople();toast(n+' added.')};
+ const c=addContact({name:n,contact:$('#npContact').value.trim(),company:$('#npCompany').value.trim(),vegan:$('#npVegan').checked,tags:splitTags($('#npTags').value),birthday:readDate($('#npBday')),anniversary:readDate($('#npAnniv'))});
+ ['#npName','#npFirst','#npLast','#npContact','#npCompany','#npTags'].forEach(s=>$(s).value='');$('#npVegan').checked=false;$('#addPerson').hidden=true;selContact=c.id;resetQs(c);renderPeople();toast(n+' added.')};
 if($('#demoUnbox'))$('#demoUnbox').onclick=()=>{const b=boxFromProfile({who:'Priya Shah',contact:'',title:'Intro call'});b.confetti='classic';const p=clonePizza(signature);veganize(p);openRecipient(p,b)};
 
 
@@ -2315,7 +2416,7 @@ const PREMADES=[
  {id:'four',name:'Four Cheese',desc:'Mozzarella, cheddar, parmesan, and goat cheese.',sauce:'red',cheese:[['mozz',20],['cheddar',15],['parm',25],['goat',6]],tops:[]},
  {id:'pesto',name:'Pesto Garden',desc:'Pesto, mozzarella, mushrooms, and peppers.',sauce:'pesto',cheese:[['mozz',35]],tops:[['mushroom',7],['pepper',7]]},
  {id:'hotmess',name:'Hot Mess Express',desc:'Garlic white sauce, banana peppers, olives, and jalapeños, topped with a buffalo drizzle.',sauce:'white',cheese:[['mozz',38]],tops:[['bananaPepper',10],['olive',8],['jalapeno',9],['buffalo',5]]},
- {id:'heartattack',name:'Heart Attack Express',desc:"Kevin's order: light sauce, every cheese with extra, and sausage, ham, bacon, Canadian bacon, meatballs, and BBQ chicken.",sauce:'red',light:true,cheese:[['mozz',55],['cheddar',35],['parm',35],['goat',12]],tops:[['sausage',7],['ham',6],['bacon',5],['canadianBacon',5],['meatball',5],['bbqChicken',6]]},
+ {id:'heartattack',name:'Heart Attack Express',desc:"Light sauce, every cheese with extra, and sausage, ham, bacon, Canadian bacon, meatballs, and BBQ chicken.",sauce:'red',light:true,cheese:[['mozz',55],['cheddar',35],['parm',35],['goat',12]],tops:[['sausage',7],['ham',6],['bacon',5],['canadianBacon',5],['meatball',5],['bbqChicken',6]]},
  {id:'vegan',name:'Vegan Garden',desc:'Vegan dough and cheese, plant pepperoni, and veggies.',vegan:true,sauce:'red',cheese:[['vmozz',40]],tops:[['pepperoni',8],['pepper',7],['mushroom',6],['basil',5]]}];
 function premadePizza(pm){const amt=topAmount(),tm={light:1.5,regular:3.5,loaded:6}[amt],cm={light:.8,regular:1.1,loaded:1.5}[amt];const p=newPizza();p.size=.92;p.tosses=TOSSES;p.vegan=!!pm.vegan;p.sauce=pm.sauce;p.sauceDabs=[];
  for(let r=0;r<=.84;r+=.1){const n=Math.max(1,Math.round(r*(pm.light?16:28)));for(let i=0;i<n;i++){const a=i/n*6.283+r*3;p.sauceDabs.push({x:Math.cos(a)*r,y:Math.sin(a)*r,r:pm.light?.1:.15,k:pm.sauce})}}

@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.13.4 =====
+/* ===== Slice of Thanks live layer v0.14.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -586,7 +586,7 @@ $('#sendNow').onclick = () => {
 /* --- People on real data: everyone the member has sent a pizza to, from Supabase --- */
 function personFromServer(x) {
   return { id: x.id, name: x.name || x.email || 'No name', company: x.company || '', contact: x.email || '', vegan: !!x.vegan, notes: x.notes || '',
-    country: x.country || '', hasConsent: !!x.has_consent,
+    country: x.country || '', hasConsent: !!x.has_consent, tags: Array.isArray(x.tags) ? x.tags : [], birthday: x.birthday || '', anniversary: x.anniversary || '',
     history: (x.history || []).filter(h => h.pizza).map(h => ({ date: shortDate(h.status === 'queued' && h.scheduled_for ? h.scheduled_for : h.at),
       label: h.status === 'queued' ? 'Scheduled' + (h.label ? ': ' + h.label : '') : (h.status === 'failed' ? 'Not delivered' : (h.label || 'Pizza')),
       pizza: h.pizza, box: h.box || {}, opened: !!h.opened, status: h.status })) };
@@ -650,13 +650,49 @@ async function peopleSend(c, btn) {
     const n = $('#npName').value.trim(), em = $('#npContact').value.trim();
     if (!n) { $('#npName').focus(); toast('Add a name first.'); return; }
     if (em.indexOf('@') < 1) { $('#npContact').focus(); toast('Add their email address.'); return; }
-    const r = await LIVE.call('/people/save', { person: { name: n, email: em, company: $('#npCompany').value.trim(), role: $('#npRole') ? $('#npRole').value.trim() : '', vegan: $('#npVegan').checked } }).catch(() => null);
+    const r = await LIVE.call('/people/save', { person: { name: n, email: em, company: $('#npCompany').value.trim(), role: $('#npRole') ? $('#npRole').value.trim() : '', vegan: $('#npVegan').checked,
+      tags: splitTags($('#npTags').value), birthday: readDate($('#npBday')), anniversary: readDate($('#npAnniv')) } }).catch(() => null);
     if (!r || !r.ok) { toast(r && r.code === 'bad_email' ? MSG.bad_email : MSG.server_error); return; }
-    ['#npName', '#npContact', '#npCompany', '#npRole'].forEach(sel => { if ($(sel)) $(sel).value = ''; }); $('#npVegan').checked = false; $('#addPerson').hidden = true;
+    ['#npName', '#npFirst', '#npLast', '#npContact', '#npCompany', '#npRole', '#npTags'].forEach(sel => { if ($(sel)) $(sel).value = ''; }); $('#npVegan').checked = false; $('#addPerson').hidden = true;
     await loadPeople();
     const c = contacts.find(x => x.id === r.id); selContact = r.id; resetQs(c); renderPeople(); toast(n + ' added.');
   };
 })();
+
+/* --- Tags, birthdays and work anniversaries: saved to the server as they change --- */
+savePersonFields = function (c, patch) {
+  Object.assign(c, patch);
+  LIVE.call('/people/save', { person: Object.assign({ id: c.id }, patch) }).then(r => { if (!r || !r.ok) toast(MSG.server_error); }).catch(() => toast(MSG.server_error));
+};
+$('#selTag').onclick = () => {
+  if (!peopleSel || !peopleSel.size) return;
+  const n = peopleSel.size, p = document.createElement('div'); p.className = 'field';
+  p.innerHTML = '<label for="selTagIn">Tag</label><input type="text" id="selTagIn" maxlength="30" placeholder="Like holiday list">' + (allTags().length ? '<small>Or tap one: </small><div class="chips" id="selTagPick"></div>' : '');
+  const pick = p.querySelector('#selTagPick');
+  if (pick) allTags().slice(0, 12).forEach(x => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = x.t; b.onclick = () => { $('#selTagIn').value = x.t; }; pick.appendChild(b); });
+  liveSheet('Tag ' + n + ' ' + (n === 1 ? 'person' : 'people'), p, [{ label: 'Add tag', primary: true, run: async () => {
+    const tags = splitTags($('#selTagIn').value); if (!tags.length) { toast('Type a tag first.'); return; }
+    closeLiveSheet();
+    const rows = contacts.filter(c => peopleSel && peopleSel.has(c.id));
+    const r = await LIVE.call('/people/import', { people: rows.filter(c => c.contact).map(c => ({ name: c.name, email: c.contact, tags })) }).catch(() => null);
+    if (!r || !r.ok) { toast(MSG.server_error); return; }
+    rows.forEach(c => { c.tags = splitTags((c.tags || []).concat(tags).join(',')); });
+    toast('Tagged ' + rows.length + ' "' + tags.join(', ') + '".'); renderPeople();
+  } }]);
+  setTimeout(() => { const i = $('#selTagIn'); if (i) i.focus(); }, 50);
+};
+/* Save a CSV list to People: new people are added, people already there get the new tags and dates */
+saveListToPeople = async function () {
+  const rows = bulk.rows.filter(r => r.ok && !r.sample);
+  if (!rows.length) { toast('There is no one on this list to save yet.'); return; }
+  const btn = $('#saveList'); btn.disabled = true; btn.textContent = 'Saving...';
+  const r = await LIVE.call('/people/import', { people: rows.map(x => ({ name: x.name, email: x.contact, company: x.company || '', role: x.role || '', vegan: !!x.vegan,
+    country: x.country || '', tags: x.tags || [], birthday: x.birthday || '', anniversary: x.anniversary || '', basis: x.basis || undefined })) }).catch(() => null);
+  btn.disabled = false; btn.textContent = 'Save these people to People';
+  if (!r || !r.ok) { toast(MSG.server_error); return; }
+  toast('Saved to People: ' + r.added + ' new' + (r.updated ? ', ' + r.updated + ' updated' : '') + (r.skipped ? ', ' + r.skipped + ' skipped' : '') + '.');
+  loadPeople();
+};
 
 /* --- Send to a list (CSV): Pro and Team. Rows go up 50 at a time; the send worker delivers them. --- */
 (function bulkExtras() {
@@ -664,7 +700,8 @@ async function peopleSend(c, btn) {
   const card = $('#csvFile') && $('#csvFile').closest('.card');
   if (card) {
     const help = card.querySelector('small.muted');
-    if (help) help.innerHTML = '<b>Columns:</b> First, Last (or one Name column), Email, Company, Role, Country (two letters, like US or CA), Consent and Vegan (yes or no). Only a name and Email are required. Extra columns are ignored. Up to 500 people per list.<br>' +
+    if (help) help.innerHTML = '<b>Columns:</b> First, Last (or one Name column), Email, Company, Role, Country (two letters, like US or CA), Consent, Vegan (yes or no), Birthday, Anniversary, Tags and Message. Only a name and Email are required. Extra columns are ignored. Up to 500 people per list.<br>' +
+      '<b>Birthday</b> and <b>Anniversary</b> can be like 03/14 or 03/14/1985. <b>Tags</b> are separated by commas, like client, holiday list. <b>Message</b> is what Gerald spells in pepperoni, up to 16 letters.<br>' +
       '<b>Consent</b> is how you know each person: <b>yes</b> or <b>permission</b> (they agreed to get emails from you), <b>relationship</b> (current client or business contact) or <b>one_to_one</b> (you just met). Rows without it use your choice below. ' +
       'First, Last, Role and Company fill the matching details in your note.';
     const f = document.createElement('div'); f.className = 'two';
@@ -682,9 +719,9 @@ async function peopleSend(c, btn) {
   if (ch) {
     ch.textContent = 'Download a sample CSV';
     ch.onclick = () => {
-      const csv = ['First,Last,Email,Company,Role,Country,Consent,Vegan',
-        'Jordan,Reyes,jordan@example.com,Brightline Legal,Managing Partner,US,relationship,no',
-        'Priya,Shah,priya@example.com,Shah & Ortiz LLP,Paralegal,CA,yes,yes'].join(String.fromCharCode(13, 10)) + String.fromCharCode(13, 10);
+      const csv = ['First,Last,Email,Company,Role,Country,Consent,Vegan,Birthday,Anniversary,Tags,Message',
+        'Jordan,Reyes,jordan@example.com,Brightline Legal,Managing Partner,US,relationship,no,03/14,06/01/2019,"client, holiday list",THANK YOU',
+        'Priya,Shah,priya@example.com,Shah & Ortiz LLP,Paralegal,CA,yes,yes,11/02/1988,,client,CHEERS PRIYA'].join(String.fromCharCode(13, 10)) + String.fromCharCode(13, 10);
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'slice-of-thanks-list.csv';
       SOTR.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
       toast('Sample downloaded. Replace the two example rows with your people, keep row 1, and upload it here.');
@@ -723,12 +760,12 @@ loadList = function (txt) {
     r.ok = !!r.name && !r.sample && r.contact.indexOf('@') > 0 && r.contact.indexOf('.', r.contact.indexOf('@')) > 0;
   });
   if (bulk.rows.length > 500) { bulk.rows = bulk.rows.slice(0, 500); toast('Lists can have up to 500 people. The first 500 were loaded.'); }
-  else toast('Loaded ' + bulk.rows.length + ' people. They join People when their pizzas are sent.');
+  else toast('Loaded ' + bulk.rows.length + ' people. Tap Save these people to People to keep them, or go ahead and send.');
   renderBulk();
 };
 $('#openBulk').onclick = () => { if (!isPro()) { upgrade('bulk'); return; } show('bulk'); };
 $('#bulkSend').onclick = async () => {
-  const good = bulk.rows.filter(r => r.ok); if (!good.length || bulk.sending) return;
+  const good = bulkGood(); if (!good.length || bulk.sending) return;
   let when = null;
   if (bulk.when === 'later') {
     const v = $('#bulkDate').value, d = v ? new Date(v) : null;
@@ -739,20 +776,24 @@ $('#bulkSend').onclick = async () => {
   const batch = 'b' + Date.now().toString(36);
   const country = $('#bulkCountry').value.replace('OTHER', ''), basis = $('#bulkBasis').value;
   store.set('lastCountry', $('#bulkCountry').value);
-  /* One picture for a signature pizza list. Vegan rows and Gerald's one-off pizzas go without a picture in the email. */
+  /* A signature list shares one picture (vegan rows go without). Gerald makes each person their own pizza, so each gets its own picture. */
   let img = '';
-  if (bulk.mode === 'signature') { try { img = pizzaImage(clonePizza(signature), false); } catch (e) { img = ''; } }
+  const own = bulk.mode !== 'signature', step = own ? 10 : 50;
+  if (!own) { try { img = pizzaImage(clonePizza(signature), false); } catch (e) { img = ''; } }
+  const picture = p => { try { const u = pizzaImage(p, false); return u.length < 1900000 ? u : ''; } catch (e) { return ''; } };
   const tally = { ok: 0 }; let stop = '';
-  for (let i = 0; i < good.length && !stop; i += 50) {
-    const rows = good.slice(i, i + 50).map((r, k) => ({ i: i + k, pizza: cleanPizza(bulkPizza(r)), box: boxPayload(bulkBox(r)),
+  for (let i = 0; i < good.length && !stop; i += step) {
+    const rows = good.slice(i, i + step).map((r, k) => { const pz = bulkPizza(r); return { i: i + k, pizza: cleanPizza(pz), box: boxPayload(bulkBox(r)),
       recipient: { name: r.name, email: r.contact, company: r.company, role: r.role || '', first_name: r.first || undefined, last_name: r.last || undefined, vegan: r.vegan, country: r.country || country, locale: 'en' },
-      consent: { basis: r.basis || basis, method: 'CSV list upload' }, send_type: 'one_to_one', image: !!img && !r.vegan }));
+      /* People already in People keep the permission on file; everyone else uses the choice above */
+      consent: r.fromPeople && r.hasConsent && !r.basis ? undefined : { basis: r.basis || basis, method: r.fromPeople ? 'Picked in People for a group send' : 'CSV list upload' },
+      send_type: 'one_to_one', image: !own && !!img && !r.vegan, image_data_url: own ? picture(pz) : undefined }; });
     let res;
     try { res = await LIVE.call('/send/bulk', { batch, rows, scheduled_for: when, label: bulk.sticker + ' list', image_data_url: img.length < 1900000 ? img : '' }); } catch (e) { res = { code: 'server_error' }; }
     if (!res || !res.ok) { stop = (res && res.code) || 'server_error'; break; }
     res.results.forEach(x => { if (x.ok) tally.ok++; else tally[x.code] = (tally[x.code] || 0) + 1; });
     if (res.results.some(x => x.code === 'needs_terms')) stop = 'needs_terms';
-    $('#bulkBar').style.width = Math.min(100, (i + 50) / good.length * 100) + '%';
+    $('#bulkBar').style.width = Math.min(100, (i + step) / good.length * 100) + '%';
   }
   bulk.sending = false; $('#bulkSend').disabled = false;
   const why = { no_credits: 'out of emails', needs_permission: 'need a different permission for their country', suppressed: 'asked not to get pizzas', bad_email: 'email does not look right', needs_upgrade: 'needs a Pro feature', test_inbox_only: 'not a test inbox', server_error: 'error on our side' };

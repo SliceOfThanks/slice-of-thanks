@@ -11,7 +11,7 @@ import { pickProvider } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.13.0";
+const VERSION = "api-0.14.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -423,6 +423,11 @@ async function route(req: Request, path: string): Promise<Response> {
   if (path === "/people/save" && req.method === "POST") {
     return json(req, await rpc("sot_save_contact", { p_member: memberId, p: body.person ?? {} }));
   }
+  // Save a CSV list to People (up to 500 rows): new people are added, people already there get the new tags
+  if (path === "/people/import" && req.method === "POST") {
+    const rows = Array.isArray(body.people) ? body.people.slice(0, 500) : [];
+    return json(req, await rpc("sot_import_people", { p_member: memberId, p_items: rows }));
+  }
   // Box presets: saved box setups (style, sticker, confetti, note, sign-off, button, gift). Limits per plan in app_settings preset_limits.
   if (path === "/presets" && req.method === "GET") {
     return json(req, { ok: true, ...(await rpc<Record<string, unknown>>("sot_presets", { p_member: memberId })) });
@@ -433,10 +438,10 @@ async function route(req: Request, path: string): Promise<Response> {
   if (path === "/presets/remove" && req.method === "POST") {
     return json(req, await rpc("sot_remove_preset", { p_member: memberId, p_id: String(body.id ?? "") }));
   }
-  // CSV list send: up to 50 rows per call. Each row becomes a queued send; the worker delivers them.
+  // CSV list or group send: up to 50 rows per call (10 when each row has its own picture). Each row becomes a queued send; the worker delivers them.
   if (path === "/send/bulk" && req.method === "POST") {
     if (!m.session.features?.csv_import) return json(req, { ok: false, code: "needs_upgrade", features: ["csv_import"] });
-    const rows = Array.isArray(body.rows) ? body.rows.slice(0, 50) : [];
+    const rows = Array.isArray(body.rows) ? body.rows.slice(0, body.rows.some((x: any) => x?.image_data_url) ? 10 : 50) : [];
     const batch = String(body.batch ?? "").slice(0, 60) || crypto.randomUUID();
     const imageUrl = await uploadPizza(body.image_data_url, `pizza-list-${batch}`);
     const results: { i: number; ok: boolean; code?: string }[] = [];
@@ -444,7 +449,9 @@ async function route(req: Request, path: string): Promise<Response> {
       const i = Number(row?.i ?? results.length);
       try {
         const { sendId, r } = await createSend(memberId, m.session.env, { ...row, scheduled_for: body.scheduled_for ?? null, label: body.label }, "csv", `list:${batch}:${i}`);
-        if (r.ok && !r.duplicate && imageUrl && row.image !== false) await rpc("sot_set_send_image", { p_send: sendId, p_url: imageUrl }).catch(() => null);
+        // Gerald's one-of-a-kind pizzas carry their own picture; a signature list shares one
+        const own = r.ok && !r.duplicate && row.image_data_url ? await uploadPizza(row.image_data_url, `pizza-${sendId}`) : undefined;
+        if (r.ok && !r.duplicate && (own || (imageUrl && row.image !== false))) await rpc("sot_set_send_image", { p_send: sendId, p_url: own || imageUrl }).catch(() => null);
         results.push({ i, ok: !!r.ok, code: r.ok ? undefined : r.code });
         if (r.code === "needs_terms" || r.code === "sending_paused" || r.code === "account_inactive") break;
       } catch (e) {

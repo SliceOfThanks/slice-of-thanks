@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.14.3 =====
+/* ===== Slice of Thanks live layer v0.14.4 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -481,6 +481,7 @@ handleLogo = function (file) {
 const _renderSettings = renderSettings;
 renderSettings = function () {
   _renderSettings();
+  try { if ($('#datesCard') && !dates.loaded) $('#datesCard').hidden = true; } catch (e) {}
   const s = LIVE.session; if (!s) return;
   loadBilling();
   if ($('#liveReply') && document.activeElement !== host) $('#liveReply').value = s.profile.reply_to || '';
@@ -1022,7 +1023,10 @@ saveDatesPrefs = function () {
 async function loadDates() {
   if (!LIVE.TOKEN) return;
   const r = await LIVE.call('/dates').catch(() => null);
-  if (!r || !r.ok) return;
+  /* Until the server has date pizzas, the Dates card stays hidden so nobody sets up something that cannot run */
+  const dc = $('#datesCard');
+  if (!r || !r.ok) { if (dc) dc.hidden = true; return; }
+  if (dc) dc.hidden = false;
   dates = { upcoming: Array.isArray(r.upcoming) ? r.upcoming : [], waiting: Array.isArray(r.waiting) ? r.waiting : [], sent: Array.isArray(r.sent) ? r.sent : [],
     settings: r.settings || {}, tz: r.tz || null, today: r.today || new Date().toISOString().slice(0, 10), loaded: true };
   if (r.settings && r.settings.mode) { datesPrefs = Object.assign(datesPrefs, r.settings); store.set('datesPrefs', datesPrefs); }

@@ -112,6 +112,7 @@ button.p-tag{cursor:pointer;font-family:inherit}button.p-tag:hover{background:va
 .vegan-tag{display:inline-block;margin-top:4px;font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--ok-bg);color:var(--ok-ink);border:1.5px solid var(--ok-ink)}
 .pill.wait{background:var(--warn-bg);color:var(--warn-ink)}
 .mode-line{font-size:.9rem;color:var(--muted)}
+.kx-reset{display:flex;justify-content:flex-end;margin:0 0 6px}
 .linkish{background:none;border:0;padding:0;font:inherit;color:var(--tomato-text);font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 /* kitchen */
 .steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
@@ -519,6 +520,7 @@ body.is-free .pro-tag{display:inline-block}
         </div>
       </div>
     </div>
+    <div class="kx-reset"><button class="linkish" id="kxReset" type="button">Start over</button></div>
     <ol class="steps" id="steps"></ol>
     <div class="stage" id="stage">
       <canvas id="pizza" aria-label="Your pizza. Tap to add to it."></canvas>
@@ -1846,6 +1848,11 @@ $('#hireTopic').addEventListener('input',hireCount);
 function renderKitchenExtras(){const kx=$('#kitchenExtras');kx.hidden=step!==0||editingSignature;if(kx.hidden)return;renderHire()}
 function toggleHire(open){const w=$('#kxHireWrap');if(open===undefined)open=w.hidden;w.hidden=!open;$('#kxHireBtn').setAttribute('aria-expanded',open?'true':'false')}
 $('#kxHireBtn').onclick=()=>toggleHire();
+/* Start over: a clean pizza for the same guest. Asks for a second tap so one slip does not throw away the work. */
+let resetArm=0;
+$('#kxReset').onclick=()=>{const b=$('#kxReset');
+ if(!resetArm){b.textContent='Tap again to start over';resetArm=setTimeout(()=>{resetArm=0;b.textContent='Start over'},3000);return}
+ clearTimeout(resetArm);resetArm=0;b.textContent='Start over';toggleHire(false);startFresh(currentMeetingId);toast('Fresh dough. Start over from step 1.')};
 $('#homeNew').onclick=()=>{toggleHire(false);startFresh(null)};
 $('#homeHire').onclick=()=>{startFresh(null);toggleHire(true);setTimeout(()=>{const c=$('#kxHireWrap');if(c.scrollIntoView)c.scrollIntoView({behavior:'smooth',block:'start'})},50)};
 function syncHireVegan(){const m=hirePick();$('#hireNew').hidden=$('#hireNewMail').hidden=$('#hireFor').value!=='new';$('#hireVegan').checked=!!settings.veganDefault||!!(m&&m.vegan);$('#hireVeganNote').textContent=m&&m.vegan?' ('+first(m.who)+' is marked vegan)':''}

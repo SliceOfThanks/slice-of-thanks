@@ -257,6 +257,12 @@
       "commit": "92c5ec441c7cb7e1252b8add669b8f5e2833b6dc",
       "date": "2026-10-25",
       "notes": "More signature pizzas (1/10/20), premade business and personal ones, Kitchen picker. api-0.16.0, signatures.sql."
+    },
+    {
+      "version": "v0.15.1",
+      "commit": "c7a16ff49531b1f94586caf34d60a5909fdea0f7",
+      "date": "2026-10-25",
+      "notes": "Send to a group: start the box from a box preset."
     }
   ]
 }

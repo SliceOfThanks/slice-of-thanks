@@ -293,6 +293,12 @@
       "commit": "b5836bfed91821c9a4db01e0d050274e5499068b",
       "date": "2026-10-25",
       "notes": "Brand color swatches show in Settings."
+    },
+    {
+      "version": "v0.16.0",
+      "commit": "b433ffe1a2fb0217e89cb75914968b5d81210480",
+      "date": "2026-10-25",
+      "notes": "This week and next week, Plan a pizza, untick to skip, tags mode after meetings. api-0.16.1, meetings_tags.sql."
     }
   ]
 }

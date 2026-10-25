@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Shrikhand&family=Work+Sans:wght@400;500;600;700&display=swap');
+
+/* Slice of Thanks brand theme for Brilliant Directories pages (account, billing, sign up, pop-ups).
+   Paste into BD admin: Settings, Design Settings, Custom CSS / HEAD tab, Additional CSS. Keep the @import line first.
+   Colors, fonts, borders and buttons only. It never changes layout, so BD pages keep working.
+   The Kitchen app and the pizza page have their own styles and are not affected. */
+
+body { background: #FFF3E0 !important; color: #3E2416 !important; font-family: 'Work Sans', Arial, sans-serif !important; }
+body p, body li, body td, body th, body label, body input, body select, body textarea, body .help-block { font-family: 'Work Sans', Arial, sans-serif !important; }
+body h1, body h2, body h3, body .h1, body .h2, body .h3, body .modal-title { font-family: 'Shrikhand', Georgia, serif !important; font-weight: 400 !important; color: #3E2416 !important; letter-spacing: 0 !important; }
+body h4, body h5, body h6 { font-family: 'Work Sans', Arial, sans-serif !important; font-weight: 700 !important; color: #3E2416 !important; }
+body a { color: #C21F1F; }
+body a:hover, body a:focus { color: #8f1212; }
+body .text-muted, body .help-block, body small { color: #6B4A3A !important; }
+
+/* Cards: panels, wells, modules and tab boxes become rounded cream cards with a dark outline */
+body .panel, body .well, body .module:not(.member-login-container), body .tab-content, body .list-group, body .thumbnail, body .member_results, body .search_result {
+  background: #FFFAF2 !important; border: 2.5px solid #3E2416 !important; border-radius: 18px !important; box-shadow: 4px 4px 0 #3E2416 !important;
+}
+body .panel-heading, body .panel-footer { background: #F7E4C6 !important; border-color: #3E2416 !important; color: #3E2416 !important; border-radius: 15px 15px 0 0 !important; }
+body .panel-footer { border-radius: 0 0 15px 15px !important; }
+body .list-group-item { background: transparent !important; border-color: #E3CBA6 !important; color: #3E2416 !important; }
+body .list-group-item.active, body .list-group-item.active:hover { background: #F5C04E !important; color: #3E2416 !important; border-color: #3E2416 !important; }
+
+/* Buttons: pill shape, dark outline, offset shadow. Main actions red, the rest cream. */
+body .btn {
+  border: 2.5px solid #3E2416 !important; border-radius: 999px !important; box-shadow: 3px 3px 0 #3E2416 !important;
+  font-family: 'Work Sans', Arial, sans-serif !important; font-weight: 700 !important; text-shadow: none !important;
+  background: #FFFAF2 !important; color: #3E2416 !important; background-image: none !important; transition: transform .1s, box-shadow .1s;
+}
+body .btn:hover, body .btn:focus { transform: translate(1px, 1px); box-shadow: 2px 2px 0 #3E2416 !important; color: #3E2416 !important; }
+body .btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 #3E2416 !important; }
+body .btn-primary, body .btn-success, body .btn-info, body .btn-warning {
+  background: #D62828 !important; color: #FFF3E0 !important;
+}
+body .btn-primary:hover, body .btn-success:hover, body .btn-info:hover, body .btn-warning:hover,
+body .btn-primary:focus, body .btn-success:focus, body .btn-info:focus, body .btn-warning:focus { background: #c21f1f !important; color: #FFF3E0 !important; }
+body .btn-danger, body .btn-default, body .btn-secondary { background: #FFFAF2 !important; color: #3E2416 !important; }
+body .btn[disabled], body .btn.disabled { opacity: .55 !important; transform: none !important; }
+body .btn:focus-visible { outline: 3px solid #F5C04E !important; outline-offset: 3px !important; }
+
+/* Tabs: pills, the open one in mustard */
+body .nav-tabs { border-bottom: 0 !important; }
+body .nav-tabs > li > a, body .nav-pills > li > a {
+  border: 2px solid #3E2416 !important; border-radius: 999px !important; background: #FFFAF2 !important; color: #3E2416 !important;
+  font-weight: 700 !important; margin: 0 6px 6px 0 !important;
+}
+body .nav-tabs > li.active > a, body .nav-tabs > li.active > a:hover, body .nav-tabs > li.active > a:focus,
+body .nav-pills > li.active > a, body .nav-pills > li.active > a:hover { background: #F5C04E !important; color: #3E2416 !important; border-color: #3E2416 !important; }
+body .nav-tabs > li > a:hover { background: #F7E4C6 !important; }
+
+/* Tables: cream rows, warm header */
+body .table, body table.dataTable { background: #FFFAF2 !important; color: #3E2416 !important; border-radius: 14px; }
+body .table > thead > tr > th, body table.dataTable thead th { background: #F7E4C6 !important; color: #3E2416 !important; border-bottom: 2px solid #3E2416 !important; font-weight: 700 !important; }
+body .table > tbody > tr > td { border-color: #E3CBA6 !important; }
+body .table-striped > tbody > tr:nth-of-type(odd) { background: #FFF3E0 !important; }
+
+/* Form fields: rounded with a dark outline */
+body .form-control, body input[type="text"], body input[type="email"], body input[type="password"], body input[type="tel"], body input[type="url"], body input[type="search"], body select, body textarea {
+  border: 2px solid #3E2416 !important; border-radius: 12px !important; background: #FFFDF8 !important; color: #3E2416 !important; box-shadow: none !important;
+}
+body .form-control:focus, body input:focus, body select:focus, body textarea:focus { border-color: #D62828 !important; outline: 3px solid #F5C04E !important; outline-offset: 1px; }
+body input[type="checkbox"], body input[type="radio"] { accent-color: #D62828; }
+
+/* Pop-ups (Add Credit Card, Billing Address and BD alerts) */
+body .modal-content, body .swal2-popup {
+  background: #FFFAF2 !important; border: 3px solid #3E2416 !important; border-radius: 22px !important; box-shadow: 6px 6px 0 #3E2416 !important;
+}
+body .modal-header, body .modal-footer { border-color: #E3CBA6 !important; }
+body .modal-backdrop.in, body .swal2-container.swal2-backdrop-show { background: rgba(30, 15, 8, .55) !important; opacity: 1 !important; }
+body .swal2-title { font-family: 'Shrikhand', Georgia, serif !important; font-weight: 400 !important; color: #3E2416 !important; }
+body .swal2-styled.swal2-confirm { background: #D62828 !important; border: 2.5px solid #3E2416 !important; border-radius: 999px !important; box-shadow: 3px 3px 0 #3E2416 !important; }
+body .swal2-styled.swal2-cancel { background: #FFFAF2 !important; color: #3E2416 !important; border: 2.5px solid #3E2416 !important; border-radius: 999px !important; }
+
+/* Paging, labels and alerts */
+body .pagination > li > a, body .pagination > li > span { background: #FFFAF2 !important; color: #3E2416 !important; border-color: #3E2416 !important; }
+body .pagination > .active > a, body .pagination > .active > span { background: #F5C04E !important; color: #3E2416 !important; border-color: #3E2416 !important; }
+body .label, body .badge { border-radius: 999px !important; border: 1.5px solid #3E2416 !important; font-weight: 700 !important; }
+body .label-success, body .badge-success { background: #DCE8C8 !important; color: #2f4a14 !important; }
+body .label-danger, body .badge-danger { background: #F9D5CF !important; color: #8f1212 !important; }
+body .label-warning, body .badge-warning, body .label-default { background: #F7E4C6 !important; color: #3E2416 !important; }
+body .alert { border: 2px solid #3E2416 !important; border-radius: 14px !important; color: #3E2416 !important; }
+body .alert-success { background: #DCE8C8 !important; }
+body .alert-danger { background: #F9D5CF !important; }
+body .alert-info, body .alert-warning { background: #F7E4C6 !important; }

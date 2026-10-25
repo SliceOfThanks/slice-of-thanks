@@ -1,10 +1,10 @@
 # Onboarding plan (draft, 2026-10-25)
 
-Status: draft for Stacey to approve. Nothing here is built yet.
+Status: approved by Stacey 2026-10-25. Not built yet.
 
 ## How the free Pro trial works
 - Everyone signs up on A Slice in BD, with no card.
-- On their first sign in, Slice of Thanks switches on The Whole Pie for 14 days (or 7, Stacey to decide). This is the same plan switch planned for the birthday gift, run by our server. BD is not changed, so nobody is billed.
+- On their first sign in, Slice of Thanks switches on The Whole Pie for 14 days. This is the same plan switch planned for the birthday gift, run by our server. BD is not changed, so nobody is billed.
 - During the trial they get every Whole Pie feature and 50 trial emails.
 - When the trial ends they drop back to A Slice unless they upgrade. Nothing they made is lost. Pro items stay saved and show a Pro tag until they upgrade.
 - One trial per account.
@@ -55,9 +55,9 @@ Each Pro step a free member sees shows one line on what it does, with a "Try it 
 4. The end-of-trial cards and email.
 About a day in total.
 
-## Decisions needed
-1. Trial length: 7 or 14 days? (Same question as the BD trial; the two should match.)
-2. No card for the trial? Recommended: no card.
-3. Trial emails: 50 during the trial? (The Whole Pie has 250 a month.)
-4. Test sends to yourself do not use an email? Recommended: yes, up to 5.
-5. Finishing the checklist gives +20 Treats? Recommended: yes.
+## Decisions (Stacey, 2026-10-25)
+1. Trial length: 14 days. The BD trial on The Whole Pie and Pizza Party is also 14 days, matching the Join page.
+2. No card for the trial.
+3. 50 emails during the trial.
+4. Test sends to yourself are free, up to 5.
+5. +20 Treats for finishing the checklist.

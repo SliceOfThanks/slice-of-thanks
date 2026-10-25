@@ -1,6 +1,6 @@
 # Member birthday pizza (draft, 2026-10-25)
 
-Status: approved by Stacey 2026-10-25 (name, note, sharing for 30 days). Whole Pie gift: Option A or B still to confirm. Not built yet.
+Status: approved by Stacey 2026-10-25. Name, note and 30-day sharing approved. Whole Pie gift is Option A, with a new birthday topper designed every year. Not built yet.
 
 Slice of Thanks sends its own members a birthday pizza. It is a special pizza nobody can make in the Kitchen.
 
@@ -29,9 +29,7 @@ Slice of Thanks sends its own members a birthday pizza. It is a special pizza no
 
 ## The gift under the pizza (revealed after the sixth slice)
 - A Slice members: 14 days of The Whole Pie, with no card. They tap "Unlock my 14 days". They have 30 days after their birthday to claim it, and the 14 days start when they tap.
-- Whole Pie members: Option A or Option B, Stacey to choose.
-  - Option A: 100 bonus emails for 30 days, plus a birthday box topper they keep.
-  - Option B: 14 days of Pizza Party once team seats are built.
+- Whole Pie members: 100 bonus emails for 30 days, plus that year's birthday box topper, theirs to keep. A new birthday topper is designed every year (for example 2026: party hat cake, 2027: something new), so members collect them.
 - Pizza Party members: a team extra once seats are built.
 
 ## Bonus: share the Birthday Special
@@ -50,8 +48,8 @@ For 30 days after their birthday, the member can send the Birthday Special to pe
 5. The gift and the "Unlock my 14 days" button.
 About a day in total.
 
-## Decisions needed
-1. The name: "Gerald's Birthday Special"?
-2. Gerald's note and the signature, as written above?
-3. Whole Pie gift: Option A or B?
-4. Should members be able to share the Birthday Special for 30 days after their birthday?
+## Decisions (Stacey, 2026-10-25)
+1. Name: Gerald's Birthday Special. Yes.
+2. Gerald's note and signature as written. Yes.
+3. Whole Pie gift: Option A, and a new birthday topper every year.
+4. Members can share the Birthday Special for 30 days after their birthday. Yes.

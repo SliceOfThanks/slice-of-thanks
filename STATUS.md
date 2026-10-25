@@ -1,6 +1,6 @@
 # Build status (read this first in a new session)
 
-Last updated: 2026-10-25. Live code version: v0.13.3 (see releases.json and app_settings.code_version).
+Last updated: 2026-10-25. Live code version: v0.13.4 (see releases.json and app_settings.code_version).
 
 ## Done and live
 - Supabase project cmnclubiarmthibqibuj. Edge Function `api` (api-0.4.0, verify_jwt false, own auth). Tables have RLS with no policies.
@@ -68,6 +68,7 @@ Git tags cannot be pushed. Use commit IDs.
 - v0.13.1 (2026-10-25, commit 011b3e7, app only): tidyCardFrame now hides only the visible siblings along the path to the billing area (display none), leaving hidden-at-load modals alone, and injects CARD_CSS brand styles; new-tab fallback link. fitSheet() corrects .sheet-back position and height from visualViewport (BD layouts put a transformed ancestor above the app). autoFold(card,key,summary) folds Settings cards (meetCard, sigCard, dietCard, presetCard, calCard, liveBilling) with store fold_<key>; plan comparison behind #planCompare. Presets: Use it (startFresh then presetBox) and Preview (lid plus note with sample name Jordan). fold-test.js added.
 - v0.13.2 (2026-10-25, commit 1b91a8c, app only): live localStorage keys are sot_ (build_app.py renames zabreak_). clearLocal() removes sot_ and zabreak_ keys; runs on Log out, after Delete, and in liveStart when sot_owner differs from the session member_id (keeps a guest draft's pizza, drops its box, then reloads). Card sheet: sheet does not scroll, iframe fills the room. ChatGPT v0.13.0 run: all passed except Add New Credit Card (fixed in v0.13.1, needs a retest); test account #21 delete removed the BD login (account_deletions bd_deleted true).
 - v0.13.3 (2026-10-25, commit d056360, app only): the in-app billing iframe is gone. ChatGPT retest on v0.13.2 found BD's Add New Credit Card still opened nothing inside the frame and the frame scrolled both ways. openCardSheet() now explains the steps and opens bd_links.billing (default /account/billing) in a new tab (same tab if pop-ups are blocked); visibilitychange reloads /billing on return. liveSheet() shows Cancel only when the sheet has actions. BD signup asks for CAPTCHA repeatedly (BD setting, not ours).
+- v0.13.4 (2026-10-25, commit e62e499, app only): bd/brand-theme.css (pasted by Stacey into BD Design Settings, Custom CSS / HEAD, Additional CSS) brands BD pages and hides the account sidebar: the innermost col holding both /account/upgrade and logout links; its row's cols go full width (no nested :has). Account card: Name and email (bd_links.manage_account, default /account/changelisting), Change password (bd_links.password, default /account/password), Contact us shown only when bd_links.contact is set; openBdTab(). The two defaults are unverified (BD redirects any /account/ path to login when signed out). BD plan Member's Dashboard toggles set by Stacey.
 
 ## Next, in order
 1. Live test the calendar connections with a real Calendly and TidyCal booking (built in v0.10.0), with Stacey's rules:

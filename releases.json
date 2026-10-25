@@ -197,6 +197,12 @@
       "commit": "d056360174a5806bb6a3d2d9f886bc100dce586c",
       "date": "2026-10-25",
       "notes": "Card and billing address opens BD secure billing in a new tab; Billing card refreshes on return. Final sheets have no Cancel."
+    },
+    {
+      "version": "v0.13.4",
+      "commit": "e62e499994891d60348013ac0f7e797e46af0938",
+      "date": "2026-10-25",
+      "notes": "Account card links to BD name and email and password pages. Brand theme hides the BD account sidebar."
     }
   ]
 }

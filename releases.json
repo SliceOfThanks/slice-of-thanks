@@ -263,6 +263,12 @@
       "commit": "c7a16ff49531b1f94586caf34d60a5909fdea0f7",
       "date": "2026-10-25",
       "notes": "Send to a group: start the box from a box preset."
+    },
+    {
+      "version": "v0.15.2",
+      "commit": "b45623a17cfc2244c1a33773a61669b84c4fae0b",
+      "date": "2026-10-25",
+      "notes": "Send step: Send to Someone new or Someone in People toggle."
     }
   ]
 }

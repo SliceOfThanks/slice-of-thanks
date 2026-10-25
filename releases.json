@@ -299,6 +299,12 @@
       "commit": "b433ffe1a2fb0217e89cb75914968b5d81210480",
       "date": "2026-10-25",
       "notes": "This week and next week, Plan a pizza, untick to skip, tags mode after meetings. api-0.16.1, meetings_tags.sql."
+    },
+    {
+      "version": "v0.16.1",
+      "commit": "7283a909301c316d2412f7dcade97beefa5d91ac",
+      "date": "2026-10-25",
+      "notes": "Launch test fixes."
     }
   ]
 }

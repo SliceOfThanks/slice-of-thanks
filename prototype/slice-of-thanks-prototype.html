@@ -112,7 +112,7 @@ button.p-tag{cursor:pointer;font-family:inherit}button.p-tag:hover{background:va
 .vegan-tag{display:inline-block;margin-top:4px;font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--ok-bg);color:var(--ok-ink);border:1.5px solid var(--ok-ink)}
 .pill.wait{background:var(--warn-bg);color:var(--warn-ink)}
 .mode-line{font-size:.9rem;color:var(--muted)}
-.kx-reset{display:flex;justify-content:flex-end;margin:0 0 6px}
+.kx-reset{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 6px}
 .linkish{background:none;border:0;padding:0;font:inherit;color:var(--tomato-text);font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 /* kitchen */
 .steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
@@ -520,7 +520,7 @@ body.is-free .pro-tag{display:inline-block}
         </div>
       </div>
     </div>
-    <div class="kx-reset"><button class="linkish" id="kxReset" type="button">Start over</button></div>
+    <div class="kx-reset"><button class="linkish" id="kxSig" type="button">Use my signature pizza</button><button class="linkish" id="kxReset" type="button">Start over</button></div>
     <ol class="steps" id="steps"></ol>
     <div class="stage" id="stage">
       <canvas id="pizza" aria-label="Your pizza. Tap to add to it."></canvas>
@@ -882,7 +882,7 @@ body.is-free .pro-tag{display:inline-block}
     </div>
     <div class="card" id="sigCard">
       <h2>Your signature pizza</h2>
-      <div class="sig"><canvas id="sigCanvas" aria-label="Your signature pizza"></canvas><div style="display:flex;flex-direction:column;gap:8px;min-width:0"><h3 id="sigName"></h3><p class="muted" style="font-size:.9rem">This is the one that goes out when you pick "Send my signature pizza" or turn on automatic sending.</p><div><button class="btn small" id="editSig">Edit signature pizza</button></div></div></div>
+      <div class="sig"><canvas id="sigCanvas" aria-label="Your signature pizza"></canvas><div style="display:flex;flex-direction:column;gap:8px;min-width:0"><h3 id="sigName"></h3><p class="muted" style="font-size:.9rem">This is the one that goes out when you pick "Send my signature pizza" or turn on automatic sending.</p><div class="btn-row"><button class="btn small primary" id="sendSig">Send it to someone</button><button class="btn small" id="editSig">Edit signature pizza</button></div></div></div>
     </div>
     <div class="card fold" id="boxCard">
       <button class="fold-head" type="button" id="boxCardHead" aria-expanded="false" aria-controls="boxCardBody"><span><h2>Your box</h2><small class="muted" id="boxCardSum"></small></span><span class="fold-ic" aria-hidden="true">▾</span></button>
@@ -1345,7 +1345,7 @@ function startFresh(id){
 function makeChips(el,items,get,set,lk){el.innerHTML='';items.forEach(([val,label,sw])=>{const b=document.createElement('button');b.className='chip';b.type='button';const isLk=lk&&lk.locked(val);
  if(sw){const d=document.createElement('span');d.className='dot';d.style.background=sw;b.appendChild(d)}
  b.appendChild(document.createTextNode(label));b.dataset.val=val;b.setAttribute('aria-pressed',get()===val?'true':'false');
- b.onclick=()=>{set(val);el.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true')};
+ b.onclick=()=>{set(val);if(!b.isConnected)return;el.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true')};
  if(isLk){b.classList.add('locked');b.setAttribute('aria-pressed','false');const t=document.createElement('span');t.className='pro';t.textContent='Pro';b.appendChild(t);b.setAttribute('aria-label',label+', Pro feature');b.onclick=()=>lk.onLocked(val)}
  el.appendChild(b)})}
 function renderSteps(){const ol=$('#steps');ol.innerHTML='';STEPS.forEach((s,i)=>{const li=document.createElement('li');li.className=i===step?'on':(i<step?'done':'');
@@ -1756,6 +1756,12 @@ document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('cha
  toast({ask:'You will get a prompt after each meeting.',auto:'Your signature pizza will go out automatically.',off:'After-meeting pizzas are off.'}[settings.mode])}));
 $('#extOnly').addEventListener('change',e=>{settings.extOnly=e.target.checked;store.set('settings',settings)});
 [['#pName','name'],['#pBiz','business'],['#pNote','note'],['#pLinkLabel','linkLabel'],['#pLink','link']].forEach(([s,k])=>$(s).addEventListener('input',e=>{profile[k]=e.target.value;saveProfile()}));
+/* Send the signature pizza: it comes out of the oven ready, with your usual box, straight to the Send step. Whoever the pizza was for stays filled in. */
+function useSignature(){const to=box.to||'',contact=box.contact||'',company=box.company||'',role=box.role||'';
+ editingSignature=false;toggleHire(false);pizza=clonePizza(signature);pizza.baked=true;pizza.bake=Math.max(pizza.bake||0,.6);
+ box=boxFromProfile(meetings.find(x=>x.id===currentMeetingId)||null);if(to){box.to=to;box.contact=contact;box.company=company;box.role=role}
+ step=5;saidStep=-1;show('make');toast('Your signature pizza is ready. Pick who it is for and send.')}
+$('#kxSig').onclick=useSignature;$('#sendSig').onclick=()=>{currentMeetingId=null;box.to='';box.contact='';useSignature()};
 $('#editSig').onclick=()=>{editingSignature=true;currentMeetingId=null;pizza=clonePizza(signature);box=boxFromProfile(null);step=2;saidStep=-1;show('make')};
 
 /* ---------- Gerald tab: hire, tips ---------- */
@@ -2150,10 +2156,10 @@ function shownPeople(){const q=$('#peopleSearch').value.trim().toLowerCase();
  return contacts.filter(c=>(!openF||openState(c)===openF)&&(!tagF||(c.tags||[]).some(t=>t.toLowerCase()===tagF.toLowerCase()))&&(!q||c.name.toLowerCase().includes(q)||c.company.toLowerCase().includes(q)||(c.tags||[]).some(t=>t.toLowerCase().includes(q))))}
 function renderPeopleTools(){const tags=allTags();const tf=$('#tagFilter');
  if(tagF&&!tags.some(x=>x.t.toLowerCase()===tagF.toLowerCase()))tagF='';
- tf.hidden=false;if(tags.length)makeChips(tf,[['','Everyone']].concat(tags.map(x=>[x.t,x.t+' ('+x.n+')'])),()=>tagF,v=>{tagF=v;renderPeople()});
+ tf.hidden=false;if(tags.length)makeChips(tf,[['','Everyone']].concat(tags.map(x=>[x.t,x.t+' ('+x.n+')'])),()=>tagF,v=>{tagF=v&&v===tagF?'':v;renderPeople()});
  else tf.innerHTML='<small class="muted">Filter by tag: no tags yet. Tap + Tag on anyone to add one.</small>';
  const cnt=k=>contacts.filter(c=>openState(c)===k).length;
- makeChips($('#openFilter'),[['','Everyone'],['opened','Opened ('+cnt('opened')+')'],['not','Not opened ('+cnt('not')+')'],['new','No pizza yet ('+cnt('new')+')']],()=>openF,v=>{openF=v;renderPeople()});
+ makeChips($('#openFilter'),[['','Everyone'],['opened','Opened ('+cnt('opened')+')'],['not','Not opened ('+cnt('not')+')'],['new','No pizza yet ('+cnt('new')+')']],()=>openF,v=>{openF=v&&v===openF?'':v;renderPeople()});
  $('#selectMode').textContent=peopleSel?'Stop selecting':'Select people';$('#selectAll').hidden=!peopleSel;
  const st=$('#sendTagged'),n=tagF?shownPeople().length:0;st.hidden=!tagF||!n;st.textContent='Send to everyone tagged '+tagF+' ('+n+')';
  const bar=$('#selBar');bar.hidden=!peopleSel;if(peopleSel){const k=peopleSel.size;$('#selCount').textContent=k+' selected';$('#selSend').disabled=!k;$('#selTag').disabled=!k}}

@@ -64,9 +64,13 @@ const PEOPLE = [
     check(of === 'Everyone|Opened (1)|Not opened (1)|No pizza yet (1)', plan + ': last pizza filter shows counts: ' + of);
     const pick = async lab => { await inRoot(page, "[...R.querySelectorAll('#openFilter .chip')].find(c=>c.textContent.indexOf(a)===0).click()".replace('a)', JSON.stringify(lab) + ')')); await wait(150); return inRoot(page, "return [...R.querySelectorAll('#peopleList li.person')].map(li=>li.textContent.indexOf('Ann Lee')>=0?'Ann':li.textContent.indexOf('Bo Diaz')>=0?'Bo':li.textContent.indexOf('Cy Park')>=0?'Cy':'?').join('|')"); };
     check((await pick('Opened')) === 'Ann', plan + ': Opened shows Ann');
+    const pressed = () => inRoot(page, "return [...R.querySelectorAll('#openFilter .chip')].filter(c=>c.getAttribute('aria-pressed')==='true').map(c=>c.textContent).join('|')");
+    check((await pressed()) === 'Opened (1)', plan + ': the picked filter is highlighted');
+    check((await pick('Opened')) === 'Ann|Bo|Cy' && (await pressed()) === 'Everyone', plan + ': tapping it again turns it off and highlights Everyone');
     check((await pick('Not opened')) === 'Bo', plan + ': Not opened shows Bo');
     check((await pick('No pizza yet')) === 'Cy', plan + ': No pizza yet shows Cy');
     await inRoot(page, "const s=[...R.querySelectorAll('#tagFilter .chip')].find(c=>c.textContent.indexOf('client')===0);s.click()"); await wait(150);
+    check((await inRoot(page, "return [...R.querySelectorAll('#tagFilter .chip')].filter(c=>c.getAttribute('aria-pressed')==='true').map(c=>c.textContent).join('|')")) === 'client (2)', plan + ': the picked tag is highlighted');
     check((await inRoot(page, "return R.querySelector('#peopleList').textContent")).indexOf('No one matches these filters') >= 0, plan + ': tag and last pizza filters combine');
     check((await pick('Not opened')) === 'Bo', plan + ': client and Not opened shows Bo');
     await pick('Everyone'); await inRoot(page, "[...R.querySelectorAll('#tagFilter .chip')].find(c=>c.textContent==='Everyone').click()"); await wait(150);

@@ -1,4 +1,4 @@
-// Kitchen Start over: two taps give a fresh pizza back on step 1. Also: the Dates card hides when /dates is not ready. Usage: node reset-test.js /path/to/app.js
+// Kitchen Start over: two taps give a fresh pizza back on step 1. Also: Use my signature pizza, and the Dates card hides when /dates is not ready. Usage: node reset-test.js /path/to/app.js
 const { chromium } = require('playwright');
 const fs = require('fs');
 const APP = fs.readFileSync(process.argv[2], 'utf8');
@@ -71,6 +71,15 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const now = await inRoot(page, "return R.querySelector('#steps li.on').textContent");
   check(now.indexOf('Dough') !== -1, 'Two taps go back to Dough: ' + now);
   check((await toastText(page)).indexOf('Fresh dough') !== -1, 'Toast says fresh dough');
+  // Use my signature pizza: straight to Send with the signature pizza baked
+  await inRoot(page, "R.querySelector('#kxSig').click()"); await wait(400);
+  check((await inRoot(page, "return R.querySelector('#steps li.on').textContent")).indexOf('Send') !== -1, 'Use my signature pizza goes to the Send step');
+  check((await toastText(page)).indexOf('signature pizza is ready') !== -1, 'Toast says the signature pizza is ready');
+  await inRoot(page, "R.querySelector('#tab-settings').click()"); await wait(300);
+  await inRoot(page, "const t=R.querySelector('#toName');t.value='Old';t.dispatchEvent(new Event('input',{bubbles:true}))");
+  await inRoot(page, "R.querySelector('#sendSig').click()"); await wait(400);
+  const ss = await inRoot(page, "return [R.querySelector('#steps li.on').textContent, R.querySelector('#toName').value, !R.querySelector('#view-make').hidden].join(',')");
+  check(ss === '6Send,,true', 'Settings Send it to someone opens the Kitchen on Send with an empty name: ' + ss);
   // the server has no date pizzas yet: the Dates card stays hidden
   await inRoot(page, "R.querySelector('#tab-settings').click()"); await wait(500);
   check(await inRoot(page, "const c=R.querySelector('#datesCard');return !!c&&c.hidden"), 'Dates card hidden while the server has no date pizzas');

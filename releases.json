@@ -215,6 +215,12 @@
       "commit": "16d2500379e79b0bd10ef9b355ec3c3b52514339",
       "date": "2026-10-25",
       "notes": "Gerald's receipt sits straight."
+    },
+    {
+      "version": "v0.14.2",
+      "commit": "7744a94fda9935ca8f2525bf5b4de6efb0c54fe2",
+      "date": "2026-10-25",
+      "notes": "+ Tag on every person card. Filter by tag always shows."
     }
   ]
 }

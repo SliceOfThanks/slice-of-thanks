@@ -1,6 +1,6 @@
 # Member birthday pizza (draft, 2026-10-25)
 
-Status: draft for Stacey to approve. Nothing here is built yet.
+Status: approved by Stacey 2026-10-25 (name, note, sharing for 30 days). Whole Pie gift: Option A or B still to confirm. Not built yet.
 
 Slice of Thanks sends its own members a birthday pizza. It is a special pizza nobody can make in the Kitchen.
 

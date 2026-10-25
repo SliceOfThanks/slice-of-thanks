@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.15.6 =====
+/* ===== Slice of Thanks live layer v0.16.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -564,7 +564,8 @@ async function liveSend() {
   if (r.ok) {
     logSend({ who: box.to, org: '', contact: box.contact, vegan: pizza.vegan }, pizza, box, box.meeting ? 'After ' + box.meeting.toLowerCase() : 'Fresh pizza');
     if (LIVE.session && r.bucket && LIVE.session.credits[r.bucket] !== undefined) LIVE.session.credits[r.bucket]--;
-    toast(r.delivered === false && r.reason !== 'not_due' ? 'Saved. Delivery is retrying and should arrive shortly.' : 'Potato is on her way to ' + first(box.to) + '.');
+    toast(r.due_now === false && box.sendAt ? 'Planned. Potato takes it to ' + first(box.to) + ' when the meeting ends.' : r.delivered === false && r.reason !== 'not_due' ? 'Saved. Delivery is retrying and should arrive shortly.' : 'Potato is on her way to ' + first(box.to) + '.');
+    if (box.sendAt) loadCalendar();
     burst('envelopes'); store.set('draft', null); endSpecial(); show('today'); loadPeople(); return;
   }
   sendProblem(r, liveSend);
@@ -1121,7 +1122,7 @@ async function loadCalendar(sync) {
   if (!views.today.hidden) renderToday();
   renderCalendarCard();
 }
-function wantsPizza(m) { return m.want_pizza === null || m.want_pizza === undefined ? (calAuto() && settings.mode === 'auto') : !!m.want_pizza; }
+function wantsPizza(m) { return m.want_pizza === null || m.want_pizza === undefined ? (calAuto() && (m.auto_want !== undefined ? !!m.auto_want : settings.mode === 'auto')) : !!m.want_pizza; }
 function mk(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
 function meetingRow(m) {
   const li = mk('li', 'meeting'), info = mk('div', 'info'), row = mk('div', 'row');
@@ -1142,7 +1143,12 @@ function meetingRow(m) {
         toast(cb.checked ? (calAuto() ? 'Your signature pizza goes to ' + first(m.name || 'them') + ' when it ends.' : 'Your signature pizza will be waiting here when it ends.') : 'No pizza for this one.');
       };
       row.appendChild(lab);
+      if (cb.checked && calAuto() && (settings.mode === 'auto' || settings.mode === 'tags')) row.appendChild(mk('small', 'muted', 'Untick to skip this one.'));
+      btn('Plan a pizza now', () => planMeeting(m));
     }
+  } else if (m.state === 'sent' && m.send_status === 'queued') {
+    pill.classList.add('ok'); pill.textContent = 'Pizza planned'; row.appendChild(pill);
+    row.appendChild(mk('small', 'muted', 'Goes out when it ends, ' + new Date(m.send_at || m.ends_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + '.'));
   } else if (m.state === 'ready') {
     pill.classList.add('wait'); pill.textContent = m.note === 'no_credits' ? 'Waiting · out of emails' : 'Pizza waiting'; row.appendChild(pill);
     btn('Send signature pizza', b => sendMeetingSignature(m, b), true);
@@ -1187,7 +1193,22 @@ renderToday = function () {
   SOTR.querySelectorAll('.tag').forEach(t => { if (t.textContent.trim() === 'Sample calendar') t.hidden = true; });
   const ul = $('#meetings'); if (!ul) return;
   ul.innerHTML = '';
-  if (cal.meetings.length) { cal.meetings.forEach(m => ul.appendChild(meetingRow(m))); return; }
+  if (cal.meetings.length) {
+    /* This week, then next week */
+    const now = new Date(), ws = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()), nx = new Date(ws.getTime() + 7 * 86400000);
+    let headed = false;
+    cal.meetings.forEach(m => {
+      if (!headed && new Date(m.starts_at) >= nx) {
+        headed = true;
+        const h = mk('li', 'week-head'); h.style.cssText = 'list-style:none;margin:14px 0 2px';
+        h.append(mk('h3', '', 'Next week'), mk('span', 'muted', 'Week of ' + nx.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })));
+        h.querySelector('h3').style.margin = '0';
+        ul.appendChild(h);
+      }
+      ul.appendChild(meetingRow(m));
+    });
+    return;
+  }
   const li = mk('li', 'meeting'); li.style.gridTemplateColumns = '1fr';
   const info = mk('div', 'info');
   if (calOn()) {
@@ -1294,7 +1315,7 @@ const _saveSig = $('#saveSig').onclick;
 $('#saveSig').onclick = function () { _saveSig.apply(this, arguments); syncSignature(); };
 function calStart(s) {
   const prefs = s.prefs || {};
-  if (prefs.after_meeting && prefs.after_meeting !== settings.mode && (prefs.after_meeting !== 'auto' || calAuto())) { settings.mode = prefs.after_meeting; store.set('settings', settings); }
+  if (prefs.after_meeting && prefs.after_meeting !== settings.mode && ((prefs.after_meeting !== 'auto' && prefs.after_meeting !== 'tags') || calAuto())) { settings.mode = prefs.after_meeting; store.set('settings', settings); }
   if (prefs.signature && prefs.signature.pizza && !store.get('signature', null)) { signature = prefs.signature.pizza; store.set('signature', signature); }
   else if (!prefs.signature && store.get('signature', null)) syncSignature();
   const q = new URLSearchParams(location.search).get('calendar');
@@ -1636,3 +1657,66 @@ cFrame = function () {
 };
 document.addEventListener('visibilitychange', () => { if (document.hidden) clearConfetti(); });
 window.addEventListener('scroll', () => { if (cparts.length) fitConfetti(); }, { passive: true });
+
+/* --- Plan a pizza for an upcoming meeting: make it now, it goes out when the meeting ends (Pro) --- */
+function planMeeting(m) {
+  if (!(LIVE.session && LIVE.session.features && LIVE.session.features.scheduling)) { upgrade('schedule'); return; }
+  startFresh(m.id);
+  box.sendAt = m.ends_at;
+  toast('Make the pizza now. Potato takes it to ' + first(m.name || 'them') + ' when the meeting ends.');
+}
+PRO_INFO.schedule = ['Plan pizzas ahead', 'Make the pizza before the meeting and it goes out the moment the meeting ends.'];
+const _buildPayloadM = buildPayload;
+buildPayload = function () {
+  const p = _buildPayloadM();
+  if (currentMeetingId && cal.meetings.some(x => x.id === currentMeetingId)) p.meeting_id = currentMeetingId;
+  if (box.sendAt && new Date(box.sendAt) > new Date()) { p.scheduled_for = new Date(box.sendAt).toISOString(); p.idem = (p.idem + '-plan').slice(0, 90); }
+  return p;
+};
+const _renderSendM = renderSend;
+renderSend = function () {
+  _renderSendM();
+  const b = $('#sendNow');
+  if (b && box.sendAt && new Date(box.sendAt) > new Date()) b.textContent = 'Send when the meeting ends (' + new Date(box.sendAt).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }) + ')';
+};
+
+/* --- After a meeting: "Only people with certain tags" --- */
+settings.mtags = Array.isArray(settings.mtags) ? settings.mtags : [];
+function renderModeTags() {
+  const el = $('#modeTags'); if (!el) return;
+  el.hidden = settings.mode !== 'tags';
+  if (el.hidden) return;
+  el.innerHTML = '';
+  const tags = allTags().map(x => x.t);
+  settings.mtags.forEach(t => { if (!tags.some(x => x.toLowerCase() === t.toLowerCase())) tags.push(t); });
+  if (!tags.length) { el.appendChild(mk('small', 'muted', 'No tags yet. Add tags to people in People, then pick them here.')); return; }
+  tags.forEach(t => {
+    const b = mk('button', 'chip', t); b.type = 'button';
+    const on = () => settings.mtags.some(x => x.toLowerCase() === t.toLowerCase());
+    b.setAttribute('aria-pressed', String(on()));
+    b.onclick = () => {
+      settings.mtags = on() ? settings.mtags.filter(x => x.toLowerCase() !== t.toLowerCase()) : settings.mtags.concat([t]);
+      store.set('settings', settings); b.setAttribute('aria-pressed', String(on()));
+      if (LIVE.TOKEN) LIVE.call('/profile', { profile: { prefs: { after_meeting: 'tags', after_meeting_tags: settings.mtags } } }).then(() => loadCalendar()).catch(() => null);
+      toast(settings.mtags.length ? 'Meetings with people tagged ' + settings.mtags.join(', ') + ' get your signature pizza.' : 'Pick at least one tag.');
+    };
+    el.appendChild(b);
+  });
+}
+(function modeTagsSetting() {
+  const r = $('#mode-tags'); const sm = r && r.parentElement.querySelector('small');
+  if (sm) sm.textContent = 'Your signature pizza goes out after meetings with people in People who have one of these tags. Untick any meeting on Home to skip it.';
+  SOTR.querySelectorAll('input[name=mode]').forEach(x => x.addEventListener('change', e => {
+    renderModeTags();
+    if (e.target.value === 'tags' && settings.mode === 'tags' && LIVE.TOKEN) LIVE.call('/profile', { profile: { prefs: { after_meeting: 'tags', after_meeting_tags: settings.mtags } } }).then(() => loadCalendar()).catch(() => null);
+    else if (settings.mode === e.target.value && LIVE.TOKEN) setTimeout(() => loadCalendar(), 400);
+  }));
+})();
+const _calStartM = calStart;
+calStart = function (s) {
+  const prefs = (s && s.prefs) || {};
+  if (Array.isArray(prefs.after_meeting_tags)) { settings.mtags = prefs.after_meeting_tags; store.set('settings', settings); }
+  _calStartM(s);
+};
+const _renderSettingsM = renderSettings;
+renderSettings = function () { _renderSettingsM(); renderModeTags(); };

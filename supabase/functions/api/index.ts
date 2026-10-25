@@ -12,7 +12,7 @@ import { pickProvider } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.16.0";
+const VERSION = "api-0.16.1";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -137,7 +137,7 @@ const calCfg = (p: Provider) => ({
   redirectUri: `${env("SUPABASE_URL")}/functions/v1/api/oauth/${p}/callback`,
 });
 
-// Reads the member's meetings from a day ago to a week ahead and saves them. False when it could not.
+// Reads the member's meetings from a day ago to two weeks ahead and saves them. False when it could not.
 async function syncCalendar(memberId: string, p: Provider): Promise<boolean> {
   const info = await rpc<Record<string, any> | null>("sot_integration_tokens", { p_member: memberId, p_provider: p });
   let tokens = info?.tokens as Tokens | undefined;
@@ -148,7 +148,7 @@ async function syncCalendar(memberId: string, p: Provider): Promise<boolean> {
       await rpc("sot_integration_tokens_update", { p_member: memberId, p_provider: p, p_tokens: tokens });
     }
     const now = Date.now();
-    const items = await listMeetings(p, tokens.access, String(info.account ?? ""), new Date(now - 86_400_000), new Date(now + 8 * 86_400_000));
+    const items = await listMeetings(p, tokens.access, String(info.account ?? ""), new Date(now - 86_400_000), new Date(now + 15 * 86_400_000));
     await rpc("sot_meetings_upsert", { p_member: memberId, p_provider: p, p_items: items });
     await rpc("sot_integration_synced", { p_member: memberId, p_provider: p, p_ok: true });
     return true;

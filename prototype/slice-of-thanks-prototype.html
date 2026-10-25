@@ -873,6 +873,8 @@ body.is-free .pro-tag{display:inline-block}
       <h2>After a meeting ends</h2>
       <label class="radio"><input type="radio" name="mode" value="ask" id="mode-ask"><span><b>Ask me each time</b><small>You get a prompt and choose to make a fresh pizza, send your signature pizza, or skip.</small></span></label>
       <label class="radio"><input type="radio" name="mode" value="auto" id="mode-auto"><span><b>Send my signature pizza automatically<span class="pro-tag">Pro</span></b><small>Your saved pizza and note go out on their own after the meeting ends.</small></span></label>
+      <label class="radio"><input type="radio" name="mode" value="tags" id="mode-tags"><span><b>Only people with certain tags<span class="pro-tag">Pro</span></b><small>Your signature pizza goes out after meetings with people in People who have one of the tags you pick.</small></span></label>
+      <div class="chips" id="modeTags" hidden aria-label="Tags that get a pizza after a meeting"></div>
       <label class="radio"><input type="radio" name="mode" value="off" id="mode-off"><span><b>Do nothing</b><small>Make pizzas only when you open the app.</small></span></label>
       <label class="check"><input type="checkbox" id="extOnly"> Only for meetings with people outside my company</label>
     </div>
@@ -1318,7 +1320,7 @@ function renderToday(){
   info.append(h,who,row);li.append(time,info);ul.appendChild(li)});
  const pm=meetings.find(m=>m.status==='prompt');const pc=$('#promptCard');
  if(pm){pc.hidden=false;$('#promptTitle').textContent='Your '+pm.title.toLowerCase()+' with '+pm.who+' wrapped up';pc.dataset.id=pm.id}else pc.hidden=true;
- const modeNames={ask:'Ask me each time',auto:'Send my signature pizza automatically',off:'Do nothing'};
+ const modeNames={ask:'I pick the meetings',auto:'Every meeting, automatically',tags:'People with '+((settings.mtags||[]).join(', ')||'certain tags'),off:'Do nothing'};
  const ml=$('#modeLine');ml.textContent='After meetings: '+modeNames[settings.mode]+'. ';
  const cb=document.createElement('button');cb.className='linkish';cb.textContent='Change in Settings';cb.onclick=()=>show('settings');ml.appendChild(cb);
  const m4=meetings.find(m=>m.id==='m4');$('#simEnd').textContent=m4.status==='upcoming'?'Simulate the 3:30 meeting ending':'Reset the sample day';
@@ -1759,8 +1761,8 @@ function renderSettings(){tokenChips();renderBoxCard();$('#veganDefault').checke
  drawPizza($('#sigCanvas'),signature,96);$('#sigName').textContent=signature.name||'Your signature pizza';
  $('#pName').value=profile.name;$('#pBiz').value=profile.business;$('#pNote').value=profile.note;$('#pLinkLabel').value=profile.linkLabel;$('#pLink').value=profile.link;renderThumbs();
  $('#brand1').value=profile.brand1||'#1f4e79';$('#brand2').value=profile.brand2||'#f1ad2d';['#pLinkLabel','#pLink'].forEach(x=>$(x).readOnly=!isPro());renderPlanCard()}
-document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',e=>{if(e.target.value==='auto'&&!isPro()){$('#mode-'+settings.mode).checked=true;upgrade('auto');return}settings.mode=e.target.value;store.set('settings',settings);
- toast({ask:'You will get a prompt after each meeting.',auto:'Your signature pizza will go out automatically.',off:'After-meeting pizzas are off.'}[settings.mode])}));
+document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',e=>{if((e.target.value==='auto'||e.target.value==='tags')&&!isPro()){$('#mode-'+settings.mode).checked=true;upgrade('auto');return}settings.mode=e.target.value;store.set('settings',settings);
+ toast({ask:'You will get a prompt after each meeting.',auto:'Your signature pizza will go out automatically.',tags:'Pick the tags that get a pizza after meetings.',off:'After-meeting pizzas are off.'}[settings.mode])}));
 $('#extOnly').addEventListener('change',e=>{settings.extOnly=e.target.checked;store.set('settings',settings)});
 [['#pName','name'],['#pBiz','business'],['#pNote','note'],['#pLinkLabel','linkLabel'],['#pLink','link']].forEach(([s,k])=>$(s).addEventListener('input',e=>{profile[k]=e.target.value;saveProfile()}));
 /* Send the signature pizza: it comes out of the oven ready, with your usual box, straight to the Send step. Whoever the pizza was for stays filled in. */

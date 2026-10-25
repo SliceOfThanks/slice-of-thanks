@@ -100,6 +100,19 @@ const PEOPLE = [
   check(sent.rows.length === 2 && sent.rows.every(r => (r.image_data_url || '').indexOf('data:image') === 0), 'Each Gerald pizza goes with its own picture');
   check(sent.rows.every(r => r.pizza.sign && r.pizza.sign.text === 'HAPPY HOLIDAYS') && names.indexOf(sent.rows[0].pizza.name) >= 0, 'Sent pizzas match the preview: ' + sent.rows.map(r => r.pizza.name).join('|'));
   check(sent.rows[0].consent === undefined && sent.rows[1].consent && sent.rows[1].consent.method === 'Picked in People for a group send', 'Permission on file is kept; others use the choice on the screen');
+  // Quick tags right on a card: add an existing tag, add a new one, remove one
+  await inRoot(page, "[...R.querySelectorAll('#tagFilter .chip')].find(c=>c.textContent==='Everyone').click()"); await wait(100);
+  const cy = "[...R.querySelectorAll('#peopleList .person')].find(li=>li.querySelector('h3').textContent==='Cy Park')";
+  await inRoot(page, "(" + cy + ").querySelector('[data-act=tag]').click()"); await wait(150);
+  const qt = await inRoot(page, "const li=" + cy + ";return [...li.querySelectorAll('.quick-tags .chip')].map(c=>c.textContent+':'+c.getAttribute('aria-pressed')).join('|')");
+  check(qt === 'client:false|holiday list:false', 'Quick tags list the existing tags: ' + qt);
+  await inRoot(page, "[...(" + cy + ").querySelectorAll('.quick-tags .chip')].find(c=>c.textContent==='client').click()"); await wait(150);
+  await inRoot(page, "const i=R.querySelector('#qtNew');i.value='golf buddies';i.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter'}))"); await wait(150);
+  await inRoot(page, "[...(" + cy + ").querySelectorAll('.quick-tags .chip')].find(c=>c.textContent==='client').click()"); await wait(150);
+  const qs = (st.bodies['/people/save'] || []).map(x => x.person).filter(p => p.id === 'p3').map(p => (p.tags || []).join(','));
+  check(qs.join('|') === 'client|client,golf buddies|golf buddies', 'Tap to add, type to add new, tap to remove: ' + qs.join('|'));
+  await inRoot(page, "(" + cy + ").querySelector('[data-act=tag]').click()"); await wait(100);
+  st.bodies['/people/save'] = [];
   // Select mode and tagging
   await inRoot(page, "R.querySelector('#bulkBack').click()"); await wait(200);
   await inRoot(page, "[...R.querySelectorAll('#tagFilter .chip')].find(c=>c.textContent==='Everyone').click()"); await wait(100);

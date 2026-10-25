@@ -101,6 +101,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .p-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.p-tag{font-size:.74rem;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--sunk);border:1.5px solid var(--edge);color:var(--ink)}
 .p-tag button{all:unset;cursor:pointer;margin-left:6px;font-weight:700}
 .person.pick{cursor:pointer}.person.picked{outline:3px solid var(--mustard);outline-offset:2px}.p-check{width:22px;height:22px;accent-color:var(--tomato);flex:0 0 auto;margin-top:2px}
+.quick-tags{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:12px;background:var(--sunk);border:2px dashed var(--edge)}
 .sel-bar{position:sticky;bottom:12px;z-index:5;background:var(--surface);border:2.5px solid var(--edge);border-radius:18px;box-shadow:4px 4px 0 var(--shade);padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 .sel-bar[hidden]{display:none}#selCount{font-weight:700}
 .mdy{display:flex;gap:6px}.mdy select{flex:1;min-width:0}.mdy input{width:5.2em;flex:0 0 auto}
@@ -680,7 +681,7 @@ body.is-free .pro-tag{display:inline-block}
       <div class="btn-row"><button class="btn small" id="openBulk">Upload a CSV</button><span class="tag">Pro</span></div>
     </div>
     <div class="inline"><input type="text" id="peopleSearch" placeholder="Search by name, company or tag" aria-label="Search people"><button class="btn small" id="addPersonBtn">Add person</button></div>
-    <div class="chips" id="tagFilter" aria-label="Show people with a tag"></div>
+    <div class="field" style="gap:6px"><label>Filter by tag</label><div class="chips" id="tagFilter" aria-label="Show people with a tag"></div></div>
     <div class="btn-row" id="peopleTools"><button class="btn small" type="button" id="selectMode">Select people</button><button class="btn small" type="button" id="selectAll" hidden>Select all shown</button><button class="btn small primary" type="button" id="sendTagged" hidden></button></div>
     <div class="card" id="addPerson" hidden>
       <h3>Add a person</h3>
@@ -2104,12 +2105,13 @@ function splitTags(t){const out=[];String(t||'').split(/[,;|]/).forEach(x=>{x=x.
 function allTags(){const m={};contacts.forEach(c=>(c.tags||[]).forEach(t=>{const k=t.toLowerCase();m[k]=m[k]||{t,n:0};m[k].n++}));return Object.values(m).sort((a,b)=>b.n-a.n||a.t.localeCompare(b.t))}
 /* Saving a person's tags or dates. The live app sends it to the server. */
 function savePersonFields(c,patch){Object.assign(c,patch)}
-let peopleSel=null,tagF='';
+let peopleSel=null,tagF='',tagOpen=null;
 function shownPeople(){const q=$('#peopleSearch').value.trim().toLowerCase();
  return contacts.filter(c=>(!tagF||(c.tags||[]).some(t=>t.toLowerCase()===tagF.toLowerCase()))&&(!q||c.name.toLowerCase().includes(q)||c.company.toLowerCase().includes(q)||(c.tags||[]).some(t=>t.toLowerCase().includes(q))))}
 function renderPeopleTools(){const tags=allTags();const tf=$('#tagFilter');
  if(tagF&&!tags.some(x=>x.t.toLowerCase()===tagF.toLowerCase()))tagF='';
- tf.hidden=!tags.length;if(tags.length)makeChips(tf,[['','Everyone']].concat(tags.map(x=>[x.t,x.t+' ('+x.n+')'])),()=>tagF,v=>{tagF=v;renderPeople()});
+ tf.hidden=false;if(tags.length)makeChips(tf,[['','Everyone']].concat(tags.map(x=>[x.t,x.t+' ('+x.n+')'])),()=>tagF,v=>{tagF=v;renderPeople()});
+ else tf.innerHTML='<small class="muted">Filter by tag: no tags yet. Tap + Tag on anyone to add one.</small>';
  $('#selectMode').textContent=peopleSel?'Stop selecting':'Select people';$('#selectAll').hidden=!peopleSel;
  const st=$('#sendTagged'),n=tagF?shownPeople().length:0;st.hidden=!tagF||!n;st.textContent='Send to everyone tagged '+tagF+' ('+n+')';
  const bar=$('#selBar');bar.hidden=!peopleSel;if(peopleSel){const k=peopleSel.size;$('#selCount').textContent=k+' selected';$('#selSend').disabled=!k;$('#selTag').disabled=!k}}
@@ -2123,12 +2125,27 @@ function renderPeople(){
    ((c.tags||[]).length?'<div class="p-tags">'+c.tags.map(t=>'<span class="p-tag">'+esc(t)+'</span>').join('')+'</div>':'')+'</div>'+
    '<span class="pill '+(l?(l.opened?'ok':'wait'):'')+'">'+(l?(l.opened?'Opened':'Not opened'):'New')+'</span></div>'+
    '<div class="p-last">'+(l?'Last pizza: '+esc(l.date)+' · '+esc(l.pizza.name):'No pizzas sent yet')+(c.history.length>1?' · '+c.history.length+' sent':'')+(dates?'<br>'+esc(dates):'')+'</div>'+
-   (picking?'':'<div class="btn-row"><button class="btn small primary" data-act="send">'+(c.history.length?'Send another pizza':'Send a pizza')+'</button><button class="btn small" data-act="toggle">'+(selContact===c.id?'Close':'History and notes')+'</button></div>');
+   (picking?'':'<div class="btn-row"><button class="btn small primary" data-act="send">'+(c.history.length?'Send another pizza':'Send a pizza')+'</button><button class="btn small" data-act="toggle">'+(selContact===c.id?'Close':'History and notes')+'</button><button class="btn small ghost" data-act="tag" aria-expanded="'+(tagOpen===c.id)+'">'+(tagOpen===c.id?'Done tagging':'+ Tag')+'</button></div>');
   if(picking){li.onclick=()=>{peopleSel.has(c.id)?peopleSel.delete(c.id):peopleSel.add(c.id);renderPeople()};ul.appendChild(li);return}
+  if(tagOpen===c.id)li.appendChild(quickTagEl(c));
   if(selContact===c.id)li.appendChild(detailEl(c));
+  li.querySelector('[data-act=tag]').onclick=()=>{tagOpen=tagOpen===c.id?null:c.id;renderPeople();if(tagOpen){const i=$('#qtNew');if(i)i.focus()}};
   li.querySelector('[data-act=send]').onclick=()=>{selContact=c.id;resetQs(c);renderPeople();setTimeout(()=>{const el=$('#qsTopic');if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.focus()}},60)};
   li.querySelector('[data-act=toggle]').onclick=()=>{selContact=selContact===c.id?null:c.id;resetQs(c);renderPeople()};
   ul.appendChild(li)})}
+/* Quick tags on a person's card: tap a tag to add or remove it, or type a new one */
+function quickTagEl(c){const d=document.createElement('div');d.className='quick-tags';
+ const has=t=>(c.tags||[]).some(x=>x.toLowerCase()===t.toLowerCase());
+ const set=tags=>{savePersonFields(c,{tags:splitTags(tags.join(','))});renderPeople();const i=$('#qtNew');if(i)i.focus()};
+ const chips=document.createElement('div');chips.className='chips';
+ allTags().map(x=>x.t).forEach(t=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent=t;b.setAttribute('aria-pressed',String(has(t)));
+  b.onclick=()=>set(has(t)?(c.tags||[]).filter(x=>x.toLowerCase()!==t.toLowerCase()):(c.tags||[]).concat(t));chips.appendChild(b)});
+ const row=document.createElement('div');row.className='inline';
+ row.innerHTML='<input type="text" id="qtNew" maxlength="30" placeholder="New tag, like holiday list" aria-label="New tag"><button class="btn small" type="button">Add</button>';
+ const add=()=>{const v=splitTags(row.querySelector('input').value);if(!v.length)return;set((c.tags||[]).concat(v))};
+ row.querySelector('button').onclick=add;row.querySelector('input').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();add()}});
+ if(chips.children.length){const h=document.createElement('small');h.className='muted';h.textContent='Tap a tag to add or remove it.';d.append(h,chips)}
+ d.appendChild(row);return d}
 $('#selectMode').onclick=()=>{peopleSel=peopleSel?null:new Set();selContact=null;renderPeople()};
 $('#selectAll').onclick=()=>{if(!peopleSel)return;const shown=shownPeople(),all=shown.every(c=>peopleSel.has(c.id));shown.forEach(c=>all?peopleSel.delete(c.id):peopleSel.add(c.id));renderPeople()};
 $('#selDone').onclick=()=>{peopleSel=null;renderPeople()};

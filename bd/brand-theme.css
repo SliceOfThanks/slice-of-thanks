@@ -83,3 +83,10 @@ body .alert { border: 2px solid #3E2416 !important; border-radius: 14px !importa
 body .alert-success { background: #DCE8C8 !important; }
 body .alert-danger { background: #F9D5CF !important; }
 body .alert-info, body .alert-warning { background: #F7E4C6 !important; }
+
+/* Hide BD's account sidebar (profile box, My Dashboard, Manage Listing, Account menu).
+   Members use the Account card in the app's Settings for billing, name and email, password and log out.
+   The sidebar is found as the innermost column that holds both the Change Membership Plan link and the Logout link,
+   and the main column next to it then takes the full width. */
+body [class*="col-"]:has(a[href*="/account/upgrade"]):has(a[href*="logout"]):not(:has([class*="col-"] a[href*="/account/upgrade"])) { display: none !important; }
+body .row:has(> [class*="col-"] a[href*="/account/upgrade"]):has(> [class*="col-"] a[href*="logout"]) > [class*="col-"] { width: 100% !important; max-width: 100% !important; flex: 0 0 100% !important; margin-left: 0 !important; }

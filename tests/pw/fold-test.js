@@ -89,6 +89,12 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const fit = await inRoot(page, "const r=R.querySelector('#liveSheet .sheet').getBoundingClientRect();return [Math.round(r.top), Math.round(r.bottom), innerHeight, R.querySelector('#liveSheet').style.transform]");
   check(fit[0] >= 0 && fit[1] <= fit[2], 'Buy more emails sheet is fully on screen: ' + fit.join(','));
   await page.screenshot({ path: '../packs-sheet.png' });
+  // Account card links to BD's account pages in a new tab
+  await page.evaluate(() => { window.__opened = []; window.open = (u) => { window.__opened.push(u); return {}; }; });
+  await inRoot(page, "R.querySelector('#liveAcctInfo').click();R.querySelector('#livePassword').click()"); await wait(100);
+  const op = await page.evaluate(() => window.__opened);
+  check(op.join(',') === '/account/changelisting,/account/password', 'Account card opens name and email, and password: ' + op.join(','));
+  check(await inRoot(page, "return R.querySelector('#liveContact').hidden"), 'Contact us stays hidden until its address is set');
   // A different member signs in on the same browser: the last member's name and box are cleared
   await page.evaluate(() => { const p = JSON.parse(localStorage.getItem('sot_profile') || '{}'); p.name = 'Old Member'; p.business = 'Old Biz'; localStorage.setItem('sot_profile', JSON.stringify(p)); localStorage.setItem('sot_owner', JSON.stringify('someone-else')); });
   await page.reload(); await wait(3500);

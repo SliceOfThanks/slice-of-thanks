@@ -1428,7 +1428,7 @@ $('#upSheet').addEventListener('click',e=>{if(e.target.id==='upSheet')closeUp()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#upSheet').hidden)closeUp()});
 refreshPlan(true);
 
-/* ===== Slice of Thanks live layer v0.13.3 =====
+/* ===== Slice of Thanks live layer v0.13.4 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -1760,6 +1760,7 @@ function renderBilling() {
   btns.append(cp, card);
   if (s.plan !== 'free') { const pk = document.createElement('button'); pk.type = 'button'; pk.className = 'btn small'; pk.textContent = 'Buy more emails'; pk.onclick = openPacks; btns.appendChild(pk); }
   c.appendChild(btns);
+  const cu = $('#liveContact'); if (cu) cu.hidden = !bdLink('contact', '');
   const last = billing && billing.invoices && billing.invoices[0];
   autoFold(c, 'billing', last ? 'Last payment ' + shortDate(last.paidAt || last.date) + ', ' + money(last.totalCents) + '. Invoices, card and billing address.' : 'Invoices, card and billing address');
 }
@@ -1778,6 +1779,13 @@ function openCardSheet() {
     try { w.opener = null; } catch (e) {}
     cardTabOpen = true; closeLiveSheet(); toast('Billing opened in a new tab. Come back here when you are done.');
   } }]);
+}
+/* Open one of BD's pages in a new tab (same tab if pop-ups are blocked) */
+function openBdTab(url) {
+  if (!url) return;
+  const w = window.open(url, '_blank');
+  if (!w) { location.href = url; return; }
+  try { w.opener = null; } catch (e) {}
 }
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && cardTabOpen) { cardTabOpen = false; loadBilling(true); }
@@ -1884,10 +1892,15 @@ handleLogo = function (file) {
   /* Account card at the bottom of Settings: Log out (BD's /logout ends the session) and Delete my account */
   if (LIVE.TOKEN) {
     const ac = document.createElement('div'); ac.className = 'card'; ac.id = 'liveAccount';
-    ac.innerHTML = '<h2>Account</h2><p class="muted" style="margin:4px 0 10px">Log out on this device, or close your account for good.</p>' +
+    ac.innerHTML = '<h2>Account</h2><p class="muted" style="margin:4px 0 10px">Your login details live on our secure account pages. They open in a new tab.</p>' +
+      '<div class="btn-row" style="margin-bottom:10px"><button class="btn small" type="button" id="liveAcctInfo">Name and email</button><button class="btn small" type="button" id="livePassword">Change password</button><button class="btn small" type="button" id="liveContact" hidden>Contact us</button></div>' +
       '<div class="btn-row"><button class="btn small" type="button" id="liveLogout">Log out</button><button class="btn small ghost" type="button" id="liveDelete" style="color:#b3261e">Delete my account and data</button></div>';
     $('#view-settings').appendChild(ac);
     $('#liveLogout').onclick = () => { clearLocal(); location.href = '/logout'; };
+    /* BD's own account pages. Addresses can be changed in app_settings bd_links (manage_account, password, contact). */
+    $('#liveAcctInfo').onclick = () => openBdTab(bdLink('manage_account', '/account/changelisting'));
+    $('#livePassword').onclick = () => openBdTab(bdLink('password', '/account/password'));
+    $('#liveContact').onclick = () => openBdTab(bdLink('contact', ''));
     $('#liveDelete').onclick = openDeleteSheet;
   }
   let t = 0;

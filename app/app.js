@@ -77,7 +77,7 @@ function personParts(o){o=o||{};const n=(o.name||'').trim().split(/\s+/).filter(
 function fillNote(t,o){if(!t)return'';const v=personParts(o);
  const map={'[first name]':v.first,'[last name]':v.last,'[role]':v.role,'[company]':v.company,'{first}':v.first,'{company}':v.company||'your team'};
  let out=t;Object.keys(map).forEach(k=>{const re=new RegExp(k.replace(/[[\]{}]/g,c=>'\\'+c),'gi');out=out.replace(re,map[k]||'\u0000')});
- return out.replace(/ ?\u0000/g,'').replace(/ +([,.!?])/g,'$1').replace(/  +/g,' ').trim()}
+ return out.replace(/ (at|from|with|of|for|in|as) ?\u0000/gi,'\u0000').replace(/ ?\u0000/g,'').replace(/ +([,.!?])/g,'$1').replace(/  +/g,' ').trim()}
 function hasGreeting(t){return /^\s*(hi|hello|hey|dear|hola|good (morning|afternoon|evening))\b/i.test(t||'')}
 function tokenChips(){SOTR.querySelectorAll('.tokens').forEach(w=>{if(w.childElementCount)return;const ta=$('#'+w.dataset.for);
  NOTE_TOKENS.forEach(([tok,lab])=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent='+ '+lab;b.title='Adds '+tok;
@@ -1573,7 +1573,7 @@ $('#upSheet').addEventListener('click',e=>{if(e.target.id==='upSheet')closeUp()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#upSheet').hidden)closeUp()});
 refreshPlan(true);
 
-/* ===== Slice of Thanks live layer v0.16.0 =====
+/* ===== Slice of Thanks live layer v0.16.1 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -1641,9 +1641,9 @@ renderSend = function () {
 
 /* Country and permission fields on the Send step, in People and on CSV lists */
 const COUNTRIES = [['US', 'United States'], ['CA', 'Canada'], ['GB', 'United Kingdom'], ['AU', 'Australia'], ['MX', 'Mexico'], ['ES', 'Spain'], ['DE', 'Germany'], ['FR', 'France'], ['IE', 'Ireland'], ['NL', 'Netherlands'], ['OTHER', 'Another country']];
-const BASIS_OPTIONS = '<option value="one_to_one">We just met and this is a one-to-one thank-you</option>' +
-  '<option value="relationship">We have a current business relationship</option>' +
-  '<option value="permission">They gave me permission to send them messages</option>';
+const BASIS_OPTIONS = '<option value="one_to_one">We just met (a one-to-one thank-you)</option>' +
+  '<option value="relationship">We work together now</option>' +
+  '<option value="permission">They said I can message them</option>';
 function countryOptions(sel, value) {
   COUNTRIES.forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; sel.appendChild(o); });
   sel.value = COUNTRIES.some(x => x[0] === value) ? value : 'US';
@@ -3065,7 +3065,7 @@ function pickSig(fresh) {
   const list = document.createElement('div'); list.style.cssText = 'display:flex;flex-direction:column;gap:8px';
   sigs.items.forEach(it => {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.style.cssText = 'justify-content:flex-start;gap:10px;text-align:left';
-    const c = document.createElement('canvas'); c.width = c.height = 40; b.appendChild(c); try { drawPizza(c, it.pizza, 40); } catch (e) {}
+    const c = document.createElement('canvas'); c.width = c.height = 40; c.style.cssText = 'width:40px;height:40px;flex:none'; b.appendChild(c); try { drawPizza(c, it.pizza, 40); } catch (e) {}
     b.appendChild(document.createTextNode(it.name + (it.kind === 'personal' ? ' (personal)' : '') + (it.id === sigs.main_id ? ' · Main' : '')));
     b.onclick = () => { closeLiveSheet(); applySig(it); }; list.appendChild(b);
   });
@@ -3107,7 +3107,7 @@ function openSigPremades(kind) {
   SIG_PREMADES.filter(x => x.kind === kind).forEach(pm => {
     const it = sigPremade(pm), locked = pm.pro && !isPro();
     const row = document.createElement('div'); row.className = 'sig-pm'; row.style.cssText = 'display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center';
-    const c = document.createElement('canvas'); c.width = c.height = 56; try { drawPizza(c, it.pizza, 56); } catch (e) {}
+    const c = document.createElement('canvas'); c.width = c.height = 56; c.style.cssText = 'width:56px;height:56px;flex:none'; try { drawPizza(c, it.pizza, 56); } catch (e) {}
     const t = document.createElement('div'); t.appendChild(mk('b', '', it.name)); if (locked) { const tg = mk('span', 'pro-tag', 'Pro'); t.appendChild(tg); }
     t.appendChild(mk('div', 'muted', it.desc || ''));
     const add = document.createElement('button'); add.type = 'button'; add.className = 'btn small' + (locked ? '' : ' primary'); add.textContent = 'Add';
@@ -3140,7 +3140,7 @@ function renderSigList() {
   addPm.onclick = () => openSigPremades('business'); head.appendChild(addPm); w.appendChild(head);
   sigs.items.forEach(it => {
     const row = document.createElement('div'); row.className = 'sig-row'; row.style.cssText = 'display:grid;grid-template-columns:48px 1fr;gap:10px;align-items:center;border-top:1.5px solid #E3CBA6;padding-top:10px';
-    const c = document.createElement('canvas'); c.width = c.height = 48; try { drawPizza(c, it.pizza, 48); } catch (e) {}
+    const c = document.createElement('canvas'); c.width = c.height = 48; c.style.cssText = 'width:48px;height:48px;flex:none'; try { drawPizza(c, it.pizza, 48); } catch (e) {}
     const t = document.createElement('div'); t.appendChild(mk('b', '', it.name));
     t.appendChild(mk('div', 'muted', (it.kind === 'personal' ? 'Personal' : 'Business') + (it.id === sigs.main_id ? ' · Main: goes out after meetings' : '')));
     const btns = document.createElement('div'); btns.className = 'btn-row'; btns.style.marginTop = '6px';
@@ -3244,6 +3244,7 @@ PRO_INFO.schedule = ['Plan pizzas ahead', 'Make the pizza before the meeting and
 const _buildPayloadM = buildPayload;
 buildPayload = function () {
   const p = _buildPayloadM();
+  if (p.box && typeof p.box.note === 'string' && p.recipient) p.box.note = fillNote(p.box.note, { name: p.recipient.name, company: p.recipient.company, role: p.recipient.role });
   if (currentMeetingId && cal.meetings.some(x => x.id === currentMeetingId)) p.meeting_id = currentMeetingId;
   if (box.sendAt && new Date(box.sendAt) > new Date()) { p.scheduled_for = new Date(box.sendAt).toISOString(); p.idem = (p.idem + '-plan').slice(0, 90); }
   return p;

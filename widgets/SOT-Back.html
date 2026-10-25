@@ -1,4 +1,4 @@
-<!-- SOT-Back: a Back to the Kitchen bar on BD's account pages (billing, manage account, password). Version 1.1.0
+<!-- SOT-Back: a Back to the Kitchen bar on BD's account pages (billing, manage account, password). Version 1.2.0
      On Change Membership Plan (/account/upgrade) it also shows the member's current plan and what each plan includes,
      and marks Pizza Party as coming soon so nobody can switch to it yet.
      Paste at the very end of BD's Footer - Scripts widget. It only shows on addresses that start with /account.
@@ -15,6 +15,8 @@
 .sot-feat li { margin: 0 0 4px; }
 .sot-feat-lead { margin: 10px 4px 0; font-weight: 700; font-size: 15px; }
 .sot-soon { opacity: .6; }
+/* Wide BD tables (invoices) scroll sideways inside the page instead of cutting off on a phone */
+@media (max-width: 700px) { body .table-responsive, body table { display: block; max-width: 100%; overflow-x: auto; } body .container, body .row { max-width: 100%; } }
 #sot-back span { font-family: 'Shrikhand', Georgia, serif; color: #3E2416; font-size: 18px; }
 </style>
 <script>

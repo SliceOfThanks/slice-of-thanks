@@ -1047,7 +1047,7 @@ function personParts(o){o=o||{};const n=(o.name||'').trim().split(/\s+/).filter(
 function fillNote(t,o){if(!t)return'';const v=personParts(o);
  const map={'[first name]':v.first,'[last name]':v.last,'[role]':v.role,'[company]':v.company,'{first}':v.first,'{company}':v.company||'your team'};
  let out=t;Object.keys(map).forEach(k=>{const re=new RegExp(k.replace(/[[\]{}]/g,c=>'\\'+c),'gi');out=out.replace(re,map[k]||'\u0000')});
- return out.replace(/ ?\u0000/g,'').replace(/ +([,.!?])/g,'$1').replace(/  +/g,' ').trim()}
+ return out.replace(/ (at|from|with|of|for|in|as) ?\u0000/gi,'\u0000').replace(/ ?\u0000/g,'').replace(/ +([,.!?])/g,'$1').replace(/  +/g,' ').trim()}
 function hasGreeting(t){return /^\s*(hi|hello|hey|dear|hola|good (morning|afternoon|evening))\b/i.test(t||'')}
 function tokenChips(){document.querySelectorAll('.tokens').forEach(w=>{if(w.childElementCount)return;const ta=$('#'+w.dataset.for);
  NOTE_TOKENS.forEach(([tok,lab])=>{const b=document.createElement('button');b.type='button';b.className='chip';b.textContent='+ '+lab;b.title='Adds '+tok;

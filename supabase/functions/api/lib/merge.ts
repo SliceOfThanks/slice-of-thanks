@@ -29,5 +29,6 @@ export function fillNote(text: unknown, p: Person): string {
     const re = new RegExp(k.replace(/[[\]{}]/g, (c) => "\\" + c), "gi");
     out = out.replace(re, val || GAP);
   }
-  return out.replace(/ ?\u0000/g, "").replace(/ +([,.!?])/g, "$1").replace(/ {2,}/g, " ").trim();
+  // A blank detail also drops the little word before it, so "everyone at [company]" reads "everyone"
+  return out.replace(/ (at|from|with|of|for|in|as) ?\u0000/gi, "\u0000").replace(/ ?\u0000/g, "").replace(/ +([,.!?])/g, "$1").replace(/ {2,}/g, " ").trim();
 }

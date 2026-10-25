@@ -117,7 +117,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     check(cr.join() === 'false,false,true', plan + ': send step asks for company only: ' + cr);
     await inRoot(page, "const n=R.querySelector('#toName');n.value='Jordan Reyes';n.dispatchEvent(new Event('input',{bubbles:true}));const c=R.querySelector('#toContact');c.value='jordan@b.test';c.dispatchEvent(new Event('input',{bubbles:true}));const k=R.querySelector('#liveCompany');k.value='Brightline';k.dispatchEvent(new Event('input',{bubbles:true}));R.querySelector('#sendNow').click()"); await wait(700);
     const sb = (st.bodies['/send'] || [])[0] || {};
-    check(sb.recipient && sb.recipient.company === 'Brightline' && sb.box.note.indexOf('[company]') >= 0, plan + ': send carries company; the server fills the note');
+    check(sb.recipient && sb.recipient.company === 'Brightline' && sb.box.note === 'Hi Jordan, thanks to the Brightline team.', plan + ': send carries company and the note is filled in: ' + (sb.box && sb.box.note));
     // settings card
     await inRoot(page, "R.querySelector('#tab-settings').click()"); await wait(400);
     const card = await inRoot(page, "return R.querySelector('#presetCount') && R.querySelector('#presetCount').textContent");

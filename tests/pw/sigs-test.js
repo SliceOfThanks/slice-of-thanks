@@ -86,6 +86,9 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
       check(st.items.length === 3 && st.main === st.items[0].id, 'pro: Great Meeting added and the main one stays');
       const rows = await inRoot(page, "return [...R.querySelectorAll('#sigList .sig-row')].map(r=>r.querySelector('b').textContent).join('|')");
       check(rows.split('|').length === 3, 'pro: three rows in Settings: ' + rows);
+      await inRoot(page, "const h=R.querySelector('#sigCard > h2');if(h&&h.getAttribute('aria-expanded')!=='true')h.click()"); await wait(100);
+      const cw = await inRoot(page, "return [...R.querySelectorAll('#sigList .sig-row canvas')].map(c=>Math.round(c.getBoundingClientRect().width)).join(',')");
+      check(cw === '48,48,48', 'pro: signature pictures stay 48px so they do not cover the text: ' + cw);
       const sum = await inRoot(page, "return R.querySelector('#sigCard > .afold-sum').textContent");
       check(sum === '3 signature pizzas. After meetings: The Thank-You Special', 'pro: folded summary: ' + sum);
       if (process.env.SHOT) { await inRoot(page, "const h=R.querySelector('#sigCard > h2');if(h&&h.getAttribute('aria-expanded')!=='true')h.click();const r=R.querySelector('#sigCard').getBoundingClientRect();window.scrollTo(0,scrollY+r.top-10)"); await wait(300); await page.screenshot({ path: process.env.SHOT + '-list.png' }); await inRoot(page, "R.querySelector('#sigPremades').click()"); await wait(300); await page.screenshot({ path: process.env.SHOT + '-pm.png' }); await inRoot(page, "[...R.querySelectorAll('#liveSheet .btn')].find(b=>b.textContent==='Close').click()"); }

@@ -179,6 +179,12 @@
       "commit": "aaf86707a65555d9ad8067a188466a62a4d3e9ba",
       "date": "2026-10-25",
       "notes": "Gerald is Head Chef: full box with note styles and Reserve vibes (Pro). Fixed box patterns. Pro box toppers by month. Billing window in the app. Account card with Log out and Delete my account. Pizza name explained to sender, labelled for recipient."
+    },
+    {
+      "version": "v0.13.1",
+      "commit": "011b3e7fa05daf782751fc217fff6967fd872e30",
+      "date": "2026-10-25",
+      "notes": "Billing window in brand colors with the add-card window working. Sheets fit the screen. Settings cards fold. Presets get Preview and Use it."
     }
   ]
 }

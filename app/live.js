@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.14.4 =====
+/* ===== Slice of Thanks live layer v0.14.5 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -1314,3 +1314,56 @@ renderToday = function () {
     .concat(dates.upcoming.filter(u => !(u.days_away === 0 && (done.has(u.contact_id + u.kind) || done.has(u.name + u.kind)))).map(upcomingRow));
   rows.slice().reverse().forEach(li => ul.insertBefore(li, ul.firstChild));
 };
+
+/* --- Send step: pick someone from People, by name or by tag, or send to everyone with a tag --- */
+let pickQ = '', pickTag = '';
+function pickMatches() {
+  const q = pickQ.trim().toLowerCase(), t = pickTag.toLowerCase();
+  return contacts.filter(c => (!t || (c.tags || []).some(x => x.toLowerCase() === t)) &&
+    (!q || [c.name, c.contact, c.company].concat(c.tags || []).some(v => String(v || '').toLowerCase().indexOf(q) >= 0)));
+}
+function pickPerson(c) {
+  box.to = c.name; box.contact = c.contact || ''; box.company = c.company || ''; box.role = c.role || '';
+  $('#toName').value = box.to; $('#toContact').value = box.contact;
+  const ctry = $('#liveCountry'); if (ctry && c.country) { ctry.value = [...ctry.options].some(o => o.value === c.country) ? c.country : 'OTHER'; }
+  const bs = $('#liveBasis'); if (bs && c.hasConsent) bs.value = 'relationship';
+  if (c.vegan && !pizza.vegan) toast('Heads up: ' + first(c.name) + ' is marked vegan. You can turn on vegan on the Dough step.');
+  pickQ = ''; pickTag = ''; const ps = $('#pickSearch'); if (ps) ps.value = '';
+  renderPicker(); showCoRole(); renderSend();
+}
+function renderPicker() {
+  const sf = $('#sendFields'); if (!sf) return;
+  let w = $('#pickWrap');
+  if (!contacts.length) { if (w) w.hidden = true; return; }
+  if (!w) {
+    w = document.createElement('div'); w.className = 'field'; w.id = 'pickWrap';
+    w.innerHTML = '<label for="pickSearch">Pick from People</label>' +
+      '<div class="two"><input type="text" id="pickSearch" inputmode="search" placeholder="Name, email, company or tag" autocomplete="off">' +
+      '<select id="pickTag" aria-label="Filter by tag"></select></div>' +
+      '<ul class="pick-list" id="pickList" style="list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px"></ul>' +
+      '<button class="btn small" type="button" id="pickAll" hidden></button>';
+    sf.insertBefore(w, sf.firstChild);
+    $('#pickSearch').addEventListener('input', e => { pickQ = e.target.value; renderPicker(); });
+    $('#pickTag').addEventListener('change', e => { pickTag = e.target.value; renderPicker(); });
+    $('#pickAll').onclick = () => { if (pickTag) groupSend(pickMatches(), 'everyone tagged ' + pickTag); };
+  }
+  w.hidden = false;
+  const sel = $('#pickTag'), tags = allTags();
+  sel.innerHTML = '<option value="">All tags</option>' + tags.map(x => '<option>' + esc(x.t) + '</option>').join('');
+  if (pickTag && !tags.some(x => x.t === pickTag)) pickTag = '';
+  sel.value = pickTag; sel.hidden = !tags.length;
+  const list = $('#pickList'); list.innerHTML = '';
+  const m = (pickQ.trim() || pickTag) ? pickMatches() : [];
+  m.slice(0, 6).forEach(c => {
+    const li = document.createElement('li'), b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn small'; b.style.cssText = 'width:100%;justify-content:flex-start;text-align:left;font-weight:600';
+    b.textContent = c.name + (c.contact ? ' · ' + c.contact : '') + ((c.tags || []).length ? ' · ' + c.tags.join(', ') : '');
+    b.onclick = () => pickPerson(c); li.appendChild(b); list.appendChild(li);
+  });
+  if ((pickQ.trim() || pickTag) && !m.length) list.appendChild(mk('li', 'muted', 'No one matches. Type their name and email below.'));
+  if (m.length > 6) list.appendChild(mk('li', 'muted', (m.length - 6) + ' more. Type more of the name to narrow it down.'));
+  const all = $('#pickAll'); all.hidden = !pickTag || m.length < 2;
+  all.textContent = 'Send to all ' + m.length + ' tagged ' + pickTag + (isPro() ? '' : ' (Pro)');
+}
+const _renderSendPick = renderSend;
+renderSend = function () { _renderSendPick(); renderPicker(); };

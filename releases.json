@@ -287,6 +287,12 @@
       "commit": "6794840f59c4c66fc226b3e727ede25b005ca40a",
       "date": "2026-10-25",
       "notes": "Confetti never gets stuck."
+    },
+    {
+      "version": "v0.15.6",
+      "commit": "b5836bfed91821c9a4db01e0d050274e5499068b",
+      "date": "2026-10-25",
+      "notes": "Brand color swatches show in Settings."
     }
   ]
 }

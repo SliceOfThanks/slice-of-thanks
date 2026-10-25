@@ -1,0 +1,25 @@
+<!-- SOT-Back: a Back to the Kitchen bar on BD's account pages (billing, manage account, password). Version 1.0.0
+     Paste at the very end of BD's Footer - Scripts widget. It only shows on addresses that start with /account.
+     The app opens these pages in a new tab, so the button closes that tab and the member lands back in the Kitchen.
+     If the browser will not close the tab, it opens the Kitchen instead. -->
+<style>
+#sot-back { position: sticky; top: 0; z-index: 9999; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 16px; background: #FFF3E0; border-bottom: 2.5px solid #3E2416; font-family: 'Work Sans', Arial, sans-serif; }
+#sot-back a { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border: 2.5px solid #3E2416; border-radius: 999px; box-shadow: 3px 3px 0 #3E2416; background: #D62828; color: #FFF3E0 !important; font-weight: 700; font-size: 15px; text-decoration: none !important; }
+#sot-back a:active { transform: translate(3px, 3px); box-shadow: none; }
+#sot-back span { font-family: 'Shrikhand', Georgia, serif; color: #3E2416; font-size: 18px; }
+</style>
+<script>
+(function () {
+  if (location.pathname.indexOf('/account') !== 0 || document.getElementById('sot-back')) return;
+  var bar = document.createElement('div');
+  bar.id = 'sot-back';
+  bar.innerHTML = '<a href="/kitchen">&larr; Back to the Kitchen</a><span>Slice of Thanks</span>';
+  bar.firstChild.onclick = function (e) {
+    e.preventDefault();
+    try { window.close(); } catch (x) {}
+    setTimeout(function () { location.href = '/kitchen'; }, 300);
+  };
+  var go = function () { document.body.insertBefore(bar, document.body.firstChild); };
+  if (document.body) go(); else document.addEventListener('DOMContentLoaded', go);
+})();
+</script>

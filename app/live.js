@@ -342,7 +342,7 @@ function openCardSheet() {
   const url = bdLink('billing', '/account/billing');
   const p = document.createElement('div');
   p.innerHTML = '<p style="margin:0 0 8px">Your card and billing address are kept on our secure checkout, so your card number never touches the app.</p>' +
-    '<ol class="muted" style="margin:0 0 4px 18px;padding:0;font-size:.92rem"><li>Tap Open secure billing. It opens in a new tab.</li><li>Use Add New Credit Card or Billing Address there.</li><li>Come back to this tab. Your Billing card updates on its own.</li></ol>';
+    '<ol class="muted" style="margin:0 0 4px 18px;padding:0;font-size:.92rem"><li>Tap Open secure billing. It opens in a new tab.</li><li>Use Add New Credit Card or Billing Address there.</li><li>Tap Back to the Kitchen at the top when you are done. Your Billing card updates on its own.</li></ol>';
   liveSheet('Card and billing address', p, [{ label: 'Open secure billing', primary: true, run: () => {
     const w = window.open(url, '_blank');
     if (!w) { location.href = url; return; }

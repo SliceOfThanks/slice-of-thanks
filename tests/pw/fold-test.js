@@ -89,6 +89,15 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const fit = await inRoot(page, "const r=R.querySelector('#liveSheet .sheet').getBoundingClientRect();return [Math.round(r.top), Math.round(r.bottom), innerHeight, R.querySelector('#liveSheet').style.transform]");
   check(fit[0] >= 0 && fit[1] <= fit[2], 'Buy more emails sheet is fully on screen: ' + fit.join(','));
   await page.screenshot({ path: '../packs-sheet.png' });
+  // A different member signs in on the same browser: the last member's name and box are cleared
+  await page.evaluate(() => { const p = JSON.parse(localStorage.getItem('sot_profile') || '{}'); p.name = 'Old Member'; p.business = 'Old Biz'; localStorage.setItem('sot_profile', JSON.stringify(p)); localStorage.setItem('sot_owner', JSON.stringify('someone-else')); });
+  await page.reload(); await wait(3500);
+  const after = await page.evaluate(() => [JSON.parse(localStorage.getItem('sot_owner')), (JSON.parse(localStorage.getItem('sot_profile') || '{}')).name || '']);
+  check(after[0] === 'm1' && after[1] !== 'Old Member', 'New member on the same browser does not see the last member: ' + after.join(' | '));
+  // Same member again: nothing is cleared
+  await page.evaluate(() => { const p = JSON.parse(localStorage.getItem('sot_profile') || '{}'); p.business = 'Keep Me'; localStorage.setItem('sot_profile', JSON.stringify(p)); });
+  await page.reload(); await wait(2000);
+  check(await page.evaluate(() => (JSON.parse(localStorage.getItem('sot_profile') || '{}')).business === 'Keep Me'), 'Same member keeps their saved settings');
   await browser.close();
   console.log(failures ? failures + ' FAILED' : 'ALL PASSED');
   process.exit(failures ? 1 : 0);

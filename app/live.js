@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.13.1 =====
+/* ===== Slice of Thanks live layer v0.13.2 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -134,6 +134,8 @@ new MutationObserver(() => fitOpenSheets()).observe(SOTR, { subtree: true, attri
 window.addEventListener('scroll', fitOpenSheets, { passive: true });
 window.addEventListener('resize', fitOpenSheets);
 if (window.visualViewport) { window.visualViewport.addEventListener('resize', fitOpenSheets); window.visualViewport.addEventListener('scroll', fitOpenSheets); }
+/* Everything this app keeps in the browser: sot_ in the live app (build_app.py renames zabreak_), zabreak_ in the prototype */
+function clearLocal() { try { Object.keys(localStorage).filter(k => k.indexOf('sot_') === 0 || k.indexOf('zabreak_') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) {} }
 function closeLiveSheet() { const b = $('#liveSheet'); if (b) b.hidden = true; }
 
 function askTerms(then) {
@@ -381,7 +383,9 @@ function openCardSheet() {
   alt.textContent = 'Trouble with this window? Open billing in a new tab.';
   wrap.append(note, fr, alt);
   const back = liveSheet('Card and billing address', wrap, [{ label: 'Done', primary: true, run: () => { closeLiveSheet(); loadBilling(true); } }]);
-  back.querySelector('.sheet').style.maxWidth = '760px';
+  const sh = back.querySelector('.sheet'); sh.style.maxWidth = '760px'; sh.style.overflowY = 'hidden';
+  /* The billing page scrolls inside its window; the sheet around it stays still */
+  setTimeout(() => { const room = (parseFloat(sh.style.maxHeight) || innerHeight * 0.9) - (sh.scrollHeight - fr.offsetHeight) - 4; fr.style.height = Math.max(260, room) + 'px'; }, 30);
 }
 async function loadBilling(force) {
   if (!LIVE.session) return;
@@ -433,7 +437,7 @@ function openDeleteSheet() {
     const btn = back.querySelector('.btn.primary'); btn.disabled = true; btn.textContent = 'Deleting...';
     const r = await LIVE.call('/account/delete', { confirm: 'DELETE' });
     if (r && r.ok) {
-      try { Object.keys(localStorage).filter(k => k.indexOf('zabreak_') === 0).forEach(k => localStorage.removeItem(k)); } catch (e) {}
+      clearLocal();
       const done = document.createElement('p'); done.textContent = 'Your account and data are deleted. Thank you for every pizza. Gerald and Potato will miss you.';
       liveSheet('Account deleted', done, []);
       setTimeout(() => { location.href = '/logout'; }, 4000);
@@ -488,7 +492,7 @@ handleLogo = function (file) {
     ac.innerHTML = '<h2>Account</h2><p class="muted" style="margin:4px 0 10px">Log out on this device, or close your account for good.</p>' +
       '<div class="btn-row"><button class="btn small" type="button" id="liveLogout">Log out</button><button class="btn small ghost" type="button" id="liveDelete" style="color:#b3261e">Delete my account and data</button></div>';
     $('#view-settings').appendChild(ac);
-    $('#liveLogout').onclick = () => { store.set('draft', null); location.href = '/logout'; };
+    $('#liveLogout').onclick = () => { clearLocal(); location.href = '/logout'; };
     $('#liveDelete').onclick = openDeleteSheet;
   }
   let t = 0;
@@ -968,6 +972,15 @@ renderSettings = function () { _renderSettingsP(); renderPresetCard(); foldSetti
   if (!LIVE.TOKEN) { account = null; refreshPlan(true); return; }
   const s = await LIVE.call('/session');
   if (!s || !s.member_id) { account = null; refreshPlan(true); return; }
+  /* This browser was last used by a different member: start clean so nobody sees someone else's name, box or draft.
+     A pizza made as a guest just before signing up is kept, without the old box. */
+  const owner = store.get('owner', null);
+  if (owner && owner !== s.member_id) {
+    const d = store.get('draft', null); clearLocal();
+    if (d && d.pizza) store.set('draft', { pizza: d.pizza, at: d.at, special: d.special });
+    store.set('owner', s.member_id); location.reload(); return;
+  }
+  store.set('owner', s.member_id);
   applySession(s);
   loadPeople(); loadPresets(); calStart(s);
   if (s.needs_terms) setTimeout(() => askTerms(() => {}), 600);

@@ -1,0 +1,125 @@
+{
+ "_about": "Gerald's tips on Home, 8 a month, a mix of practical marketing tips for business owners and silly ones. Edit here, then run python3 tools/sync_gerald.py and python3 tools/build_app.py. No em dashes.",
+ "months": {
+  "January": [
+   "Send a thank-you to your five best clients from last year before they get buried in new-year email.",
+   "Ask for a referral in the same note as your thank-you. People say yes when they feel appreciated.",
+   "New year, new pizza. Update your signature pizza so it does not taste like last year.",
+   "Write down three clients who went quiet. Send each one a pizza and a simple question: how is the new year going?",
+   "Resolutions fail by February. Pizza is forever.",
+   "Book your follow-up meetings now. Put a booking link on your next-step button.",
+   "I tried a resolution once. It was to eat less pizza. I lasted nine minutes.",
+   "A short note beats a long one. Two sentences, then sign off."
+  ],
+  "February": [
+   "Valentine's week is a great time to thank clients you love working with. Keep it friendly, not romantic.",
+   "Heart pepperoni says thank you without saying a word.",
+   "Pick one person who sent you business last year and thank them by name for the referral.",
+   "Use a gift code for a February offer, like a discount for booking before the month ends.",
+   "February is short. So is my patience for cold pizza. Send it while it is warm.",
+   "Groundhog Day rule: if you see your shadow, send six more weeks of thank-yous.",
+   "Spell their first name in pepperoni. People always stop and look.",
+   "Follow up within 48 hours of every new lead. Speed wins more than clever wording."
+  ],
+  "March": [
+   "Spring cleaning: tag your People list so you can send the right pizza to the right group.",
+   "St. Patrick's Day is a fun excuse to reach out. Green toppings optional, good luck wishes required.",
+   "Send a pizza to a client who just hit a milestone. Watch for promotions and company news.",
+   "Ask happy clients for a review in your note, with a link on the next-step button.",
+   "I found a four-leaf clover once. It was basil. I put it on a pizza anyway.",
+   "Quarter ends soon. Thank your clients before they get busy closing out the books.",
+   "Add birthdays to People and Gerald will remember them for you.",
+   "Pizza is a circle. Circles have no end. Neither should your follow-up."
+  ],
+  "April": [
+   "Tax season is stressful. A surprise pizza for a client buried in paperwork goes a long way.",
+   "Administrative Professionals' Day is coming. Thank the assistant who always gets you on the calendar.",
+   "Earth Day is a nice reason to send the Garden Veggie or go vegan for the day.",
+   "April Fools' tip: spell PRANK in pepperoni. Then send a real thank-you the next day.",
+   "Check your next-step button. One clear ask works better than three.",
+   "Spring is referral season. People are planning. Remind them you exist.",
+   "I do not believe in April showers. I believe in extra cheese.",
+   "Look at who opened your last pizza but did not book. A friendly follow-up could close it."
+  ],
+  "May": [
+   "Teacher Appreciation Week and Nurses Week are in May. Thank the people who look after your clients and your family.",
+   "Graduation season: congratulate clients whose kids are graduating. They will remember you.",
+   "Mother's Day is a great time to thank the moms who run businesses with you.",
+   "Memorial Day is a time to honor, not to sell. Keep your note simple and sincere.",
+   "Mid-year is a good time to check in with clients you have not talked to since January.",
+   "Plant a seed. Send a pizza. Water both regularly.",
+   "Use personal pizzas for life moments and business pizzas for work moments. Your box changes to match.",
+   "I tried gardening. Everything I grew was basil. I am not complaining."
+  ],
+  "June": [
+   "Father's Day is a good excuse to thank the dads in your network.",
+   "Juneteenth is a day to celebrate and reflect. Keep your note thoughtful.",
+   "Summer slows things down. Use the quiet time to send thank-yous you have been putting off.",
+   "Six months in: thank the clients who made the first half of the year great.",
+   "Sunscreen protects your skin. Thank-you pizzas protect your relationships.",
+   "Wedding season is here. Congratulate clients who are tying the knot.",
+   "Save a box preset for your most common occasion so it takes seconds next time.",
+   "I went to the beach once. A seagull took my pizza. We do not speak of it."
+  ],
+  "July": [
+   "Fourth of July week is quiet in most inboxes. A fun pizza stands out.",
+   "Fireworks confetti makes any summer pizza feel like a celebration.",
+   "Pick a past client and send a just because pizza. No ask. Just thanks.",
+   "Halfway through the year is a great time to ask for testimonials.",
+   "Hot dogs are fine. Pizza is better. I will not be taking questions.",
+   "Connect your calendar so a pizza is ready the moment a meeting ends.",
+   "Keep a list of clients who send you referrals. Tag them so you can thank them as a group.",
+   "Too hot to cook? I will make the pizza. That is literally my job."
+  ],
+  "August": [
+   "Back to school season: congratulate clients sending kids off to college.",
+   "Plan your year-end thank-yous now. December fills up fast.",
+   "Send a pizza after a proposal goes out. It keeps you top of mind while they decide.",
+   "A gift code with a deadline gets more people to act than one with no end date.",
+   "August is the Sunday of summer. Send a pizza to make it feel like a Saturday.",
+   "Check your People list for missing emails. A pizza cannot find someone without one.",
+   "Review the pizzas that got opened most. Do more of whatever those had in common.",
+   "I am not saying I invented summer vacation. I am saying I took a lot of it."
+  ],
+  "September": [
+   "Labor Day is a nice moment to thank the people who work hard for you, like your team and your vendors.",
+   "September is the new January. Clients are back and planning. Reach out now.",
+   "Send a pizza to a client who started working with you this time last year. Happy client anniversary.",
+   "Spell the name of their project in pepperoni. It shows you were paying attention.",
+   "Pumpkin spice everything is coming. I have not decided how I feel about it on pizza.",
+   "Add work anniversaries to People and Gerald will send a pizza on the day.",
+   "Use one clear call to action per pizza. Book a call, leave a review, or claim an offer.",
+   "Fall leaves confetti is in season. Use it before it falls off the menu."
+  ],
+  "October": [
+   "Send it within an hour of the meeting. It lands while they still remember the conversation.",
+   "Spell the main topic in pepperoni. It shows you were listening.",
+   "Halloween is a fun, low-pressure reason to reach out. Bats confetti is in season.",
+   "Boss's Day is in October. Thank the leader who gave you a chance.",
+   "Start your holiday list now. Clients who hear from you in early December remember you.",
+   "Check if they are vegan before you bake. I notice these things.",
+   "I dressed up as a pizza for Halloween. Nobody noticed. I was already a chef.",
+   "Use the next-step button for one clear ask, like booking a follow-up."
+  ],
+  "November": [
+   "Thanksgiving is the easiest time of year to say thank you. Do not wait until December.",
+   "Small Business Saturday is a great reason to thank the small businesses you work with.",
+   "Veterans Day is about gratitude. A simple, sincere note is best.",
+   "Send your client thank-yous the week before Thanksgiving so they land before the holiday rush.",
+   "Gratitude is free. Pizza is close enough.",
+   "Use Send to a group with a holiday preset to reach your whole client list at once.",
+   "I am thankful for cheese, sauce and you. In that order. Kidding. Mostly.",
+   "Ask for a referral in your Thanksgiving note. People are in a giving mood."
+  ],
+  "December": [
+   "Holidays are crowded. Send your client thank-yous in the second week of December so they stand out.",
+   "Use the Holiday Feast pizza and a snow confetti box for a festive touch.",
+   "Year-end is the perfect time to thank clients for the whole year, not just the last project.",
+   "Add a gift code for January bookings. It gives them a reason to start the new year with you.",
+   "I checked my list twice. Everyone is getting pizza.",
+   "Thank your vendors and partners too. They make your work possible.",
+   "Keep holiday notes inclusive. Happy Holidays works for everyone on your list.",
+   "Rest is part of the work. Schedule your last pizzas, then take a real break."
+  ]
+ }
+}

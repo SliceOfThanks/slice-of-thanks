@@ -55,11 +55,27 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const { page } = await setup(browser, st);
   await page.setViewportSize({ width: 402, height: 874 });
   await page.goto(ORIGIN + '/kitchen'); await wait(1500);
+  // Gerald's tips (Crew tab) are this month's set
+  await inRoot(page, "R.querySelector('#tab-gerald').click()"); await wait(300);
+  const month = new Date().toLocaleString('en-US', { month: 'long' });
+  const tc = await inRoot(page, "return R.querySelector('#tipCount').textContent");
+  check(tc === month + ' tip 1 of 8', "Gerald's tips are this month's: " + tc);
   await inRoot(page, "R.querySelector('#tab-make').click()"); await wait(400);
   check(await inRoot(page, "const b=R.querySelector('#kxReset');return !!b&&b.offsetParent!==null"), 'Start over shows in the Kitchen');
   await page.evaluate(() => window.__SOT_DEBUG.goSend()); await wait(200);
   await inRoot(page, "R.querySelector('#back').click()"); await wait(300);
   const before = await inRoot(page, "return R.querySelector('#steps li.on').textContent");
+  // Box step: long option lists are folded, each row shows its current choice
+  const folds = await inRoot(page, "return [...R.querySelectorAll('.panel[data-step=\"4\"] .cfold')].map(f=>f.querySelector('.cf-head').textContent.replace('▾','').trim()+'='+f.classList.contains('open')).join('|')");
+  check(folds.split('|').length === 5 && folds.indexOf('=true') < 0 && folds.indexOf('Box style') === 0, 'Box options start folded: ' + folds);
+  check(await inRoot(page, "const c=R.querySelector('#confettiChips');return c.offsetParent===null"), 'Folded confetti chips are hidden');
+  await inRoot(page, "R.querySelector('#confettiChips').closest('.field').querySelector('.cf-head').click()"); await wait(100);
+  check(await inRoot(page, "return R.querySelector('#confettiChips').offsetParent!==null"), 'Tapping Confetti opens it');
+  await inRoot(page, "[...R.querySelectorAll('#confettiChips .chip')].find(c=>c.textContent.indexOf('Pizza slices')===0).click()"); await wait(100);
+  const cv = await inRoot(page, "return R.querySelector('#confettiChips').closest('.field').querySelector('.cf-val').textContent");
+  check(cv === 'Pizza slices', 'The row shows the new choice: ' + cv);
+  if (process.env.SHOT) { await inRoot(page, "const r=R.querySelector('#styleChips').closest('.field').getBoundingClientRect();window.scrollTo(0,scrollY+r.top-300)"); await wait(200); await page.screenshot({ path: process.env.SHOT }); }
+  await inRoot(page, "R.querySelector('#confettiChips').closest('.field').querySelector('.cf-head').click()"); await wait(100);
   check(before.indexOf('Box') !== -1, 'Moved ahead to Box: ' + before);
   await inRoot(page, "R.querySelector('#kxReset').click()"); await wait(200);
   check((await inRoot(page, "return R.querySelector('#kxReset').textContent")) === 'Tap again to start over', 'First tap asks for a second tap');

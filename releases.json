@@ -173,6 +173,12 @@
       "commit": "b2daf45f83bb13e416264136401456c95f2cde3f",
       "date": "2026-10-24",
       "notes": "Import contacts from Calendly and TidyCal into People (offered after connecting). Hire Gerald: Business or Personal, and How much topping (Light, Regular, Loaded); quick picks get the same choice. Personal sends skip the Meeting field. Header logo smaller. Email: Slice of Thanks text logo and Potato's box with the logo. api-0.12.0, migration import_contacts.sql."
+    },
+    {
+      "version": "v0.13.0",
+      "commit": "aaf86707a65555d9ad8067a188466a62a4d3e9ba",
+      "date": "2026-10-25",
+      "notes": "Gerald is Head Chef: full box with note styles and Reserve vibes (Pro). Fixed box patterns. Pro box toppers by month. Billing window in the app. Account card with Log out and Delete my account. Pizza name explained to sender, labelled for recipient."
     }
   ]
 }

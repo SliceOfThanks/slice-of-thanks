@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.14.7 =====
+/* ===== Slice of Thanks live layer v0.15.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -1003,7 +1003,7 @@ renderSettings = function () { _renderSettingsP(); renderPresetCard(); foldSetti
   }
   store.set('owner', s.member_id);
   applySession(s);
-  loadPeople(); loadPresets(); calStart(s); loadDates();
+  loadPeople(); loadPresets(); calStart(s); loadDates(); loadSigs();
   if (s.needs_terms) setTimeout(() => askTerms(() => {}), 600);
   const d = store.get('draft', null);
   if (d && d.pizza && Date.now() - (d.at || 0) < 7 * 864e5) {
@@ -1367,3 +1367,182 @@ function renderPicker() {
 }
 const _renderSendPick = renderSend;
 renderSend = function () { _renderSendPick(); renderPicker(); };
+
+/* --- More signature pizzas: a list per member (A Slice 1, The Whole Pie 10, Pizza Party 20), business or personal,
+   plus premade ones to add. The main one is the pizza that goes out after meetings. --- */
+let sigs = { items: [], limit: 1, main_id: null, loaded: false }, editingSigId = null;
+const SIG_PREMADES = [
+  { id: 'thanks', kind: 'business', name: 'The Thank-You Special', desc: 'Pepperoni, basil and a handshake in a Kraft box.', make: () => defaultSignature(), box: { style: 'kraft', sticker: 'Thank You', confetti: 'classic', note: 'Thanks for your time today, [first name]. This one is on me.' } },
+  { id: 'meeting', kind: 'business', name: 'Great Meeting', desc: 'Classic Pepperoni in a Classic box.', pm: 'pep', box: { style: 'classic', sticker: 'Great Meeting', confetti: 'classic', note: 'Great meeting today, [first name]. Looking forward to what comes next.' } },
+  { id: 'nice', kind: 'business', name: 'Nice to Meet You', desc: 'A fresh Margherita in a Kraft box.', pm: 'marg', box: { style: 'kraft', sticker: 'Nice to Meet You', confetti: 'classic', note: 'It was great to meet you, [first name].' } },
+  { id: 'client', kind: 'business', vibe: 'client', pro: true, note: 'Welcome aboard, [first name]! We are so glad you are here.' },
+  { id: 'win', kind: 'business', vibe: 'win', pro: true, note: 'Congrats on the big win, [first name]! You earned this one.' },
+  { id: 'referral', kind: 'business', vibe: 'referral', pro: true, note: 'Thank you for the referral, [first name]. It means a lot.' },
+  { id: 'yearend', kind: 'business', vibe: 'yearend', pro: true, note: 'Thank you for a great year, [first name]. Here is to the next one.' },
+  { id: 'thankyou', kind: 'personal', name: 'Thank You So Much', desc: 'Four Cheese in a Kraft box.', pm: 'four', box: { style: 'kraft', sticker: 'Thank You', confetti: 'classic', note: 'Thank you so much, [first name]. You are the best.' } },
+  { id: 'celebrate', kind: 'personal', name: "Let's Celebrate", desc: 'A Supreme in a Classic box.', pm: 'supreme', box: { style: 'classic', sticker: "Let's Do This", confetti: 'classic', note: 'Time to celebrate, [first name]!' } },
+  { id: 'bday', kind: 'personal', vibe: 'bday', pro: true, note: 'Happy birthday, [first name]! Gerald made this one just for you.' },
+  { id: 'love', kind: 'personal', vibe: 'love', pro: true, note: 'Happy anniversary, [first name]. Here is to many more.' },
+  { id: 'retire', kind: 'personal', vibe: 'retire', pro: true, note: 'Happy retirement, [first name]! Enjoy every slice.' },
+  { id: 'holiday', kind: 'personal', vibe: 'holiday', pro: true, note: 'Happy holidays, [first name]! Warm wishes from all of us.' },
+  { id: 'cheers', kind: 'personal', vibe: 'cheers', pro: true, note: 'Cheers to you, [first name]!' }
+];
+function sigPremade(pm) {
+  const rv = pm.vibe ? reserveVibe(pm.vibe) : null;
+  let p;
+  if (rv) p = geraldPizza(pm.vibe, '', !!settings.veganDefault);
+  else if (pm.pm) p = premadePizza(PREMADES.find(x => x.id === pm.pm));
+  else p = pm.make();
+  p.baked = true; p.bake = Math.max(p.bake || 0, .6);
+  const name = rv ? rv.pizza : pm.name;
+  p.name = name;
+  const bx = rv ? { style: rv.style, sticker: rv.sticker, confetti: rv.confetti, note: pm.note } : pm.box;
+  return { name, kind: pm.kind, pizza: cleanPizza(p), box: Object.assign({ kind: pm.kind }, bx), desc: rv ? (STYLES[rv.style] || 'Reserve') + ' box with a ' + rv.sticker + ' sticker. Gerald\'s Reserve.' : pm.desc };
+}
+/* The parts of a box a signature keeps. Photos stay out (they are per send). */
+function sigBoxOf(b) {
+  const keep = ['kind', 'style', 'sticker', 'confetti', 'tone', 'note', 'sign', 'linkLabel', 'link', 'lidText', 'topper'];
+  const o = {}; keep.forEach(k => { if (b && b[k] !== undefined && b[k] !== null) o[k] = b[k]; });
+  if (b && b.reward && b.reward.code) o.reward = { text: b.reward.text || '', code: b.reward.code, link: b.reward.link || '', exp: b.reward.exp || '' };
+  return o;
+}
+const sigMain = () => sigs.items.find(x => x.id === sigs.main_id) || sigs.items[0] || null;
+async function loadSigs() {
+  if (!LIVE.TOKEN || !account) return;
+  const r = await LIVE.call('/signatures').catch(() => null);
+  if (!r || !r.ok) return;
+  sigs = { items: Array.isArray(r.items) ? r.items : [], limit: Number(r.limit) || 1, main_id: r.main_id || null, loaded: true };
+  /* First time: the signature pizza they already had becomes the first one on the list */
+  if (!sigs.items.length && signature) {
+    await saveSigItem({ name: signature.name || 'My signature pizza', kind: 'business', pizza: cleanPizza(signature), box: sigBoxOf(boxFromProfile(null)) }, true, true);
+    return;
+  }
+  const m = sigMain(); if (m && m.pizza) { signature = m.pizza; store.set('signature', signature); }
+  renderSigList();
+}
+async function saveSigItem(item, main, quiet) {
+  let img = '';
+  if (main) { try { img = pizzaImage(clonePizza(item.pizza), false); } catch (e) { img = ''; } }
+  const r = await LIVE.call('/signatures/save', { item: Object.assign({}, item, { main: !!main }), image_data_url: img.length < 1900000 ? img : '' }).catch(() => null);
+  if (!r || !r.ok) {
+    if (!quiet) toast(r && r.code === 'signature_limit' ? 'Your signature pizzas are full (' + r.limit + '). Remove one first.' : MSG.server_error);
+    return null;
+  }
+  if (main) { signature = item.pizza; store.set('signature', signature); }
+  await loadSigs();
+  return r.id;
+}
+/* Put a signature pizza in the Kitchen, ready on the Send step. Whoever it was for stays filled in. */
+function applySig(item) {
+  const to = box.to || '', contact = box.contact || '', company = box.company || '', role = box.role || '';
+  editingSignature = false; editingSigId = null; toggleHire(false);
+  pizza = clonePizza(item.pizza); pizza.baked = true; pizza.bake = Math.max(pizza.bake || 0, .6);
+  box = Object.assign(boxFromProfile(meetings.find(x => x.id === currentMeetingId) || null), item.box || {});
+  if (to) { box.to = to; box.contact = contact; box.company = company; box.role = role; }
+  step = 5; saidStep = -1; show('make'); toast(item.name + ' is ready. Pick who it is for and send.');
+}
+function pickSig(fresh) {
+  if (fresh) { currentMeetingId = null; box.to = ''; box.contact = ''; }
+  if (sigs.items.length <= 1) { const m = sigMain(); if (m) applySig(m); else useSignature(); return; }
+  const list = document.createElement('div'); list.style.cssText = 'display:flex;flex-direction:column;gap:8px';
+  sigs.items.forEach(it => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.style.cssText = 'justify-content:flex-start;gap:10px;text-align:left';
+    const c = document.createElement('canvas'); c.width = c.height = 40; b.appendChild(c); try { drawPizza(c, it.pizza, 40); } catch (e) {}
+    b.appendChild(document.createTextNode(it.name + (it.kind === 'personal' ? ' (personal)' : '') + (it.id === sigs.main_id ? ' · Main' : '')));
+    b.onclick = () => { closeLiveSheet(); applySig(it); }; list.appendChild(b);
+  });
+  liveSheet('Pick a signature pizza', list, []);
+  const back = $('#liveSheet'); if (back) { const row = back.querySelector('.btn-row'); const x = document.createElement('button'); x.type = 'button'; x.className = 'btn ghost'; x.textContent = 'Cancel'; x.onclick = closeLiveSheet; row.appendChild(x); }
+}
+$('#kxSig').onclick = () => pickSig(false);
+$('#sendSig').onclick = () => pickSig(true);
+$('#editSig').onclick = () => { const m = sigMain(); if (m) editSig(m); else { editingSignature = true; currentMeetingId = null; pizza = clonePizza(signature); box = boxFromProfile(null); step = 2; saidStep = -1; show('make'); } };
+function editSig(it) {
+  editingSignature = true; editingSigId = it.id; currentMeetingId = null;
+  pizza = clonePizza(it.pizza); box = Object.assign(boxFromProfile(null), it.box || {}); step = 2; saidStep = -1; show('make');
+  toast('Editing ' + it.name + '. Save it on the Send step.');
+}
+/* Save as my signature pizza: changes the one being edited, or adds a new one (A Slice keeps one, so it is replaced) */
+$('#saveSig').onclick = async function () {
+  const p = clonePizza(pizza); p.baked = true; p.bake = Math.max(p.bake || 0, .6); if (!p.name) p.name = suggestName();
+  const item = { name: p.name, kind: box.kind === 'personal' ? 'personal' : 'business', pizza: cleanPizza(p), box: sigBoxOf(box) };
+  let main = false;
+  if (!sigs.loaded) { signature = p; store.set('signature', signature); syncSignature(); toast('Saved as your signature pizza.'); }
+  else {
+    if (editingSigId) { item.id = editingSigId; const old = sigs.items.find(x => x.id === editingSigId); if (old) item.name = old.name; main = editingSigId === sigs.main_id; }
+    else if (sigs.items.length >= sigs.limit) {
+      if (sigs.limit > 1) { toast('Your signature pizzas are full (' + sigs.limit + '). Remove one in Settings first.'); return; }
+      const only = sigs.items[0]; if (only) item.id = only.id; main = true;
+    } else main = !sigs.items.length;
+    const id = await saveSigItem(item, main); if (!id) return;
+    toast(editingSigId ? 'Saved ' + item.name + '.' : (main ? 'Saved as your signature pizza.' : 'Added ' + item.name + ' to your signature pizzas.'));
+  }
+  if (main) { profile.note = box.note; profile.sign = box.sign; profile.sticker = box.sticker; profile.linkLabel = box.linkLabel; profile.link = box.link; saveProfile(); }
+  editingSigId = null;
+  if (editingSignature) { editingSignature = false; show('settings'); }
+};
+function openSigPremades(kind) {
+  const wrap = document.createElement('div'); wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px';
+  const tabs = document.createElement('div'); tabs.className = 'chips';
+  [['business', 'Business'], ['personal', 'Personal']].forEach(([k, l]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = l; b.setAttribute('aria-pressed', String(k === kind)); b.onclick = () => openSigPremades(k); tabs.appendChild(b); });
+  wrap.appendChild(tabs);
+  SIG_PREMADES.filter(x => x.kind === kind).forEach(pm => {
+    const it = sigPremade(pm), locked = pm.pro && !isPro();
+    const row = document.createElement('div'); row.className = 'sig-pm'; row.style.cssText = 'display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center';
+    const c = document.createElement('canvas'); c.width = c.height = 56; try { drawPizza(c, it.pizza, 56); } catch (e) {}
+    const t = document.createElement('div'); t.appendChild(mk('b', '', it.name)); if (locked) { const tg = mk('span', 'pro-tag', 'Pro'); t.appendChild(tg); }
+    t.appendChild(mk('div', 'muted', it.desc || ''));
+    const add = document.createElement('button'); add.type = 'button'; add.className = 'btn small' + (locked ? '' : ' primary'); add.textContent = 'Add';
+    add.onclick = async () => {
+      if (locked) { closeLiveSheet(); upgrade('reserve'); return; }
+      const full = sigs.items.length >= sigs.limit;
+      if (full && sigs.limit > 1) { toast('Your signature pizzas are full (' + sigs.limit + '). Remove one first.'); return; }
+      if (full) { const only = sigs.items[0]; if (only) it.id = only.id; }
+      add.disabled = true; const main = full || !sigs.items.length;
+      const id = await saveSigItem({ id: it.id, name: it.name, kind: it.kind, pizza: it.pizza, box: it.box }, main);
+      add.disabled = false; if (!id) return;
+      closeLiveSheet(); toast(full ? it.name + ' is now your signature pizza.' : 'Added ' + it.name + ' to your signature pizzas.');
+    };
+    row.append(c, t, add); wrap.appendChild(row);
+  });
+  liveSheet('Premade signature pizzas', wrap, []);
+  const back = $('#liveSheet'); if (back) { const row = back.querySelector('.btn-row'); const x = document.createElement('button'); x.type = 'button'; x.className = 'btn ghost'; x.textContent = 'Close'; x.onclick = closeLiveSheet; row.appendChild(x); }
+}
+function renderSigList() {
+  const card = $('#sigCard'); if (!card || !sigs.loaded) return;
+  let w = $('#sigList');
+  if (!w) { w = document.createElement('div'); w.id = 'sigList'; w.style.cssText = 'display:flex;flex-direction:column;gap:10px;margin-top:12px'; (card.querySelector('.fold-body') || card).appendChild(w); }
+  w.innerHTML = '';
+  const h2 = card.querySelector(':scope > h2'), sm = card.querySelector(':scope > .afold-sum'), m = sigMain();
+  if (h2) h2.textContent = 'Your signature pizzas';
+  if (sm) sm.textContent = sigs.items.length + (sigs.items.length === 1 ? ' signature pizza' : ' signature pizzas') + (m ? '. After meetings: ' + m.name : '');
+  const head = document.createElement('div'); head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap';
+  head.appendChild(mk('b', '', 'Your signature pizzas (' + sigs.items.length + ' of ' + sigs.limit + ')'));
+  const addPm = document.createElement('button'); addPm.type = 'button'; addPm.className = 'btn small'; addPm.id = 'sigPremades'; addPm.textContent = 'Add a premade';
+  addPm.onclick = () => openSigPremades('business'); head.appendChild(addPm); w.appendChild(head);
+  sigs.items.forEach(it => {
+    const row = document.createElement('div'); row.className = 'sig-row'; row.style.cssText = 'display:grid;grid-template-columns:48px 1fr;gap:10px;align-items:center;border-top:1.5px solid #E3CBA6;padding-top:10px';
+    const c = document.createElement('canvas'); c.width = c.height = 48; try { drawPizza(c, it.pizza, 48); } catch (e) {}
+    const t = document.createElement('div'); t.appendChild(mk('b', '', it.name));
+    t.appendChild(mk('div', 'muted', (it.kind === 'personal' ? 'Personal' : 'Business') + (it.id === sigs.main_id ? ' · Main: goes out after meetings' : '')));
+    const btns = document.createElement('div'); btns.className = 'btn-row'; btns.style.marginTop = '6px';
+    const b = (label, fn, primary) => { const x = document.createElement('button'); x.type = 'button'; x.className = 'btn small' + (primary ? ' primary' : ''); x.textContent = label; x.onclick = fn; btns.appendChild(x); };
+    b('Send', () => { currentMeetingId = null; box.to = ''; box.contact = ''; applySig(it); }, true);
+    b('Edit', () => editSig(it));
+    if (it.id !== sigs.main_id && it.kind !== 'personal') b('Make main', async () => { if (await saveSigItem(it, true)) toast(it.name + ' now goes out after meetings.'); });
+    b('Rename', () => {
+      const f = document.createElement('div'); f.className = 'field'; f.innerHTML = '<label for="sigNewName">Name</label><input type="text" id="sigNewName" maxlength="60">';
+      liveSheet('Rename', f, [{ label: 'Save', primary: true, run: async () => { const n = $('#sigNewName').value.trim(); if (!n) return; closeLiveSheet(); if (await saveSigItem(Object.assign({}, it, { name: n }), it.id === sigs.main_id)) toast('Renamed.'); } }]);
+      $('#sigNewName').value = it.name;
+    });
+    if (sigs.items.length > 1 && it.id !== sigs.main_id) b('Remove', () => liveSheet('Remove "' + it.name + '"?', null, [{ label: 'Remove', primary: true, run: async () => { closeLiveSheet(); const r = await LIVE.call('/signatures/remove', { id: it.id }).catch(() => null); if (r && r.ok) { toast('Removed.'); loadSigs(); } else toast(MSG.server_error); } }]));
+    t.appendChild(btns); row.append(c, t); w.appendChild(row);
+  });
+  if (!isPro() && sigs.items.length >= sigs.limit) {
+    const up = document.createElement('button'); up.type = 'button'; up.className = 'linkish'; up.textContent = 'Keep up to 10 signature pizzas on The Whole Pie';
+    up.onclick = () => upgrade('signatures'); w.appendChild(up);
+  }
+}
+PRO_INFO.signatures = ['Keep more signature pizzas', 'Save up to 10 signature pizzas, business and personal, and send any of them in one tap. Pizza Party keeps 20.'];
+const _renderSettingsSigs = renderSettings;
+renderSettings = function () { _renderSettingsSigs(); renderSigList(); };

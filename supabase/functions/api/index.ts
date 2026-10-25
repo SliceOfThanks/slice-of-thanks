@@ -12,7 +12,7 @@ import { pickProvider } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.15.0";
+const VERSION = "api-0.16.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -44,6 +44,8 @@ async function member(req: Request) {
   const claims = await verifyBdToken(req.headers.get("x-sot-auth") ?? undefined, env("BD_SHARED_SECRET"));
   if (!claims) return null;
   const s = await rpc<Record<string, any>>("sot_session", { p: { bd_user_id: claims.uid, bd_sub_id: claims.sub, name: claims.name ?? "", legal_signup: claims.lg === 1, joined: typeof claims.jn === "string" ? claims.jn : "" } });
+  // The signature list can be large; the app loads it from /signatures instead
+  if (s?.prefs && typeof s.prefs === "object" && "signatures" in s.prefs) { const { signatures: _drop, ...rest } = s.prefs; s.prefs = rest; }
   return { claims, session: s };
 }
 
@@ -481,6 +483,18 @@ async function route(req: Request, path: string): Promise<Response> {
     if (imageUrl) await rpc("sot_set_send_image", { p_send: sendId, p_url: imageUrl }).catch(() => null);
     if (!r.due_now) return json(req, r);
     return json(req, { ...r, ...(await deliver(sendId, imageUrl)) });
+  }
+  // More signature pizzas: a list in prefs.signatures (limits per plan in app_settings signature_limits). main: true also makes it the meeting pizza.
+  if (path === "/signatures" && req.method === "GET") {
+    return json(req, { ok: true, ...(await rpc<Record<string, unknown>>("sot_signatures", { p_member: memberId })) });
+  }
+  if (path === "/signatures/save" && req.method === "POST") {
+    const it = body.item ?? {};
+    const imageUrl = body.image_data_url ? await uploadPizza(body.image_data_url, `signature-${memberId}-${Date.now()}`) : null;
+    return json(req, await rpc("sot_save_signature_item", { p_member: memberId, p: { id: it.id ?? null, name: it.name ?? "", kind: it.kind ?? "business", pizza: it.pizza ?? null, box: it.box ?? {}, main: !!it.main, image_url: imageUrl } }));
+  }
+  if (path === "/signatures/remove" && req.method === "POST") {
+    return json(req, await rpc("sot_remove_signature_item", { p_member: memberId, p_id: String(body.id ?? "") }));
   }
   // The signature pizza is kept on the account so it can go out when a meeting ends
   if (path === "/signature" && req.method === "POST") {

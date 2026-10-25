@@ -227,6 +227,12 @@
       "commit": "ca26332ced3cc50807a05308d458d3730c212ef7",
       "date": "2026-10-25",
       "notes": "Tap a tag on any person card to filter People by it."
+    },
+    {
+      "version": "v0.14.4",
+      "commit": "796f062101912050264003a5557422ba322efd09",
+      "date": "2026-10-25",
+      "notes": "Kitchen Start over (tap twice). Billing steps say tap Back to the Kitchen. Dates card hidden until dates.sql is applied."
     }
   ]
 }

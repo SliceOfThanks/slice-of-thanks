@@ -221,6 +221,12 @@
       "commit": "7744a94fda9935ca8f2525bf5b4de6efb0c54fe2",
       "date": "2026-10-25",
       "notes": "+ Tag on every person card. Filter by tag always shows."
+    },
+    {
+      "version": "v0.14.3",
+      "commit": "ca26332ced3cc50807a05308d458d3730c212ef7",
+      "date": "2026-10-25",
+      "notes": "Tap a tag on any person card to filter People by it."
     }
   ]
 }

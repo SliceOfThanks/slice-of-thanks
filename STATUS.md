@@ -1,6 +1,6 @@
 # Build status (read this first in a new session)
 
-Last updated: 2026-10-25. Live code version: v0.14.2 (see releases.json and app_settings.code_version).
+Last updated: 2026-10-25. Live code version: v0.14.3 (see releases.json and app_settings.code_version).
 
 ## Done and live
 - Supabase project cmnclubiarmthibqibuj. Edge Function `api` (api-0.4.0, verify_jwt false, own auth). Tables have RLS with no policies.
@@ -72,6 +72,7 @@ Git tags cannot be pushed. Use commit IDs.
 - v0.14.0 (2026-10-25, commit 5552740, api-0.14.0, migration people_tags.sql): contacts.birthday and contacts.anniversary (text YYYY-MM-DD, 0000 when no year; sot_clean_date), contacts.tags via sot_clean_tags (20 max, 30 chars, case-insensitive unique). sot_save_contact takes tags (tags_mode add merges), birthday, anniversary; sot_people returns them; sot_import_people (POST /people/import, 500 rows) adds or merges. /send/bulk takes row.image_data_url (own picture per send, 10 rows a call). People: #tagFilter, #selectMode, #selectAll, #sendTagged, #selBar (Send pizzas, Add a tag via /people/import, Done); detail #pTags, #pBday, #pAnniv (dateField/readDate). groupSend() fills bulk.rows (fromPeople, hasConsent: consent omitted when on file). Group screen: include checkbox per row, #bulkVibe (mix plus 4 house vibes plus Reserve), #bulkMsg (first, column, same with #bulkMsgText 16 max), bulkPizza() cached per row so preview equals send, openPreview3(). CSV header: First, Last, Email, Company, Role, Country, Consent, Vegan, Birthday, Anniversary, Tags, Message; #saveList. group-test.js added.
 - v0.14.1 (2026-10-25, commit 16d2500, app and unbox CSS): .receipt no longer has transform rotate(-1deg) (Stacey found the tilt confusing).
 - v0.14.2 (2026-10-25, commit 7744a94, app only): each person card has + Tag (quickTagEl: tag chips toggle, #qtNew adds a new tag, saves through savePersonFields). Filter by tag row always shows, with a hint when no one has a tag. ChatGPT's v0.14.0 run was blocked: it was not signed in and landed on the BD coming-soon home page.
+- v0.14.3 (2026-10-25, commit ca26332, app only): .p-tag on cards are buttons (data-tag); tap sets tagF (tap again clears) and scrolls to #tagFilter.
 
 ## Next, in order
 1. Live test the calendar connections with a real Calendly and TidyCal booking (built in v0.10.0), with Stacey's rules:

@@ -116,6 +116,24 @@ function liveSheet(title, bodyEl, actions) {
   row.appendChild(cancel); sh.appendChild(row); back.appendChild(sh); back.hidden = false;
   return back;
 }
+/* Sheets fit the visible screen. On some phones and site layouts a fixed overlay is measured from the page
+   instead of the screen, which pushed the bottom of a sheet out of view. This measures and corrects it. */
+function fitSheet(back) {
+  if (!back || back.hidden) return;
+  back.style.transform = ''; back.style.height = ''; back.style.width = '';
+  const vv = window.visualViewport, r = back.getBoundingClientRect();
+  const top = vv ? vv.offsetTop : 0, left = vv ? vv.offsetLeft : 0, h = vv ? vv.height : innerHeight, w = vv ? vv.width : innerWidth;
+  const dx = left - r.left, dy = top - r.top;
+  if (Math.abs(dx) > 1 || Math.abs(dy) > 1 || Math.abs(r.height - h) > 1) {
+    back.style.transform = 'translate(' + dx + 'px,' + dy + 'px)'; back.style.height = h + 'px'; back.style.width = w + 'px'; back.style.bottom = 'auto'; back.style.right = 'auto';
+  }
+  back.querySelectorAll(':scope > .sheet').forEach(sh => { sh.style.maxHeight = Math.max(240, h - 32) + 'px'; });
+}
+function fitOpenSheets() { SOTR.querySelectorAll('.sheet-back').forEach(b => { if (!b.hidden) fitSheet(b); }); }
+new MutationObserver(() => fitOpenSheets()).observe(SOTR, { subtree: true, attributes: true, attributeFilter: ['hidden'], childList: true });
+window.addEventListener('scroll', fitOpenSheets, { passive: true });
+window.addEventListener('resize', fitOpenSheets);
+if (window.visualViewport) { window.visualViewport.addEventListener('resize', fitOpenSheets); window.visualViewport.addEventListener('scroll', fitOpenSheets); }
 function closeLiveSheet() { const b = $('#liveSheet'); if (b) b.hidden = true; }
 
 function askTerms(then) {
@@ -263,7 +281,7 @@ const _renderPlanCard2 = renderPlanCard;
 renderPlanCard = function () {
   _renderPlanCard2();
   const t = $('#planTeam'); if (t) t.onclick = openPlans;
-  const b = $('#planBilling'); if (b) b.onclick = () => { const c = $('#liveBilling'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  const b = $('#planBilling'); if (b) b.onclick = () => { const c = $('#liveBilling'); if (c) { openFold(c); c.scrollIntoView({ behavior: 'smooth', block: 'start' }); } };
 };
 
 /* --- Billing inside the app: plan, payment history, change plan. Card details stay on BD's secure page. --- */
@@ -310,24 +328,45 @@ function renderBilling() {
   btns.append(cp, card);
   if (s.plan !== 'free') { const pk = document.createElement('button'); pk.type = 'button'; pk.className = 'btn small'; pk.textContent = 'Buy more emails'; pk.onclick = openPacks; btns.appendChild(pk); }
   c.appendChild(btns);
+  const last = billing && billing.invoices && billing.invoices[0];
+  autoFold(c, 'billing', last ? 'Last payment ' + shortDate(last.paidAt || last.date) + ', ' + money(last.totalCents) + '. Invoices, card and billing address.' : 'Invoices, card and billing address');
 }
-/* Card and billing address: BD's own billing page, shown inside the app.
-   Same site, so we can hide BD's header and sidebar and show only the card and address part. */
-const CARD_CSS = 'html.sot-card body{visibility:hidden}html.sot-card .sot-card-area,html.sot-card .sot-card-area *,html.sot-card .modal,html.sot-card .modal *{visibility:visible}' +
-  'html.sot-card .sot-card-area{position:fixed;inset:0;overflow:auto;z-index:2147483000;background:#fff;margin:0;padding:12px;max-width:none;width:auto}' +
-  'html.sot-card .modal-backdrop{z-index:2147483500}html.sot-card .modal{z-index:2147483600}';
+/* Card and billing address: BD's own billing page, shown inside the app and dressed in our colors.
+   Same site, so we can hide BD's header, sidebar and footer. Only parts showing when the page loads are hidden,
+   so BD's add-card window (hidden until opened) still works. */
+const CARD_CSS = 'html,body{background:#FFF3E0!important;color:#3E2416;font-family:"Work Sans",Arial,sans-serif!important}' +
+  'body{padding:10px!important;margin:0!important;min-height:0!important}.sot-card-area{margin:0!important;padding:0!important;width:auto!important;max-width:none!important;float:none!important}' +
+  '.sot-card-area *{font-family:"Work Sans",Arial,sans-serif}.sot-card-area h1,.sot-card-area h2,.sot-card-area h3{font-family:Shrikhand,Georgia,serif!important;font-weight:400!important;color:#3E2416!important}' +
+  '.sot-card-area .panel,.sot-card-area .well,.sot-card-area .card,.sot-card-area .tab-content,.sot-card-area .box{background:#FFFAF2!important;border:2.5px solid #3E2416!important;border-radius:16px!important;box-shadow:3px 3px 0 #3E2416!important}' +
+  '.btn,button.btn,a.btn{border:2.5px solid #3E2416!important;border-radius:999px!important;font-weight:700!important;box-shadow:3px 3px 0 #3E2416!important;background:#FFFAF2!important;color:#3E2416!important;text-shadow:none!important}' +
+  '.btn-success,.btn-primary,.btn-info,.btn-default.active{background:#D62828!important;color:#FFF3E0!important}' +
+  '.nav-tabs{border:0!important}.nav-tabs>li>a{border:2px solid #3E2416!important;border-radius:999px!important;margin:0 6px 6px 0!important;color:#3E2416!important;background:#FFFAF2!important;font-weight:700}' +
+  '.nav-tabs>li.active>a{background:#F5C04E!important}table{background:#FFFAF2}a{color:#C21F1F}' +
+  '.modal-content{border:3px solid #3E2416!important;border-radius:18px!important;background:#FFFAF2!important;box-shadow:5px 5px 0 #3E2416!important}' +
+  'input,select,textarea{border:2px solid #3E2416!important;border-radius:10px!important}';
 function tidyCardFrame(fr) {
   let doc;
   try { doc = fr.contentDocument; } catch (e) { doc = null; }
   if (!doc || !doc.body) return false;
+  const st = doc.createElement('style'); st.textContent = CARD_CSS; doc.head.appendChild(st);
+  const fl = doc.createElement('link'); fl.rel = 'stylesheet'; fl.href = 'https://fonts.googleapis.com/css2?family=Shrikhand&family=Work+Sans:wght@400;600;700&display=swap'; doc.head.appendChild(fl);
   const btn = [...doc.querySelectorAll('a,button')].find(x => (x.textContent || '').includes('Add New Credit Card'));
   if (!btn) return true;
   let area = btn;
   while (area.parentElement && area.parentElement !== doc.body && !(area.textContent || '').includes('Payment History')) area = area.parentElement;
   if (area === doc.body) return true;
   area.classList.add('sot-card-area');
-  const st = doc.createElement('style'); st.textContent = CARD_CSS; doc.head.appendChild(st);
-  doc.documentElement.classList.add('sot-card');
+  const win = fr.contentWindow;
+  const shown = el => { const cs = win.getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden'; };
+  const keep = el => /modal|popup|fancybox|overlay|dialog/i.test((el.id || '') + ' ' + (typeof el.className === 'string' ? el.className : ''));
+  for (let el = area; el && el !== doc.body; el = el.parentElement) {
+    [...(el.parentElement ? el.parentElement.children : [])].forEach(sib => {
+      if (sib === el || ['SCRIPT', 'STYLE', 'LINK', 'NOSCRIPT'].includes(sib.tagName) || keep(sib) || !shown(sib)) return;
+      sib.style.setProperty('display', 'none', 'important');
+    });
+    const par = el.parentElement;
+    if (par && par !== doc.body) ['margin', 'padding'].forEach(k => par.style.setProperty(k, '0', 'important'));
+  }
   return true;
 }
 function openCardSheet() {
@@ -336,9 +375,11 @@ function openCardSheet() {
   const note = document.createElement('p'); note.className = 'muted'; note.style.margin = '0 0 8px';
   note.textContent = 'Add a new card or change your billing address. This is our secure checkout, so your card number never touches the app.';
   const fr = document.createElement('iframe'); fr.title = 'Card and billing address'; fr.src = url;
-  fr.style.cssText = 'width:100%;height:62vh;border:2.5px solid #3E2416;border-radius:12px;background:#fff';
+  fr.style.cssText = 'width:100%;height:calc(90vh - 230px);min-height:320px;border:2.5px solid #3E2416;border-radius:14px;background:#FFF3E0;display:block';
   fr.onload = () => { if (!tidyCardFrame(fr)) { closeLiveSheet(); location.href = url; } };
-  wrap.append(note, fr);
+  const alt = document.createElement('a'); alt.href = url; alt.target = '_blank'; alt.rel = 'noopener'; alt.className = 'muted'; alt.style.fontSize = '.85rem';
+  alt.textContent = 'Trouble with this window? Open billing in a new tab.';
+  wrap.append(note, fr, alt);
   const back = liveSheet('Card and billing address', wrap, [{ label: 'Done', primary: true, run: () => { closeLiveSheet(); loadBilling(true); } }]);
   back.querySelector('.sheet').style.maxWidth = '760px';
 }
@@ -885,14 +926,42 @@ function renderPresetCard() {
     const t = document.createElement('div'); t.innerHTML = '<b></b><br><span class="muted" style="font-size:.85rem"></span>';
     t.querySelector('b').textContent = pr.name; t.querySelector('span').textContent = presetSummary(pr);
     const row = document.createElement('div'); row.className = 'btn-row';
-    [['Edit', () => editPreset(pr)], ['Rename', () => askPresetName('Rename preset', pr.name, async name => { if (await savePreset(pr.id, name)) toast('Renamed.'); })],
+    [['Use it', () => usePreset(pr)], ['Preview', () => previewPreset(pr)], ['Edit', () => editPreset(pr)], ['Rename', () => askPresetName('Rename preset', pr.name, async name => { if (await savePreset(pr.id, name)) toast('Renamed.'); })],
       ['Remove', () => liveSheet('Remove "' + pr.name + '"?', null, [{ label: 'Remove', primary: true, run: async () => { closeLiveSheet(); const r = await LIVE.call('/presets/remove', { id: pr.id }).catch(() => null); if (r && r.ok) { toast('Removed.'); loadPresets(); } else toast(MSG.server_error); } }])]]
-      .forEach(([l, fn]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small' + (l === 'Remove' ? ' ghost' : ''); b.textContent = l; b.onclick = fn; row.appendChild(b); });
+      .forEach(([l, fn]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small' + (l === 'Remove' ? ' ghost' : l === 'Use it' ? ' primary' : ''); b.textContent = l; b.onclick = fn; row.appendChild(b); });
     li.append(t, row); ul.appendChild(li);
   });
+  autoFold(card, 'presets', presets.length ? presets.length + ' saved: ' + presets.map(x => x.name).join(', ') : 'Save box choices you use often');
+}
+/* A preset's box as the recipient sees it: the lid, then the note inside with a sample name */
+function presetBox(pr) {
+  const b = boxFromProfile(null);
+  PRESET_KEYS.forEach(k => { if (pr.data && pr.data[k] !== undefined) b[k] = pr.data[k]; });
+  b.reward = Object.assign({ text: '', code: '', link: '', exp: '' }, (pr.data && pr.data.reward) || {});
+  return b;
+}
+function previewPreset(pr) {
+  const b = presetBox(pr);
+  const w = document.createElement('div'); w.style.cssText = 'display:flex;flex-direction:column;gap:10px';
+  w.innerHTML = '<div class="lid"><div class="lid-logo"></div><div class="lid-biz"></div><div class="lid-sticker"></div><div class="lid-vegan" hidden>Vegan</div></div>' +
+    '<div class="card" style="margin:0"><p class="eyebrow" style="margin:0">Inside the lid</p><p class="hand" style="margin:6px 0 0"></p><p class="hand sign" style="margin:6px 0 0"></p></div>' +
+    '<p class="muted" style="font-size:.85rem;margin:0"></p>';
+  renderLid(w.querySelector('.lid'), w.querySelector('.lid-logo'), w.querySelector('.lid-biz'), w.querySelector('.lid-sticker'), b, false);
+  w.querySelector('.hand').textContent = fillNote(b.note || '', { name: 'Jordan Reyes', company: 'Acme' });
+  w.querySelector('.sign').textContent = b.sign || '';
+  const extra = [b.confetti && b.confetti !== 'none' ? 'Confetti: ' + confName(b.confetti) : '', b.link && isPro() ? 'Button: ' + (b.linkLabel || 'Book a follow-up') : '', b.reward && b.reward.code ? 'Gift under the pizza' : ''].filter(Boolean).join(' · ');
+  w.querySelector('p.muted').textContent = 'Shown with a sample name, Jordan. ' + extra;
+  liveSheet(pr.name, w, [{ label: 'Use it', primary: true, run: () => { closeLiveSheet(); usePreset(pr); } }, { label: 'Show the confetti', run: () => burst(b.confetti) }]);
+}
+/* Start a new pizza with this box already set: make the pizza, and the box step is done */
+function usePreset(pr) {
+  startFresh(null);
+  box = presetBox(pr);
+  renderStep();
+  toast('Your box is set from "' + pr.name + '". Make the pizza, then check the box step before you send.');
 }
 const _renderSettingsP = renderSettings;
-renderSettings = function () { _renderSettingsP(); renderPresetCard(); };
+renderSettings = function () { _renderSettingsP(); renderPresetCard(); foldSettings(); };
 
 /* --- Start: sign in with the BD pass, restore a guest draft --- */
 (async function liveStart() {
@@ -1050,6 +1119,8 @@ function renderCalendarCard() {
     b.onclick = async () => { b.disabled = true; b.textContent = 'Checking...'; await loadCalendar(true); toast('Your meetings are up to date.'); };
     r.appendChild(b); c.appendChild(r);
   }
+  const conn = (cal.integrations || []).filter(x => x.status === 'connected').map(x => CAL_NAMES[x.provider] || x.provider);
+  autoFold(c, 'cal', conn.length ? conn.join(' and ') + ' connected' : 'Connect Calendly or TidyCal');
 }
 async function connectCal(p, b) {
   if (!account) { toast('Sign in first.'); return; }
@@ -1121,6 +1192,6 @@ function calStart(s) {
 renderCalendarCard();
 
 /* Test hook, only when the widget sets data-debug */
-if (host_isDebug()) { window.__SOT_DEBUG = { toppings() { return pizza.toppings.length; }, goSend() { pizza = P_demo(); step = 5; saidStep = 5; show('make'); renderStep(); } }; }
+if (host_isDebug()) { window.__SOT_DEBUG = { toppings() { return pizza.toppings.length; }, box() { return { style: box.style, note: box.note, sticker: box.sticker }; }, goSend() { pizza = P_demo(); step = 5; saidStep = 5; show('make'); renderStep(); } }; }
 function host_isDebug() { return SOTR.host.hasAttribute('data-debug'); }
 function P_demo() { const p = clonePizza(signature); p.baked = true; p.bake = 1; p.tosses = 3; return p; }

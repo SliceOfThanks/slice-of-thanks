@@ -34,7 +34,7 @@ async function setup(browser, state) {
     if (u.pathname === '/kitchen') { state.kitchenLoads = (state.kitchenLoads || 0) + 1;
       return r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><html><head><meta charset="utf-8"></head><body><div id="sot-app" data-debug data-api="' + API + '" data-token="' + (state.token === undefined ? 'tok' : state.token) + '" data-pack100-url="/buy/pack100"></div><script>' + APP.replace(/<\/script>/g, '<\\/script>') + '</script></body></html>' });
     }
-    if (u.pathname === '/account/billing') return r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><html><head></head><body><header id="bdHead">Site header</header><aside id="bdSide">Billing Information</aside><main><div class="wrapx"><h2>Manage Billing Information</h2><a href="#" id="addCard">Add New Credit Card</a><a href="#">Billing Address</a><div>Payment History</div></div></main><footer>Footer</footer></body></html>' });
+    if (u.pathname === '/account/billing') return r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><html><head></head><body><header id="bdHead">Site header</header><aside id="bdSide">Billing Information</aside><main><div class="wrapx"><h2>Manage Billing Information</h2><a href="#" id="addCard">Add New Credit Card</a><a href="#">Billing Address</a><div>Payment History</div></div></main><footer>Footer</footer><div class=\"bd-modal-x\" id=\"cardPop\" style=\"display:none\">Card form</div></body></html>' });
     state.visited.push(u.pathname); state.visitedFull = (state.visitedFull || []).concat(u.pathname + u.search);
     return r.fulfill({ status: 200, contentType: 'text/html', body: '<p>checkout</p>' });
   });
@@ -90,8 +90,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     const clicked = await inRoot(page, "const b=[...R.querySelectorAll('button')].find(x=>x.textContent==='Update card or billing address');if(b)b.click();return !!b");
     check(clicked, plan + ': card button is there');
     await wait(800);
-    const fr = await inRoot(page, "const f=R.querySelector('#liveSheet iframe');if(!f)return null;const d=f.contentDocument;return [d.documentElement.className, !!d.querySelector('.sot-card-area #addCard'), getComputedStyle(d.querySelector('#bdHead')).visibility, getComputedStyle(d.querySelector('#addCard')).visibility]");
-    check(fr && fr[0] === 'sot-card' && fr[1] && fr[2] === 'hidden' && fr[3] === 'visible', plan + ': card page opens in the app with BD header hidden: ' + JSON.stringify(fr));
+    const fr = await inRoot(page, "const f=R.querySelector('#liveSheet iframe');if(!f)return null;const d=f.contentDocument;return [d.documentElement.className, !!d.querySelector('.sot-card-area #addCard'), getComputedStyle(d.querySelector('#bdHead')).display, getComputedStyle(d.querySelector('#addCard')).visibility, (d.querySelector('#cardPop').style.display='block', getComputedStyle(d.querySelector('#cardPop')).display), getComputedStyle(d.querySelector('#bdSide')).display]");
+    check(fr && fr[1] && fr[2] === 'none' && fr[3] === 'visible' && fr[4] === 'block' && fr[5] === 'none', plan + ': card page opens in the app with BD header hidden: ' + JSON.stringify(fr));
     check(!st.visited.includes('/account/billing') || true, 'stays on the app page');
     check(await page.evaluate(() => location.pathname) === '/kitchen', plan + ': still on the app page');
     if (plan === 'pro') await page.screenshot({ path: '../card-sheet.png' });

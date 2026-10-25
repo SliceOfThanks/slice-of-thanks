@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.15.2 =====
+/* ===== Slice of Thanks live layer v0.15.3 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -477,6 +477,19 @@ handleLogo = function (file) {
   let t = 0;
   const save = () => { clearTimeout(t); t = setTimeout(() => LIVE.call('/profile', { profile: { reply_to: $('#liveReply').value.trim() } }), 800); };
   $('#liveReply').addEventListener('input', save);
+  /* Changes save as they type; the Save button saves right away and says so */
+  const row = document.createElement('div'); row.className = 'btn-row'; row.style.alignItems = 'center';
+  row.innerHTML = '<button class="btn small primary" type="button" id="liveYouSave">Save</button><small class="muted" id="liveYouStatus">Changes save as you type.</small>';
+  r.after(row);
+  $('#liveYouSave').onclick = async () => {
+    const rt = $('#liveReply').value.trim();
+    if (rt && rt.indexOf('@') < 1) { toast('That email address does not look right.'); $('#liveReply').focus(); return; }
+    clearTimeout(t); clearTimeout(profTimer); pendingProfile = null;
+    const b = $('#liveYouSave'); b.disabled = true; b.textContent = 'Saving...';
+    const res = await LIVE.call('/profile', { profile: { display_name: profile.name, business_name: profile.business, brand_color_1: profile.brand1 || null, brand_color_2: profile.brand2 || null, reply_to: rt } }).catch(() => null);
+    b.disabled = false; b.textContent = 'Save';
+    if (res && res.ok) { $('#liveYouStatus').textContent = 'Saved.'; toast('Saved.'); } else toast(MSG.server_error);
+  };
 })();
 const _renderSettings = renderSettings;
 renderSettings = function () {

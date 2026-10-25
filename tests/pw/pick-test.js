@@ -75,7 +75,10 @@ const PEOPLE = [
     check((await pick('Not opened')) === 'Bo', plan + ': client and Not opened shows Bo');
     await pick('Everyone'); await inRoot(page, "[...R.querySelectorAll('#tagFilter .chip')].find(c=>c.textContent==='Everyone').click()"); await wait(150);
     await page.evaluate(() => window.__SOT_DEBUG.goSend()); await wait(300);
-    check(await inRoot(page, "const w=R.querySelector('#pickWrap');return !!w&&!w.hidden&&w.offsetParent!==null"), plan + ': Pick from People shows on the Send step');
+    check(await inRoot(page, "const w=R.querySelector('#pickWrap');return !!w&&!w.hidden&&w.offsetParent!==null"), plan + ': Send to shows on the Send step');
+    check(await inRoot(page, "return R.querySelector('#pickBody').hidden && [...R.querySelectorAll('#pickMode .chip')].find(c=>c.getAttribute('aria-pressed')==='true').textContent==='Someone new'"), plan + ': starts on Someone new with the People search hidden');
+    await inRoot(page, "[...R.querySelectorAll('#pickMode .chip')].find(c=>c.textContent==='Someone in People').click()"); await wait(150);
+    check(await inRoot(page, "return !R.querySelector('#pickBody').hidden"), plan + ': Someone in People shows the search');
     const tags = await inRoot(page, "return [...R.querySelectorAll('#pickTag option')].map(o=>o.textContent).join('|')");
     check(tags === 'All tags|client|holiday list', plan + ': tag dropdown lists tags: ' + tags);
     check((await inRoot(page, "return R.querySelectorAll('#pickList button').length")) === 0, plan + ': no list until they type or pick a tag');
@@ -92,6 +95,9 @@ const PEOPLE = [
     const f = await inRoot(page, "return [R.querySelector('#toName').value,R.querySelector('#toContact').value,R.querySelector('#liveCountry').value,R.querySelector('#liveBasis').value].join(',')");
     check(f === 'Ann Lee,ann@x.test,CA,relationship', plan + ': picking fills name, email, country and how you know them: ' + f);
     check((await inRoot(page, "return R.querySelectorAll('#pickList button').length+'/'+R.querySelector('#pickTag').value")) === '0/', plan + ': the list closes after picking');
+    await inRoot(page, "[...R.querySelectorAll('#pickMode .chip')].find(c=>c.textContent==='Someone new').click()"); await wait(150);
+    check((await inRoot(page, "return [R.querySelector('#toName').value,R.querySelector('#toContact').value,R.querySelector('#pickBody').hidden].join(',')")) === ',,true', plan + ': Someone new clears the name and email and hides the search');
+    await inRoot(page, "[...R.querySelectorAll('#pickMode .chip')].find(c=>c.textContent==='Someone in People').click()"); await wait(150);
     await inRoot(page, "const s=R.querySelector('#pickTag');s.value='client';s.dispatchEvent(new Event('change'))"); await wait(100);
     await inRoot(page, "R.querySelector('#pickAll').click()"); await wait(400);
     if (plan === 'pro') {

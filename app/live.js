@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.15.1 =====
+/* ===== Slice of Thanks live layer v0.15.2 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -1316,7 +1316,7 @@ renderToday = function () {
 };
 
 /* --- Send step: pick someone from People, by name or by tag, or send to everyone with a tag --- */
-let pickQ = '', pickTag = '';
+let pickQ = '', pickTag = '', pickOn = false;
 function pickMatches() {
   const q = pickQ.trim().toLowerCase(), t = pickTag.toLowerCase();
   return contacts.filter(c => (!t || (c.tags || []).some(x => x.toLowerCase() === t)) &&
@@ -1337,17 +1337,26 @@ function renderPicker() {
   if (!contacts.length) { if (w) w.hidden = true; return; }
   if (!w) {
     w = document.createElement('div'); w.className = 'field'; w.id = 'pickWrap';
-    w.innerHTML = '<label for="pickSearch">Pick from People</label>' +
+    w.innerHTML = '<label>Send to</label><div class="chips" id="pickMode"></div><div id="pickBody" style="display:flex;flex-direction:column;gap:6px">' +
       '<div class="two"><input type="text" id="pickSearch" inputmode="search" placeholder="Name, email, company or tag" autocomplete="off">' +
       '<select id="pickTag" aria-label="Filter by tag"></select></div>' +
       '<ul class="pick-list" id="pickList" style="list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px"></ul>' +
-      '<button class="btn small" type="button" id="pickAll" hidden></button>';
+      '<button class="btn small" type="button" id="pickAll" hidden></button></div>';
     sf.insertBefore(w, sf.firstChild);
     $('#pickSearch').addEventListener('input', e => { pickQ = e.target.value; renderPicker(); });
     $('#pickTag').addEventListener('change', e => { pickTag = e.target.value; renderPicker(); });
     $('#pickAll').onclick = () => { if (pickTag) groupSend(pickMatches(), 'everyone tagged ' + pickTag); };
   }
   w.hidden = false;
+  /* Someone new types the name and email below; Someone in People shows the search */
+  makeChips($('#pickMode'), [['new', 'Someone new'], ['people', 'Someone in People']], () => pickOn ? 'people' : 'new', v => {
+    const on = v === 'people'; if (on === pickOn) return;
+    pickOn = on; pickQ = ''; pickTag = ''; $('#pickSearch').value = '';
+    if (!on) { box.to = ''; box.contact = ''; box.company = ''; box.role = ''; $('#toName').value = ''; $('#toContact').value = ''; renderSend(); }
+    renderPicker(); if (on) $('#pickSearch').focus();
+  });
+  $('#pickBody').hidden = !pickOn;
+  if (!pickOn) return;
   const sel = $('#pickTag'), tags = allTags();
   sel.innerHTML = '<option value="">All tags</option>' + tags.map(x => '<option>' + esc(x.t) + '</option>').join('');
   if (pickTag && !tags.some(x => x.t === pickTag)) pickTag = '';

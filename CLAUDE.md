@@ -6,6 +6,7 @@ Read docs/Slice_of_Thanks_Build_Blueprint_v7.docx before building. It is the sou
 Stacey (MiniBoss). Not technical with GitHub. She installs code and changes settings; she does not run tests.
 Live testing goes to ChatGPT through one ready-to-paste prompt per release.
 Writing style for anything she reads: plain, direct, no em dashes, no "it's not X, it's Y", no punchy negation strings.
+End every update to Stacey with three clear headings, in this order: "What you need to do next" (numbered steps, or "Nothing right now"), "Next steps in general" (where things stand), and "What I'll build next".
 
 ## Architecture
 - Brilliant Directories (sliceofthanks.app): member accounts, logins, plans, BD payments and Digital Products, admin area.

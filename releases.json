@@ -209,6 +209,12 @@
       "commit": "55527407881005b54c4d1ff8965025fb0944c66b",
       "date": "2026-10-25",
       "notes": "Tags, birthdays and anniversaries in People. Select people or a tag and send to the group. Gerald makes each person their own pizza with its own picture. Preview the first 3. Save a CSV to People."
+    },
+    {
+      "version": "v0.14.1",
+      "commit": "16d2500379e79b0bd10ef9b355ec3c3b52514339",
+      "date": "2026-10-25",
+      "notes": "Gerald's receipt sits straight."
     }
   ]
 }

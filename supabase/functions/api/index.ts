@@ -7,12 +7,12 @@ import { recipientToken, tokenHash } from "./lib/crypto.ts";
 import { buildDateEmail, buildEmail, buildWaitingEmail, SITE } from "./lib/email.ts";
 import { dateBox, datePizza, type DateKind } from "./lib/gerald.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
-import { billingLines, deleteBdUser, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
+import { billingLines, deleteBdUser, fetchBdEmail, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
 import { pickProvider } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.16.1";
+const VERSION = "api-0.17.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -72,6 +72,17 @@ async function syncBilling(memberId: string, bdUserId: number, minSeconds: numbe
     console.error("billing sync", String(e));
   }
   return { checked: true, changed };
+}
+
+async function fillReplyTo(memberId: string, bdUserId: number): Promise<boolean> {
+  if (!env("BD_API_KEY") || !bdUserId) return false;
+  try {
+    const email = await fetchBdEmail({ site: env("BD_SITE_URL") || BD_API_SITE, key: env("BD_API_KEY"), bdUserId });
+    return email ? !!(await rpc<boolean>("sot_fill_reply_to", { p_member: memberId, p_email: email })) : false;
+  } catch (e) {
+    console.error("reply_to fill", String(e));
+    return false;
+  }
 }
 
 async function deliver(sendId: string, pizzaImageUrl?: string) {
@@ -339,7 +350,19 @@ async function route(req: Request, path: string): Promise<Response> {
 
   if (path === "/session") {
     const b = await syncBilling(memberId, m.claims.uid, 600);
-    return json(req, b.changed ? (await member(req))!.session : m.session);
+    // "Where replies go" starts as the login email, so replies and Send one back always reach the member
+    const filled = !m.session?.profile?.reply_to && await fillReplyTo(memberId, m.claims.uid);
+    return json(req, b.changed || filled ? (await member(req))!.session : m.session);
+  }
+  // Send one back: the person who got a pizza adds its sender to their People, without knowing the email
+  if (path === "/sendback" && req.method === "POST") {
+    const hash = await tokenHash(String(body.t ?? "").slice(0, 400));
+    let r = await rpc<Record<string, any>>("sot_send_back", { p_member: memberId, p_hash: hash });
+    if (r?.ok && !r.email && r.sender_member_id && r.sender_bd_user_id && await fillReplyTo(r.sender_member_id, Number(r.sender_bd_user_id))) {
+      r = await rpc<Record<string, any>>("sot_send_back", { p_member: memberId, p_hash: hash });
+    }
+    if (!r?.ok) return json(req, { ok: false, code: r?.code ?? "not_found" });
+    return json(req, { ok: true, added: !!r.added, person: { id: r.id ?? null, name: r.name, company: r.company ?? "", email: r.email ?? "" } });
   }
   if (path === "/purchases/check" && req.method === "POST") {
     const b = await syncBilling(memberId, m.claims.uid, 4);

@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.16.3 =====
+/* ===== Slice of Thanks live layer v0.17.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -1723,3 +1723,158 @@ calStart = function (s) {
 };
 const _renderSettingsM = renderSettings;
 renderSettings = function () { _renderSettingsM(); renderModeTags(); };
+
+/* --- Free trial of The Whole Pie and the Get set up checklist (docs/ONBOARDING_PLAN.md) ---
+   The server starts a 14 day trial on a new A Slice member's first sign in and ends it on its own.
+   The app only explains it: a welcome sheet once, a card on Home, the plan card wording and the checklist. */
+function trialOf() { const s = LIVE.session; return s && s.paid_plan === 'free' && s.trial ? s.trial : null; }
+function savePrefs(p) { if (!LIVE.session) return; LIVE.session.prefs = Object.assign({}, LIVE.session.prefs || {}, p); if (LIVE.TOKEN) LIVE.call('/profile', { profile: { prefs: p } }).catch(() => null); }
+function dayWord(n) { return n === 1 ? '1 day' : n + ' days'; }
+const TRIAL_KEEP = ['Your logo and brand colors on the box', 'Your own button and a gift code', 'Pizzas after meetings and on birthdays that send on their own', 'Send to a whole list at once', '250 emails a month'];
+
+function trialWelcome() {
+  const t = trialOf(); const prefs = (LIVE.session && LIVE.session.prefs) || {};
+  if (!t || !t.active || prefs.trial_welcome) return;
+  const p = document.createElement('div');
+  p.innerHTML = '<p>Gerald has the oven hot and Potato has her helmet on. Welcome to the kitchen.</p>' +
+    '<p><b>Your ' + dayWord(t.days_left) + ' of The Whole Pie start now. No card needed.</b></p>' +
+    '<p class="muted">You get every Whole Pie feature and 50 emails during your trial. When it ends you move to A Slice, which is free forever, unless you upgrade. Nothing you make is lost.</p>';
+  liveSheet('Welcome to Slice of Thanks', p, [{ label: 'Get set up', primary: true, run: () => { closeLiveSheet(); savePrefs({ trial_welcome: true }); show('today'); const c = $('#setupCard'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }]);
+  const b = $('#liveSheet'); const x = b && b.querySelector('.btn.ghost'); if (x) { x.textContent = 'Later'; x.onclick = () => { b.hidden = true; savePrefs({ trial_welcome: true }); }; }
+}
+
+function renderTrialCard() {
+  const home = $('#view-today'); if (!home) return;
+  let c = $('#trialCard'); const t = trialOf(); const prefs = (LIVE.session && LIVE.session.prefs) || {};
+  const ended = t && !t.active;
+  if (!t || (ended && prefs.trial_end_seen)) { if (c) c.remove(); return; }
+  if (!c) { c = mk('div', 'card trial-card'); c.id = 'trialCard'; home.insertBefore(c, home.firstChild); }
+  c.innerHTML = '';
+  const add = (tag, cls, text) => { const e = mk(tag, cls, text); c.appendChild(e); return e; };
+  if (!ended) {
+    const soon = t.days_left <= 3;
+    add('p', 'eyebrow', 'Free trial');
+    add('h2', '', soon ? (t.days_left <= 1 ? 'Your trial ends today' : dayWord(t.days_left) + ' left of The Whole Pie') : 'You are on The Whole Pie for ' + dayWord(t.days_left));
+    add('p', 'muted', soon ? 'Upgrade to keep these when your trial ends:' : 'No card needed. Every Whole Pie feature is on, with 50 emails for your trial.');
+    if (soon) { const ul = add('ul', ''); TRIAL_KEEP.forEach(k => ul.appendChild(mk('li', '', k))); }
+  } else {
+    add('p', 'eyebrow', 'Trial over');
+    add('h2', '', 'You are on A Slice now');
+    add('p', 'muted', 'Your free trial of The Whole Pie ended. Everything you made is saved. Pro items show a Pro tag until you upgrade. These changed:');
+    const ul = add('ul', ''); ['Your logo, button and gift code are off on new pizzas', 'Pizzas after meetings and on birthdays now wait for you to send', 'Send to a group is off', '10 emails a month'].forEach(k => ul.appendChild(mk('li', '', k)));
+  }
+  const row = add('div', 'btn-row');
+  const up = mk('button', 'btn primary small', 'Upgrade to The Whole Pie'); up.type = 'button'; up.onclick = () => goPro(); row.appendChild(up);
+  if (ended) { const ok = mk('button', 'btn ghost small', 'Got it'); ok.type = 'button'; ok.onclick = () => { savePrefs({ trial_end_seen: true }); c.remove(); }; row.appendChild(ok); }
+}
+
+/* Get set up: each step is done when the app can see it, or when the member taps Do it on a step it cannot see */
+function setupSteps() {
+  const s = LIVE.session || {}; const pr = s.profile || {}; const pro = s.plan !== 'free';
+  const go = (view, card) => () => { show(view); if (card) setTimeout(() => { const el = typeof card === 'function' ? card() : $(card); if (el) { openFold(el); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, 80); };
+  const st = [
+    { id: 'name', title: 'Name and business', text: 'Your name, your business, and whether pizzas come from you or the business.', done: () => !!pr.display_name && !!(profile.business || pr.business_name), run: go('settings', '#youCard') },
+    { id: 'reply', title: 'Where replies go', text: 'The email that gets replies to your pizzas.', done: () => !!pr.reply_to, run: go('settings', '#youCard') },
+    { id: 'brand', pro: true, title: 'Logo and brand colors', text: 'Your logo and two colors on every box.', done: () => !!(profile.logo || pr.logo_url), run: go('settings', '#boxCard') },
+    { id: 'sig', title: 'Your signature pizza', text: 'Pick a premade or make your own. It is the pizza that goes out after meetings.', done: () => sigs.items.length > 0, run: go('settings', '#sigCard') },
+    { id: 'test', title: 'Send a test pizza to yourself', text: 'See exactly what people get.', manual: true, run: () => { show('make'); toast('Make a pizza, then send it to your own email.'); } },
+    { id: 'people', title: 'Add your people', text: pro ? 'Upload a CSV, or add three people with birthdays and tags.' : 'Add people one at a time, with birthdays.', done: () => contacts.length >= (pro ? 3 : 1), run: go('people') },
+    { id: 'hire', free: true, title: 'Try Hire Gerald', text: 'Let the Head Chef make a pizza for someone.', manual: true, run: () => { const b = $('#homeHire'); show('today'); if (b) b.click(); } },
+    { id: 'cal', pro: true, title: 'Connect your calendar', text: 'Calendly or TidyCal, so pizzas go out after meetings.', done: () => cal.integrations.length > 0, run: go('settings', calCardEl) },
+    { id: 'dates', title: 'Turn on Gerald never forgets a date', text: pro ? 'Birthday and work anniversary pizzas, sent on their own or waiting for you.' : 'Birthday and work anniversary pizzas wait for you to send.', done: () => datesPrefs.mode === 'wait' || datesPrefs.mode === 'auto', run: go('settings', '#datesCard') }
+  ];
+  return st.filter(x => !(x.pro && !pro) && !(x.free && pro));
+}
+let setupCelebrated = false;
+function renderSetup() {
+  const home = $('#view-today'); const s = LIVE.session; if (!home || !s) return;
+  const prefs = s.prefs || {}; const su = Object.assign({ done: [], skip: [] }, prefs.setup || {});
+  let c = $('#setupCard');
+  if ((!trialOf() && !prefs.setup) || su.dismissed) { if (c) c.remove(); return; }
+  const steps = setupSteps();
+  const isDone = x => su.done.indexOf(x.id) >= 0 || (x.done && x.done());
+  const n = steps.filter(isDone).length, all = steps.every(x => isDone(x) || su.skip.indexOf(x.id) >= 0);
+  if (!c) { c = mk('div', 'card'); c.id = 'setupCard'; const t = $('#trialCard'); if (t) t.after(c); else home.insertBefore(c, home.firstChild); }
+  const open = c.dataset.open !== '0';
+  c.innerHTML = '';
+  const head = mk('div', 'setup-head'); head.appendChild(mk('h2', '', 'Get set up'));
+  const tg = mk('button', 'btn ghost small', open ? 'Fold' : 'Show'); tg.type = 'button'; tg.onclick = () => { c.dataset.open = open ? '0' : '1'; renderSetup(); }; head.appendChild(tg);
+  c.appendChild(head);
+  c.appendChild(mk('p', 'muted', n + ' of ' + steps.length + ' done' + (all ? '. You are all set.' : '')));
+  const bar = mk('div', 'setup-bar'); const fill = mk('i'); fill.style.width = Math.round(100 * n / steps.length) + '%'; bar.appendChild(fill); c.appendChild(bar);
+  if (open) {
+    const ul = mk('ul', 'setup-list');
+    steps.forEach(x => {
+      const d = isDone(x), sk = !d && su.skip.indexOf(x.id) >= 0;
+      const li = mk('li', d ? 'done' : sk ? 'skip' : '');
+      li.appendChild(mk('span', 'tick', d ? '✓' : sk ? '-' : ''));
+      const t = mk('span', 't'); t.appendChild(mk('b', '', x.title)); t.appendChild(mk('small', '', x.text)); li.appendChild(t);
+      const a = mk('span', 'acts');
+      if (!d) {
+        const b = mk('button', 'btn small' + (sk ? '' : ' primary'), 'Do it'); b.type = 'button';
+        b.onclick = () => { if (x.manual) markSetup(x.id, 'done'); x.run(); }; a.appendChild(b);
+        if (!sk) { const k = mk('button', 'linkish', 'Skip'); k.type = 'button'; k.onclick = () => markSetup(x.id, 'skip'); a.appendChild(k); }
+      }
+      li.appendChild(a); ul.appendChild(li);
+    });
+    c.appendChild(ul);
+    const row = mk('div', 'btn-row'); const hide = mk('button', 'btn ghost small', all ? 'Done, hide this' : 'Hide the checklist'); hide.type = 'button';
+    hide.onclick = () => { su.dismissed = true; savePrefs({ setup: su }); c.remove(); }; row.appendChild(hide); c.appendChild(row);
+  }
+  if (all && !su.rewarded && !setupCelebrated && n === steps.length) {
+    setupCelebrated = true; su.rewarded = true; savePrefs({ setup: su });
+    treats.bal += 20; saveTreats(); try { burst('gold'); } catch (_) {}
+    toast('Fully set up! Potato found you an easter egg: +20 Treats');
+  }
+}
+function markSetup(id, kind) {
+  const s = LIVE.session; if (!s) return;
+  const su = Object.assign({ done: [], skip: [] }, (s.prefs || {}).setup || {});
+  const list = kind === 'done' ? su.done : su.skip; if (list.indexOf(id) < 0) list.push(id);
+  savePrefs({ setup: su }); renderSetup();
+}
+
+const _applySessionT = applySession;
+applySession = function (s) {
+  _applySessionT(s);
+  renderTrialCard(); renderSetup();
+  setTimeout(trialWelcome, 900);
+  [1500, 4000].forEach(ms => setTimeout(renderSetup, ms));
+};
+const _showT = show;
+show = function (v) { _showT(v); if (v === 'today' && LIVE.session) { renderTrialCard(); renderSetup(); } };
+const _renderPlanCardT = renderPlanCard;
+renderPlanCard = function () {
+  _renderPlanCardT();
+  const s = LIVE.session; const el = $('#planCard'); if (!s || !el) return;
+  const t = trialOf(); const c = s.credits || {};
+  const h = el.querySelector('h2'); const p = el.querySelector('p.muted');
+  if (t && t.active && h) h.textContent = 'Your plan: The Whole Pie, free trial';
+  if (p && c.bonus) p.textContent = p.textContent.replace('Emails left this month: ' + (c.monthly || 0), 'Emails left this month: ' + (c.monthly || 0) + ' plus ' + c.bonus + (t && t.active ? ' trial emails' : ' bonus emails'));
+  if (p && t && t.active) p.textContent += ' Your trial ends in ' + dayWord(t.days_left) + '. No card needed.';
+};
+
+/* --- Send one back: the pizza page's button brings its link token here. The server adds the sender to People
+   (name, business, reply email) and the Send step is filled in, so nobody has to know or type the email. --- */
+(function catchSendBack() {
+  const q = new URLSearchParams(location.search); const t = q.get('back');
+  if (!t) return;
+  store.set('sendBack', { t: t.slice(0, 400), at: Date.now() });
+  q.delete('back'); q.delete('from');
+  try { history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q.toString() : '')); } catch (e) { /* ignore */ }
+})();
+async function useSendBack() {
+  const sb = store.get('sendBack', null);
+  if (!sb || !LIVE.TOKEN || !LIVE.session) return;
+  store.set('sendBack', null);
+  if (Date.now() - (sb.at || 0) > 7 * 864e5) return;
+  const r = await LIVE.call('/sendback', { t: sb.t }).catch(() => null);
+  if (!r || !r.ok || !r.person) { show('make'); toast('Make a pizza to send back. Add their name and email on the Send step.'); return; }
+  const p = r.person; const who = first(p.name || 'them');
+  if (!pizza.toppings.length || views.make.hidden) startFresh(null);
+  pickPerson({ name: p.name || '', contact: p.email || '', company: p.company || '', hasConsent: !!p.email });
+  if (p.email) loadPeople();
+  toast(p.email ? 'Make a pizza back for ' + who + '. ' + (r.added ? 'They are in your People now, ' : '') + 'their email is filled in on the Send step.' : 'Make a pizza back for ' + who + '. Add their email on the Send step.');
+}
+const _applySessionB = applySession;
+applySession = function (s) { _applySessionB(s); setTimeout(useSendBack, 300); };

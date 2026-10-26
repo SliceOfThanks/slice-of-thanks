@@ -62,6 +62,18 @@ export async function fetchTransactions(opts: { site: string; key: string; bdUse
   return j;
 }
 
+// A member's login email, used to fill "Where replies go" when they have not set one. BD API: GET {site}/api/v2/user/get/{user_id}.
+export async function fetchBdEmail(opts: { site: string; key: string; bdUserId: number; fetchFn?: typeof fetch }): Promise<string | null> {
+  const res = await (opts.fetchFn ?? fetch)(opts.site.replace(/\/+$/, "") + "/api/v2/user/get/" + encodeURIComponent(String(opts.bdUserId)), {
+    headers: { "X-Api-Key": opts.key, accept: "application/json" }, signal: AbortSignal.timeout(6000), redirect: "manual",
+  });
+  const j = await res.json().catch(() => null);
+  if (!res.ok || !j || (j.status && j.status !== "success")) return null;
+  const m = Array.isArray(j.message) ? j.message[0] : j.message;
+  const e = String(m?.email ?? "").trim().toLowerCase();
+  return e.includes("@") && e.length <= 200 ? e : null;
+}
+
 export type Invoice = { id: string; number: string; date: string | null; paidAt: string | null; status: string; totalCents: number; items: { description: string; amountCents: number }[] };
 
 const cents = (v: unknown) => { const n = Math.round(parseFloat(String(v ?? "0")) * 100); return isNaN(n) ? 0 : n; };

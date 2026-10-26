@@ -1,4 +1,4 @@
-/* Slice of Thanks recipient page (unbox) v0.2.0
+/* Slice of Thanks recipient page (unbox) v0.2.1
    Delivery by Potato, open the box, six-slice pizza, sender's button under the pizza,
    Gerald's receipt on the same screen, gift after the sixth slice, send a pizza back.
    Needs shared/pizza-core.js loaded first. Mounts into #sot-unbox. */
@@ -20,7 +20,7 @@
       sent: function (s) { return s + ' sent you a pizza'; }, named: function (s) { return 'Your pizza, named by ' + s; }, from: 'from', open: 'Open the box', see: 'See your pizza', tap: 'Tap a slice to eat it.',
       togo: function (n) { return n + ' to go.'; }, lines: ['Mmm.', 'Gerald is watching. He approves.', 'Halfway there.', 'Potato is drooling.', 'One more slice.'],
       tease: function (s) { return s + ' hid something under this pizza. Eat all 6 slices to find out.'; },
-      gone: 'All gone.', ate: 'You ate all 6 slices. Gerald is impressed. Potato is a little jealous.',
+      gone: 'All gone.', received: 'All gone. Thanks received.', to: 'To', ate: 'You ate all 6 slices. Gerald is impressed. Potato is a little jealous.',
       under: 'Under the pizza', copy: 'Copy code', copied: 'Copied!', use: 'Use it now', useBy: function (d) { return 'Use it by ' + d; },
       back: function (s) { return 'Send ' + s + ' a pizza back'; }, review: "GERALD'S REVIEW", critic: 'Head Chef, Slice of Thanks',
       rating: function (n) { return 'Rating: ' + n + ' of 5 slices'; }, eaten: function (n) { return 'Slices eaten: ' + '●'.repeat(n) + '○'.repeat(6 - n) + ' ' + n + ' of 6'; },
@@ -35,7 +35,7 @@
       sent: function (s) { return s + ' te envió una pizza'; }, named: function (s) { return 'Tu pizza, bautizada por ' + s; }, from: 'de', open: 'Abre la caja', see: 'Mira tu pizza', tap: 'Toca una porción para comerla.',
       togo: function (n) { return 'Faltan ' + n + '.'; }, lines: ['Mmm.', 'Gerald te está mirando. Lo aprueba.', 'Vas a la mitad.', 'A Potato se le hace agua la boca.', 'Una porción más.'],
       tease: function (s) { return s + ' escondió algo debajo de esta pizza. Come las 6 porciones para descubrirlo.'; },
-      gone: 'Se acabó.', ate: 'Te comiste las 6 porciones. Gerald está impresionado. Potato tiene un poco de envidia.',
+      gone: 'Se acabó.', received: 'Se acabó. Gracias recibidas.', to: 'Para', ate: 'Te comiste las 6 porciones. Gerald está impresionado. Potato tiene un poco de envidia.',
       under: 'Debajo de la pizza', copy: 'Copiar código', copied: '¡Copiado!', use: 'Úsalo ahora', useBy: function (d) { return 'Úsalo antes del ' + d; },
       back: function (s) { return 'Envíale una pizza a ' + s; }, review: 'RESEÑA DE GERALD', critic: 'Chef principal, Slice of Thanks',
       rating: function (n) { return 'Calificación: ' + n + ' de 5 porciones'; }, eaten: function (n) { return 'Porciones comidas: ' + '●'.repeat(n) + '○'.repeat(6 - n) + ' ' + n + ' de 6'; },
@@ -166,7 +166,7 @@
     ]);
     var done = el('div', { class: 'u-stage', hidden: true });
     s2.appendChild(eatBtn); s2.appendChild(hint); if (cta) s2.appendChild(cta); if (tease) s2.appendChild(tease); s2.appendChild(done); s2.appendChild(receipt);
-    var backBtn = el('a', { class: 'u-btn', href: SITE + '/kitchen?from=pizza', text: t.back(whoFirst), onclick: function () { track('send_back_started'); } });
+    var backBtn = el('a', { class: 'u-btn', href: SITE + '/kitchen?from=pizza' + (TOKEN && !DEMO ? '&back=' + encodeURIComponent(TOKEN) : ''), text: t.back(whoFirst), onclick: function () { track('send_back_started'); } });
     s2.appendChild(backBtn);
     ROOT.appendChild(s2);
     ROOT.appendChild(footer(who, sender));
@@ -208,9 +208,17 @@
       track('pizza_completed');
       setTimeout(function () {
         eatBtn.hidden = true; hint.hidden = true; if (tease) tease.hidden = true;
-        done.appendChild(el('img', { class: 'u-empty', src: BASE + '/brand/characters/empty-box.svg', alt: 'An empty pizza box with crumbs' }));
-        done.appendChild(el('img', { class: 'u-celebrate', src: BASE + '/brand/characters/potato-celebrate.png', alt: 'Potato celebrating' }));
-        done.appendChild(el('h2', { text: t.gone }));
+        // The open box: the note card stays on the inside of the lid, and the box below is empty
+        var cardIn = el('div', { class: 'u-note' }, [
+          d.recipient_name ? el('span', { class: 'u-to', text: t.to + ': ' + first(d.recipient_name) }) : null,
+          el('p', { class: 'u-note-text', text: box.note || '' }),
+          el('p', { class: 'u-note-sign', text: box.sign || [sender.name, sender.business].filter(Boolean).join(', ') }),
+          gift ? el('span', { class: 'u-note-gift', text: (lang === 'es' ? 'Código de regalo: ' : 'Gift code: ') + gift.code }) : null
+        ]);
+        done.appendChild(el('div', { class: 'u-open' }, [
+          el('div', { class: 'u-lidin', 'data-style': box.style || 'kraft' }, [cardIn]),
+          el('div', { class: 'u-base' }, [el('div', { class: 'u-base-in' }, [el('p', { text: t.received })])])
+        ]));
         if (gift) {
           track('gift_revealed');
           var codeEl = el('span', { class: 'u-code', text: gift.code });

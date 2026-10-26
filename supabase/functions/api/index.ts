@@ -13,7 +13,7 @@ import { fillNote } from "./lib/merge.ts";
 import { sendCustomer, sendSale } from "./lib/partnero.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.20.0";
+const VERSION = "api-0.21.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -633,6 +633,12 @@ async function route(req: Request, path: string): Promise<Response> {
   }
   if (path === "/people/save" && req.method === "POST") {
     return json(req, await rpc("sot_save_contact", { p_member: memberId, p: body.person ?? {} }));
+  }
+  // Remove people from People (one or many). People with a scheduled pizza still waiting are kept.
+  if (path === "/people/remove" && req.method === "POST") {
+    const ids = Array.isArray(body.ids) ? body.ids.filter((x: unknown) => typeof x === "string").slice(0, 1000) : [];
+    if (!ids.length) return json(req, { ok: false, code: "nothing_selected" });
+    return json(req, await rpc("sot_remove_people", { p_member: memberId, p_ids: ids }));
   }
   // Save a CSV list to People (up to 500 rows): new people are added, people already there get the new tags
   if (path === "/people/import" && req.method === "POST") {

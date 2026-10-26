@@ -798,7 +798,7 @@ body.is-free .pro-tag{display:inline-block}
       <div class="btn-row"><button class="btn primary small" id="savePerson">Save</button><button class="btn ghost small" id="cancelPerson">Cancel</button></div>
     </div>
     <ul class="people" id="peopleList"></ul>
-    <div class="sel-bar" id="selBar" hidden><span id="selCount"></span><div class="btn-row"><button class="btn small primary" type="button" id="selSend">Send pizzas</button><button class="btn small" type="button" id="selTag">Add a tag</button><button class="btn small ghost" type="button" id="selDone">Done</button></div></div>
+    <div class="sel-bar" id="selBar" hidden><span id="selCount"></span><div class="btn-row"><button class="btn small primary" type="button" id="selSend">Send pizzas</button><button class="btn small" type="button" id="selTag">Add a tag</button><button class="btn small" type="button" id="selRemove">Remove</button><button class="btn small ghost" type="button" id="selDone">Done</button></div></div>
   </section>
 
   <!-- GERALD -->
@@ -2427,7 +2427,7 @@ function renderPeopleTools(){const tags=allTags();const tf=$('#tagFilter');
  makeChips($('#openFilter'),[['','Everyone'],['opened','Opened ('+cnt('opened')+')'],['not','Not opened ('+cnt('not')+')'],['new','No pizza yet ('+cnt('new')+')']],()=>openF,v=>{openF=v&&v===openF?'':v;renderPeople()});
  $('#selectMode').textContent=peopleSel?'Stop selecting':'Select people';$('#selectAll').hidden=!peopleSel;
  const st=$('#sendTagged'),n=tagF?shownPeople().length:0;st.hidden=!tagF||!n;st.textContent='Send to everyone tagged '+tagF+' ('+n+')';
- const bar=$('#selBar');bar.hidden=!peopleSel;if(peopleSel){const k=peopleSel.size;$('#selCount').textContent=k+' selected';$('#selSend').disabled=!k;$('#selTag').disabled=!k}}
+ const bar=$('#selBar');bar.hidden=!peopleSel;if(peopleSel){const k=peopleSel.size;$('#selCount').textContent=k+' selected';$('#selSend').disabled=!k;$('#selTag').disabled=!k;$('#selRemove').disabled=!k}}
 function renderPeople(){
  renderPeopleTools();const ul=$('#peopleList');ul.innerHTML='';const list=shownPeople();
  if(!list.length){const li=document.createElement('li');li.className='muted';li.textContent=contacts.length?'No one matches these filters.':'No one here yet. Add a person or upload a CSV.';ul.appendChild(li);return}
@@ -2464,6 +2464,10 @@ function quickTagEl(c){const d=document.createElement('div');d.className='quick-
 $('#selectMode').onclick=()=>{peopleSel=peopleSel?null:new Set();selContact=null;renderPeople()};
 $('#selectAll').onclick=()=>{if(!peopleSel)return;const shown=shownPeople(),all=shown.every(c=>peopleSel.has(c.id));shown.forEach(c=>all?peopleSel.delete(c.id):peopleSel.add(c.id));renderPeople()};
 $('#selDone').onclick=()=>{peopleSel=null;renderPeople()};
+$('#selRemove').onclick=()=>{if(peopleSel&&peopleSel.size)askRemove([...peopleSel])};
+/* Remove people: their pizza history stays in your totals, they leave your People list */
+function askRemove(ids){const n=ids.length,who=n===1?(contacts.find(c=>c.id===ids[0])||{}).name||'this person':n+' people';if(confirm('Remove '+who+' from People?'))removePeople(ids)}
+function removePeople(ids){const n=ids.length;ids.forEach(id=>{const i=contacts.findIndex(c=>c.id===id);if(i>=0)contacts.splice(i,1)});peopleSel=null;selContact=null;toast('Removed '+n+(n===1?' person':' people')+' from People.');renderPeople()}
 $('#selSend').onclick=()=>{if(peopleSel&&peopleSel.size)groupSend(contacts.filter(c=>peopleSel.has(c.id)),peopleSel.size+' people you picked')};
 $('#sendTagged').onclick=()=>{if(tagF)groupSend(shownPeople(),'everyone tagged '+tagF)};
 $('#selTag').onclick=()=>{if(!peopleSel||!peopleSel.size)return;const t=prompt('Tag to add to '+peopleSel.size+' people');const tags=splitTags(t);if(!tags.length)return;
@@ -2486,8 +2490,10 @@ function detailEl(c){
   (c.history.length?'<h3>History</h3><ul class="hist" id="qsHist"></ul>':'')+
   '<div class="field"><label for="pTags">Tags</label><input type="text" id="pTags" maxlength="200" placeholder="Like client, holiday list"><small>Separate tags with commas.</small></div>'+
   '<div class="two"><div class="field"><label>Birthday</label><div class="mdy" id="pBday"></div></div><div class="field"><label>Work anniversary</label><div class="mdy" id="pAnniv"></div></div></div>'+
-  '<div class="field"><label for="pNotes">Notes</label><textarea id="pNotes" placeholder="Anything to remember about '+esc(first(c.name))+'"></textarea></div>';
+  '<div class="field"><label for="pNotes">Notes</label><textarea id="pNotes" placeholder="Anything to remember about '+esc(first(c.name))+'"></textarea></div>'+
+  '<div class="btn-row"><button class="btn small ghost" type="button" id="pRemove">Remove '+esc(first(c.name))+' from People</button></div>';
  const q=s=>d.querySelector(s);
+ q('#pRemove').onclick=()=>askRemove([c.id]);
  fillQuick(q('#qsQuick'),c.name,24);q('#qsQuick').addEventListener('change',e=>{if(e.target.value){qs.topic=e.target.value;q('#qsTopic').value=qs.topic;qs.built=null;e.target.value=''}});
  q('#qsTopic').value=qs.topic;q('#qsTopic').addEventListener('input',e=>{qs.topic=e.target.value;qs.built=null});
  q('#qsNote').value=qs.note;q('#qsNote').addEventListener('input',e=>{qs.note=e.target.value;qs.built=null});

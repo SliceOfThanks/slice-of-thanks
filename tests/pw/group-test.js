@@ -59,6 +59,7 @@ const PEOPLE = [
     if (path === '/presets') return { ok: true, limit: 10, presets: [{ id: 'pr1', name: 'Holiday thanks', data: { style: 'plaid', sticker: 'Happy Holidays', confetti: 'stars', note: 'Happy holidays, [first name]! Thanks from all of us.', sign: 'The Lawfecta team', linkLabel: 'Book a call', link: 'https://x.test/book', reward: { text: '20% off', code: 'CHEERS20' } } }] };
     if (path === '/calendar') return { ok: true, integrations: [], meetings: [] };
     if (path === '/people/import') return { ok: true, added: 1, updated: 1, skipped: 0 };
+    if (path === '/people/remove') return { ok: true, removed: (b.ids || []).length, kept: 0 };
     if (path === '/send/bulk') return { ok: true, results: (b.rows || []).map(r => ({ i: r.i, ok: true })) };
     return { ok: true };
   };
@@ -140,7 +141,22 @@ const PEOPLE = [
   await inRoot(page, "R.querySelector('#selTagIn').value='VIP';[...R.querySelectorAll('#liveSheet .btn')].find(b=>b.textContent==='Add tag').click()"); await wait(400);
   const tg = (st.bodies['/people/import'] || [])[0] || { people: [] };
   check(tg.people.length === 2 && tg.people.every(p => p.tags[0] === 'VIP'), 'Add a tag to everyone picked');
-  await inRoot(page, "R.querySelector('#selDone').click()"); await wait(100);
+  // Remove from the selection bar asks first, then sends the picked ids
+  check(await inRoot(page, "const b=R.querySelector('#selRemove');return !!b&&!b.disabled&&b.textContent==='Remove'"), 'Selection bar has Remove');
+  await inRoot(page, "R.querySelector('#selRemove').click()"); await wait(200);
+  check((await inRoot(page, "return R.querySelector('#liveSheet h2').textContent")) === 'Remove 2 people?', 'Remove asks to confirm');
+  await inRoot(page, "[...R.querySelectorAll('#liveSheet .btn')].find(b=>b.textContent==='Remove 2').click()"); await wait(500);
+  const rm = (st.bodies['/people/remove'] || [])[0] || { ids: [] };
+  check(rm.ids.length === 2 && rm.ids.indexOf('p3') < 0, 'Remove sends the two picked people: ' + JSON.stringify(rm));
+  check((await toastText(page)).indexOf('Removed 2 people') === 0 && await inRoot(page, "return R.querySelector('#selBar').hidden"), 'Removed toast and selection ends');
+  // Remove one person from their card
+  await inRoot(page, "[...R.querySelectorAll('#peopleList .person')].find(li=>li.querySelector('h3').textContent==='Cy Park').querySelector('[data-act=toggle]').click()"); await wait(200);
+  check((await inRoot(page, "const b=R.querySelector('#pRemove');return b?b.textContent:''")) === 'Remove Cy from People', 'Person card has Remove');
+  await inRoot(page, "R.querySelector('#pRemove').click()"); await wait(200);
+  check((await inRoot(page, "return R.querySelector('#liveSheet h2').textContent")) === 'Remove Cy Park?', 'One person remove asks to confirm');
+  await inRoot(page, "[...R.querySelectorAll('#liveSheet .btn')].find(b=>b.textContent==='Cancel').click()"); await wait(150);
+  check(!(st.bodies['/people/remove'] || [])[1], 'Cancel removes no one');
+  await inRoot(page, "[...R.querySelectorAll('#peopleList .person')].find(li=>li.querySelector('h3').textContent==='Cy Park').querySelector('[data-act=toggle]').click()"); await wait(200);
   // Edit tags and birthday on one person
   await inRoot(page, "[...R.querySelectorAll('#peopleList .person')].find(li=>li.querySelector('h3').textContent==='Cy Park').querySelector('[data-act=toggle]').click()"); await wait(200);
   await inRoot(page, "const t=R.querySelector('#pTags');t.value='friend, golf';t.dispatchEvent(new Event('change'))"); await wait(200);

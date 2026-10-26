@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.20.1 =====
+/* ===== Slice of Thanks live layer v0.21.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -697,6 +697,21 @@ $('#selTag').onclick = () => {
     toast('Tagged ' + rows.length + ' "' + tags.join(', ') + '".'); renderPeople();
   } }]);
   setTimeout(() => { const i = $('#selTagIn'); if (i) i.focus(); }, 50);
+};
+/* Remove people from People: one from their card, or many from the selection bar. Past pizzas still count in your totals. */
+askRemove = function (ids) {
+  const n = ids.length, c1 = n === 1 ? contacts.find(c => c.id === ids[0]) : null;
+  const who = c1 ? c1.name : n + ' people';
+  const p = document.createElement('p'); p.className = 'hint';
+  p.textContent = 'They leave your People list, along with their tags, dates and notes. Pizzas you already sent still count in your totals. Anyone with a pizza still scheduled stays until it goes out.';
+  liveSheet('Remove ' + who + '?', p, [{ label: n === 1 ? 'Remove' : 'Remove ' + n, primary: true, run: async () => {
+    closeLiveSheet();
+    const r = await LIVE.call('/people/remove', { ids }).catch(() => null);
+    if (!r || !r.ok) { toast(MSG.server_error); return; }
+    peopleSel = null; selContact = null;
+    await loadPeople(); renderPeople();
+    toast('Removed ' + r.removed + (r.removed === 1 ? ' person' : ' people') + ' from People.' + (r.kept ? ' Kept ' + r.kept + ' with a pizza still scheduled.' : ''));
+  } }]);
 };
 /* Save a CSV list to People: new people are added, people already there get the new tags and dates */
 saveListToPeople = async function () {

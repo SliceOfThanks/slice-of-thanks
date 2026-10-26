@@ -1,4 +1,4 @@
-<!-- SOT-Join: the Slice of Thanks sign up page for /join. Version 1.1.0
+<!-- SOT-Join: the Slice of Thanks sign up page for /join. Version 1.2.0
      Put it alone in the /join page content. Each plan button goes to BD's own sign up form for that plan
      (BD creates the account, shows the legal checkbox and takes any payment). Plan IDs: A Slice 10, The Whole Pie 12, Pizza Party 11. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,6 +40,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 .sot-join-foot .sot-muted{color:var(--sot-muted)}
 .sot-join-in{max-width:460px;margin:0 auto;text-align:center;background:var(--sot-surface);border:3px solid var(--sot-edge);border-radius:22px;box-shadow:6px 6px 0 var(--sot-edge);padding:22px}
 .sot-join-in a{display:inline-block;margin-top:12px;text-decoration:none;font-weight:700;color:var(--sot-tomato-ink);background:var(--sot-tomato);border:3px solid var(--sot-edge);border-radius:999px;padding:12px 22px}
+.sot-paynow{display:block;margin-top:10px;font-size:14px;font-weight:600;color:var(--sot-muted)!important;text-align:center}
 </style>
 <div class="sot-join" id="sot-join">
   <a class="sot-join-head" href="/kitchen"><img class="sot-env" src="https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand/logo/pizza-envelope-96.png" alt=""><span><img class="sot-logo" src="https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand/logo/slice-of-thanks-logo-white-360.png" alt="Slice of Thanks"><span class="sot-tag">Pizzas for every thank-you and celebration</span></span></a>
@@ -54,7 +55,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
   <div class="sot-plans" id="sot-plans">
     <div class="sot-plan">
       <h3>A Slice</h3>
-      <div class="sot-price">Free<small>Forever</small></div>
+      <div class="sot-price">Free<small>Forever. Starts with 14 days of The Whole Pie, no card.</small></div>
       <ul>
         <li>10 emails a month</li>
         <li>Kraft and Classic boxes</li>
@@ -66,7 +67,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
     <div class="sot-plan sot-pick">
       <span class="sot-badge">Most popular</span>
       <h3>The Whole Pie</h3>
-      <div class="sot-price">$9 a month<small>or $90 a year. 14-day free trial.</small></div>
+      <div class="sot-price">$9 a month<small>or $90 a year. Free for your first 14 days, no card.</small></div>
       <ul>
         <li>250 emails a month</li>
         <li>Your logo and brand colors</li>
@@ -74,11 +75,12 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
         <li>Gift codes and your own button</li>
         <li>Email packs when you need more</li>
       </ul>
-      <a class="sot-go" href="/checkout/12">Start my free trial</a>
+      <a class="sot-go" href="/checkout/10">Start my free 14 days</a>
+      <a class="sot-paynow" href="/checkout/12">Or pay now and skip the trial</a>
     </div>
     <div class="sot-plan">
       <h3>Pizza Party</h3>
-      <div class="sot-price">$29 a month<small>or $290 a year. 14-day free trial.</small></div>
+      <div class="sot-price">$29 a month<small>or $290 a year. Coming soon.</small></div>
       <ul>
         <li>Everything in The Whole Pie</li>
         <li>3 seats, extra seats $8 each</li>

@@ -992,7 +992,7 @@ body.is-free .pro-tag{display:inline-block}
   <p class="eyebrow" style="margin:0">Upgrade your pizza</p><h2 id="upTitle"></h2><p class="muted" id="upWhy" style="margin:0"></p>
   <p style="margin:6px 0 0;font-weight:700">The Whole Pie also includes</p><ul class="up-list" id="upList"></ul>
   <div class="btn-row"><button class="btn primary" id="upMonthly" type="button">Try The Whole Pie free for 14 days</button><button class="btn" id="upYearly" type="button">Special Delivery, $2.99</button></div>
-  <p class="muted" id="upNote" style="margin:0;font-size:.82rem">The Whole Pie is $9 a month or $90 a year after the trial, with 250 emails a month. Cancel anytime. Special Delivery is a one-time $2.99 that unlocks these features for one pizza and includes its send.</p>
+  <p class="muted" id="upNote" style="margin:0;font-size:.82rem">The Whole Pie is $9 a month or $90 a year, with 250 emails a month. Cancel anytime. Special Delivery is a one-time $2.99 that unlocks these features for one pizza and includes its send.</p>
   <button class="btn ghost" id="upLater" type="button">Maybe later</button></div></div>
 
 <script>
@@ -1107,8 +1107,8 @@ function renderPlanCard(){const el=$('#planCard');if(!el)return;const pro=isPro(
   (pro?'<p class="muted" style="margin:4px 0">250 emails a month. Renews on the 23rd.</p>'
       :'<p class="muted" style="margin:4px 0">Pizzas sent this month: '+n+' of 10</p><div class="usage" role="img" aria-label="'+n+' of 10 pizzas sent"><span style="width:'+Math.min(100,n*10)+'%"></span></div>')+
   '<button class="linkish" type="button" id="planCompare" aria-expanded="false">Compare plans</button><div class="plan-cols" id="planCols" hidden>'+col('A Slice, free',!pro,['10 emails a month','Kraft and Classic boxes','Classic toppings and confetti','Special Delivery, $2.99 for Pro on one pizza'])+
-  col('The Whole Pie, $9/mo or $90/yr',pro,['Your logo and brand colors','All box styles and Pro confetti','Gift codes and your own button','250 emails a month, 14-day free trial'])+
-  col('Pizza Party (team plan), coming soon',false,['Everything in The Whole Pie','3 seats, extra seats $8 each','1,000 emails a month, shared','14-day free trial'])+'</div>'+
+  col('The Whole Pie, $9/mo or $90/yr',pro,['Your logo and brand colors','All box styles and Pro confetti','Gift codes and your own button','250 emails a month'])+
+  col('Pizza Party (team plan), coming soon',false,['Everything in The Whole Pie','3 seats, extra seats $8 each','1,000 emails a month, shared'])+'</div>'+
   '<div class="btn-row">'+(pro?'<button class="btn small" id="planBilling" type="button">Manage billing</button>'
      :'<button class="btn small primary" id="planUp" type="button">Upgrade to The Whole Pie</button>')+'</div>';
  const on=(id,f)=>{const b=$('#'+id);if(b)b.onclick=f};

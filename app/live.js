@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.17.0 =====
+/* ===== Slice of Thanks live layer v0.17.1 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -276,7 +276,7 @@ upgrade = function (key) {
   const free = !LIVE.session || LIVE.session.plan === 'free';
   $('#upYearly').hidden = !free;
   $('#upNote').textContent = free
-    ? 'The Whole Pie is $9 a month or $90 a year after the trial, with 250 emails a month. Cancel anytime. Special Delivery is a one-time $2.99 that unlocks these features for one pizza and includes its send.'
+    ? 'The Whole Pie is $9 a month or $90 a year, with 250 emails a month. Cancel anytime. Special Delivery is a one-time $2.99 that unlocks these features for one pizza and includes its send.'
     : 'The Whole Pie is $9 a month or $90 a year, with 250 emails a month. Cancel anytime.';
 };
 const _renderPlanCard2 = renderPlanCard;
@@ -374,7 +374,7 @@ function openPlans() {
   const s = LIVE.session; const cur = s ? s.plan : 'free';
   const plans = [
     ['free', 'A Slice', 'Free. 10 emails a month, Kraft and Classic boxes.', 'checkout_free', '/checkout/10'],
-    ['pro', 'The Whole Pie', '$9 a month or $90 a year. 250 emails a month, your logo, gift codes and your own button. 14-day free trial.', 'checkout_pro', '/checkout/12'],
+    ['pro', 'The Whole Pie', '$9 a month or $90 a year. 250 emails a month, your logo, gift codes and your own button.', 'checkout_pro', '/checkout/12'],
     /* Pizza Party (team seats) opens after launch: it is listed, without a checkout */
     ['team', 'Pizza Party', 'Team plan with shared seats. Coming soon.', '', '']
   ];

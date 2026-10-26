@@ -16,6 +16,7 @@ export type EmailInput = {
   markImageUrl?: string; // the Slice of Thanks text logo
   isTest?: boolean;
   occasion?: string; // the box's occasion sticker; it picks the subject line
+  replyName?: string; // set when replies go straight to the sender (a confirmed address and they want replies)
 };
 
 const T = {
@@ -36,6 +37,7 @@ const T = {
     via: "Sent through Slice of Thanks",
     from: "from",
     test: "TEST SEND",
+    reply: (s: string) => `Hit reply to say thanks to ${s}. Your reply goes straight to them.`,
   },
   es: {
     subject: (s: string) => `${s} te envió una porción de agradecimiento`,
@@ -54,6 +56,7 @@ const T = {
     via: "Enviado a través de Slice of Thanks",
     from: "de",
     test: "ENVÍO DE PRUEBA",
+    reply: (s: string) => `Responde a este correo para darle las gracias a ${s}. Tu respuesta le llega directamente.`,
   },
 };
 
@@ -111,6 +114,7 @@ ${i.potatoImageUrl ? `<img src="${esc(i.potatoImageUrl)}" width="240" alt="Potat
 ${i.pizzaImageUrl ? `<img src="${esc(i.pizzaImageUrl)}" width="200" alt="" style="display:block;margin:0 auto 18px;max-width:100%;height:auto">` : ""}
 <a href="${esc(i.link)}" style="display:inline-block;background:#D62828;color:#FFF3E0;text-decoration:none;font-weight:bold;font-size:17px;padding:14px 28px;border-radius:999px;border:2px solid #3E2416">${esc(t.button)}</a>
 <p style="margin:16px 0 0;font-size:14px;color:#6b4a3a">${esc(t.note)}</p>
+${i.replyName ? `<p style="margin:12px 0 0;font-size:14px;color:#3E2416">${esc(t.reply(i.replyName))}</p>` : ""}
 </td></tr>
 <tr><td style="padding:18px 24px 22px;font-size:12px;line-height:1.6;color:#6b4a3a;text-align:center;border-top:1px dashed #d8c4a4">
 ${esc(fullFrom)}<br>${esc(address)}<br>
@@ -120,7 +124,7 @@ ${esc(t.why(who))}<br>
 ${i.sender.show_made_with ? `<br><a href="${SITE}" style="color:#6b4a3a">${esc(t.made)}</a>` : ""}
 </td></tr></table></td></tr></table></body></html>`;
   const text = [
-    t.hi(i.recipientName), "", t.lead(headline), "", `${t.button}: ${i.link}`, "", t.note, "", "--",
+    t.hi(i.recipientName), "", t.lead(headline), "", `${t.button}: ${i.link}`, "", t.note, ...(i.replyName ? ["", t.reply(i.replyName)] : []), "", "--",
     fullFrom, address, t.why(who),
     `${t.unsubSender(who)}: ${i.unsubscribeSender}`, `${t.unsubAll}: ${i.unsubscribeAll}`,
     `${t.privacy}: ${SITE}/privacy`, `${t.terms}: ${SITE}/terms`,
@@ -202,4 +206,20 @@ export function buildTrialEmail(i: { kind: "3d" | "end"; name?: string; days: nu
 </td></tr></table></td></tr></table></body></html>`;
   const text = [lead, "", "Upgrade to keep:", ...keep.map((k) => "- " + k), "", after, "", `Keep The Whole Pie: ${i.upgradeLink}`, `Open my Kitchen: ${i.kitchenLink}`].join("\n");
   return { subject, html, text };
+}
+
+// To a member who typed a new "Replies go to" address: confirm it before replies go there. It uses no email credit.
+export function buildReplyConfirmEmail(i: { link: string; email: string }): { subject: string; html: string; text: string } {
+  const lead = `Tap the button to confirm that replies to your Slice of Thanks pizzas can come to ${i.email}.`;
+  const after = "Until you confirm, replies go to Slice of Thanks and your email stays private. If you did not ask for this, ignore this email.";
+  const html = `<!doctype html><html><body style="margin:0;background:#FFF3E0;font-family:Arial,Helvetica,sans-serif;color:#3E2416">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF3E0"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fffaef;border:3px solid #3E2416;border-radius:18px">
+<tr><td style="padding:24px;text-align:center">
+<p style="margin:0 0 14px;font-size:18px;font-weight:bold">Confirm where replies go</p>
+<p style="margin:0 0 18px;font-size:15px;line-height:1.5">${esc(lead)}</p>
+<a href="${esc(i.link)}" style="display:inline-block;background:#D62828;color:#FFF3E0;text-decoration:none;font-weight:bold;font-size:16px;padding:12px 24px;border-radius:999px;border:2px solid #3E2416">Confirm this address</a>
+<p style="margin:16px 0 0;font-size:13px;color:#6b4a3a">${esc(after)}</p>
+</td></tr></table></td></tr></table></body></html>`;
+  return { subject: "Confirm where replies to your pizzas go", html, text: [lead, "", `Confirm: ${i.link}`, "", after].join("\n") };
 }

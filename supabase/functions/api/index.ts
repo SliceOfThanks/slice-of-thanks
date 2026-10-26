@@ -3,8 +3,8 @@
 // Recipients use their private link token. Everything else is refused.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifyBdToken } from "./lib/auth.ts";
-import { recipientToken, tokenHash } from "./lib/crypto.ts";
-import { buildDateEmail, buildEmail, buildTrialEmail, buildWaitingEmail, SITE } from "./lib/email.ts";
+import { hmacHex, recipientToken, safeEqual, tokenHash } from "./lib/crypto.ts";
+import { buildDateEmail, buildEmail, buildReplyConfirmEmail, buildTrialEmail, buildWaitingEmail, senderLabel, SITE } from "./lib/email.ts";
 import { birthdaySpecial, dateBox, datePizza, type DateKind } from "./lib/gerald.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, deleteBdUser, fetchBdEmail, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
@@ -13,7 +13,7 @@ import { fillNote } from "./lib/merge.ts";
 import { sendCustomer, sendSale } from "./lib/partnero.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.21.4";
+const VERSION = "api-0.22.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -116,6 +116,27 @@ async function fillReplyTo(memberId: string, bdUserId: number): Promise<boolean>
   }
 }
 
+// "Replies go to": a typed address gets a confirm link before replies go there. The login email is confirmed as it is.
+async function replyLink(memberId: string, email: string): Promise<string> {
+  const x = String(Date.now() + 3 * 864e5);
+  const sig = await hmacHex(env("LINK_SECRET"), `reply|${memberId}|${email}|${x}`);
+  const q = new URLSearchParams({ m: memberId, e: email, x, s: sig });
+  return `${env("SUPABASE_URL")}/functions/v1/api/reply/confirm?${q}`;
+}
+async function checkReplyTo(memberId: string, bdUserId: number): Promise<Record<string, any>> {
+  const st = await rpc<Record<string, any>>("sot_reply_state", { p_member: memberId });
+  if (!st || st.verified) return st ?? {};
+  const email = String(st.email ?? "").trim().toLowerCase();
+  if (!email || email.indexOf("@") < 1) return st;
+  if (env("BD_API_KEY") && bdUserId) {
+    const login = await fetchBdEmail({ site: env("BD_SITE_URL") || BD_API_SITE, key: env("BD_API_KEY"), bdUserId }).catch(() => null);
+    if (login && login.trim().toLowerCase() === email && await rpc<boolean>("sot_reply_verify", { p_member: memberId, p_email: email })) return { ...st, verified: true };
+  }
+  const mail = buildReplyConfirmEmail({ link: await replyLink(memberId, email), email });
+  const r = await sendMail({ from: { name: "Slice of Thanks", email: SENDER_EMAIL }, to: { email }, subject: mail.subject, html: mail.html, text: mail.text, tags: ["member_notice", "reply_confirm"] });
+  return { ...st, confirm_sent: r.ok };
+}
+
 // Every email goes out here: the main service, then the backup if the main one refused it (app_settings email_provider)
 async function sendMail(msg: EmailMessage) {
   const setting = await rpc("sot_setting", { p_env: "live", p_key: "email_provider" }).catch(() => null);
@@ -139,6 +160,8 @@ async function deliver(sendId: string, pizzaImageUrl?: string) {
     unsubscribeAll: `${SITE}/unsubscribe?t=${encodeURIComponent(token)}&s=global`,
     pizzaImageUrl: pizzaImageUrl ?? snap.image_url ?? undefined, potatoImageUrl: `${ASSETS}/characters/potato-delivery-side-email-logo.png`,
     markImageUrl: `${ASSETS}/logo/slice-of-thanks-logo.png`,
+    // job.reply_to is only set for a confirmed address when the member wants replies (sot_claim_send)
+    replyName: job.reply_to ? senderLabel(snap.sender ?? {}) : undefined,
   });
   const fromName = (snap.sender?.send_as === "business" && snap.sender?.business) ? snap.sender.business : (snap.sender?.name || "Slice of Thanks");
   // Which service sends is a setting (app_settings email_provider); everything above is ours
@@ -338,6 +361,15 @@ async function route(req: Request, path: string): Promise<Response> {
     return json(req, r);
   }
 
+  // The confirm link from the "Replies go to" email
+  if (path === "/reply/confirm" && req.method === "GET") {
+    const q = new URL(req.url).searchParams;
+    const m = q.get("m") ?? "", e = (q.get("e") ?? "").toLowerCase(), x = q.get("x") ?? "", sig = q.get("s") ?? "";
+    const good = !!m && !!e && Number(x) > Date.now() && safeEqual(sig, await hmacHex(env("LINK_SECRET"), `reply|${m}|${e}|${x}`));
+    const ok = good && !!(await rpc<boolean>("sot_reply_verify", { p_member: m, p_email: e }).catch(() => false));
+    return Response.redirect(`${SITE}/kitchen?reply=${ok ? "confirmed" : "expired"}`, 302);
+  }
+
   // Calendly or TidyCal sends the member back here after they approve. The state ties it to the member.
   const cb = path.match(/^\/oauth\/(calendly|tidycal)\/callback$/);
   if (cb && req.method === "GET") {
@@ -436,7 +468,9 @@ async function route(req: Request, path: string): Promise<Response> {
     const b = await syncBilling(memberId, m.claims.uid, 600);
     // "Where replies go" starts as the login email, so replies and Send one back always reach the member
     const filled = !m.session?.profile?.reply_to && await fillReplyTo(memberId, m.claims.uid);
-    return json(req, b.changed || filled ? (await member(req))!.session : m.session);
+    const s = b.changed || filled ? (await member(req))!.session : m.session;
+    const rs = await rpc<Record<string, any>>("sot_reply_state", { p_member: memberId }).catch(() => null);
+    return json(req, { ...s, reply: { verified: !!rs?.verified, replies: rs?.replies ?? "me" } });
   }
   // Send one back: the person who got a pizza adds its sender to their People, without knowing the email
   if (path === "/sendback" && req.method === "POST") {
@@ -508,7 +542,11 @@ async function route(req: Request, path: string): Promise<Response> {
   }
   if (path === "/profile" && req.method === "POST") {
     await rpc("sot_update_profile", { p_member: memberId, p: body.profile ?? {} });
+    if (body.profile && typeof body.profile.reply_to === "string") return json(req, { ok: true, reply: await checkReplyTo(memberId, m.claims.uid) });
     return json(req, { ok: true });
+  }
+  if (path === "/reply/resend" && req.method === "POST") {
+    return json(req, { ok: true, reply: await checkReplyTo(memberId, m.claims.uid) });
   }
   if (path === "/logo" && req.method === "POST") {
     const blob = dataUrlToBlob(String(body.data_url ?? ""), 1_000_000);
@@ -525,6 +563,11 @@ async function route(req: Request, path: string): Promise<Response> {
     return json(req, { ok: true, photo_url: url });
   }
   if (path === "/send" && req.method === "POST") {
+    // Free tests go to the member's own inbox, so that address has to be confirmed first
+    if (body.is_test) {
+      const rs = await rpc<Record<string, any>>("sot_reply_state", { p_member: memberId }).catch(() => null);
+      if (!rs?.verified) return json(req, { ok: false, code: "reply_unverified" });
+    }
     const { sendId, r } = await createSend(memberId, m.session.env, body, body.source === "people" ? "people" : "kitchen", String(body.idem ?? "") || crypto.randomUUID());
     // A pizza sent for a calendar meeting from Home marks that meeting done
     if (r.ok && body.meeting_id) await rpc("sot_meeting_done", { p_member: memberId, p_id: String(body.meeting_id), p_send: r.send_id ?? sendId }).catch(() => null);

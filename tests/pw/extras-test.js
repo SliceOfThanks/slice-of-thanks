@@ -67,7 +67,7 @@ async function run(browser, sess, extra) {
 (async () => {
   const browser = await chromium.launch();
   // 1. Free test to yourself
-  let r = await run(browser, { profile: { display_name: 'Test Member', reply_to: 'me@test.com', mailing_address: '1 Main', send_as: 'person' }, birthday: { md: null, on: true, toppers: [] } });
+  let r = await run(browser, { profile: { display_name: 'Test Member', reply_to: 'me@test.com', mailing_address: '1 Main', send_as: 'person' }, birthday: { md: null, on: true, toppers: [] }, reply: { verified: true, replies: 'me' } });
   let p = r.page;
   await p.evaluate(() => window.__SOT_DEBUG.goSend()); await wait(400);
   check((await inRoot(p, "const b=R.querySelector('#liveTestSend');return b&&!b.hidden?b.textContent:''")) === 'Send a test to myself (5 free left)', 'Send step has the free test button');
@@ -79,6 +79,16 @@ async function run(browser, sess, extra) {
   check((await inRoot(p, "return R.querySelector('#liveTestSend').textContent")) === 'Send a test to myself (4 free left)', 'Count goes down to 4');
   check((await toastText(p)).indexOf('used no emails') >= 0, 'Toast says it used no emails');
   check(await inRoot(p, "const n=R.querySelector('#liveTestNote');return !!n&&!n.hidden&&n.textContent==='Test sent to me@test.com. It used no emails. 4 free tests left.'"), 'Confirmation stays under the button');
+  // Where replies go: confirmed address, replies come to me
+  check((await inRoot(p, "const l=R.querySelector('#liveReplyLine');return l?l.textContent:''")) === 'Replies come to you at me@test.com. Change in Settings', 'Send step says replies come to me');
+  check((await inRoot(p, "return R.querySelector('#msgBody').textContent")).indexOf('Hit reply to say thanks to Test Member. Your reply goes straight to them.') >= 0, 'Preview shows the hit reply line');
+  await inRoot(p, "R.querySelector('#tab-settings').click()"); await wait(300);
+  check((await inRoot(p, "return R.querySelector('#liveReplyState').textContent")) === 'Confirmed.', 'Settings says the email is confirmed');
+  await inRoot(p, "R.querySelector('#liveReplies [data-v=us]').click()"); await wait(300);
+  check(JSON.stringify((r.st.posts['/profile'] || []).slice(-1)[0]) === '{"profile":{"prefs":{"replies":"us"}}}', 'Choosing Slice of Thanks saves prefs.replies us');
+  check((await inRoot(p, "return R.querySelector('#liveRepliesHint').textContent")).indexOf('your email stays private') >= 0 && await inRoot(p, "return R.querySelector('#liveReplies [data-v=us]').getAttribute('aria-pressed')==='true'"), 'Private choice shows as picked');
+  await p.evaluate(() => window.__SOT_DEBUG.goSend()); await wait(400);
+  check((await inRoot(p, "return R.querySelector('#liveReplyLine').textContent")).indexOf('Replies go to Slice of Thanks') === 0 && (await inRoot(p, "return R.querySelector('#msgBody').textContent")).indexOf('Hit reply') < 0, 'Private: Send step line changes and no hit reply line');
   // What you are thanking them for: a full sentence is not wrapped twice, and the tip shows the finished line
   await inRoot(p, "const i=R.querySelector('#mtgTitle');i.value='Thanks for the call today.';i.dispatchEvent(new Event('input'))"); await wait(150);
   const mb = await inRoot(p, "return R.querySelector('#msgBody').textContent");
@@ -123,6 +133,16 @@ async function run(browser, sess, extra) {
   await p.evaluate(() => window.__SOT_DEBUG.goSend()); await wait(300);
   await inRoot(p, "R.querySelector('#back').click()"); await wait(400);
   check(await inRoot(p, "return [...R.querySelectorAll('#topperChips .chip')].some(c=>c.textContent.indexOf('2026 birthday topper')>=0)"), 'The 2026 birthday topper is in the topper list');
+  await r.ctx.close();
+  // Not confirmed yet: replies go to Slice of Thanks, Settings offers the link again
+  r = await run(browser, { profile: { display_name: 'T', reply_to: 'new@test.com', mailing_address: '1', send_as: 'person' }, birthday: { md: null, on: true, toppers: [] }, reply: { verified: false, replies: 'me' } });
+  p = r.page;
+  await inRoot(p, "R.querySelector('#tab-settings').click()"); await wait(300);
+  check((await inRoot(p, "return R.querySelector('#liveReplyState').textContent")).indexOf('Not confirmed yet. Check new@test.com') === 0, 'Unconfirmed email says so: ' + await inRoot(p, "return R.querySelector('#liveReplyState').textContent"));
+  await inRoot(p, "const i=R.querySelector('#liveReply');i.value='other@test.com';i.dispatchEvent(new Event('change'))"); await wait(700);
+  check(JSON.stringify((r.st.posts['/profile'] || []).slice(-1)[0]) === '{"profile":{"reply_to":"other@test.com"}}', 'A new email saves when they leave the box');
+  await p.evaluate(() => window.__SOT_DEBUG.goSend()); await wait(400);
+  check((await inRoot(p, "return R.querySelector('#liveReplyLine').textContent")).indexOf('Replies go to Slice of Thanks') === 0, 'Unconfirmed: replies go to Slice of Thanks');
   await r.ctx.close();
   await browser.close();
   console.log(failures ? failures + ' FAILED' : 'ALL PASSED');

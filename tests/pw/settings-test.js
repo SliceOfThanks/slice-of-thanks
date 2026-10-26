@@ -63,7 +63,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await inRoot(page, "R.querySelector('#liveYouSave').click()"); await wait(300);
   const sv = (st.bodies['/profile'] || []).map(x => x.profile).find(p => p.reply_to !== undefined && p.display_name !== undefined) || {};
   check(sv.display_name === 'Kevin & Stacey' && sv.business_name === 'Lawfecta' && sv.reply_to === 'hello@lawfecta.test', 'Save sends name, business and reply-to at once: ' + JSON.stringify(sv));
-  check((await inRoot(page, "return R.querySelector('#liveYouStatus').textContent")) === 'Saved.' && (await toastText(page)) === 'Saved.', 'Save says Saved');
+  check((await inRoot(page, "return R.querySelector('#liveYouStatus').textContent")) === 'Saved.' && (await toastText(page)) === 'Saved. Check hello@lawfecta.test for a link to confirm it.', 'Save says Saved, and a new email gets a confirm link');
   await wait(1000);
   check((st.bodies['/profile'] || []).length === 1, 'No extra save fires after the Save button: ' + (st.bodies['/profile'] || []).length);
   await inRoot(page, "const r=R.querySelector('#liveReply');r.value='nope';r.dispatchEvent(new Event('input'))"); await wait(50);

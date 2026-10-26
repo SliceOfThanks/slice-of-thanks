@@ -1713,13 +1713,15 @@ function thanksLine(m){let t=String(m||'').trim();if(!t)return '';
  ['for the ','for ','the '].forEach(w=>{if(l.indexOf(w)===0){t=t.slice(w.length);l=l.slice(w.length)}});
  if(l.slice(-6)===' today'){t=t.slice(0,-6)}
  return t?'Thanks for the '+t.toLowerCase()+' today. ':''}
+/* The live app adds "Hit reply to say thanks..." when replies go to the sender */
+function replyLineText(name){return ''}
 function msgText(){const f=first(box.to),link='sliceofthanks.app/p/'+slug(f+'-'+(pizza.name||'pizza'));const pers=isPersonal(box);
  const from=profile.name+(profile.business&&!pers?' from '+profile.business:''),thanks=isThanksOccasion(box.sticker);
  const mtg=box.meeting&&!pers?thanksLine(box.meeting):'';
  const line=thanks?mtg+'I made you a little thank-you pizza.':'I made you a little pizza'+(box.sticker?' for the occasion: '+box.sticker+'!':'.');
  if(box.method==='text')return{subj:'',body:'Hi '+f+'! '+line+' Open the box here: '+link};
  return{subj:thanks?from+' sent you a slice of thanks':'A special pizza delivery for you from '+from,
-  body:'Hi '+f+',\n\n'+line+' Open the box here:\n'+link+'\n\n'+profile.name+(profile.business&&!pers?'\n'+profile.business:'')}}
+  body:'Hi '+f+',\n\n'+line+' Open the box here:\n'+link+(replyLineText(profile.name||profile.business)?'\n\n'+replyLineText(profile.name||profile.business):'')+'\n\n'+profile.name+(profile.business&&!pers?'\n'+profile.business:'')}}
 function renderMsg(){try{renderMtgSay()}catch(e){}const m=msgText();$('#msgLabel').textContent=box.method==='text'?'Your text':'Your email';$('#msgSubj').textContent=m.subj;$('#msgSubj').hidden=!m.subj;$('#msgBody').textContent=m.body}
 function renderSend(){
  $('#sendHeading').textContent=editingSignature?'Save your signature pizza':'Send it';

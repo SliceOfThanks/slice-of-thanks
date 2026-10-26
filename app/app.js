@@ -647,13 +647,15 @@ function thanksLine(m){let t=String(m||'').trim();if(!t)return '';
  ['for the ','for ','the '].forEach(w=>{if(l.indexOf(w)===0){t=t.slice(w.length);l=l.slice(w.length)}});
  if(l.slice(-6)===' today'){t=t.slice(0,-6)}
  return t?'Thanks for the '+t.toLowerCase()+' today. ':''}
+/* The live app adds "Hit reply to say thanks..." when replies go to the sender */
+function replyLineText(name){return ''}
 function msgText(){const f=first(box.to),link='sliceofthanks.app/p/'+slug(f+'-'+(pizza.name||'pizza'));const pers=isPersonal(box);
  const from=profile.name+(profile.business&&!pers?' from '+profile.business:''),thanks=isThanksOccasion(box.sticker);
  const mtg=box.meeting&&!pers?thanksLine(box.meeting):'';
  const line=thanks?mtg+'I made you a little thank-you pizza.':'I made you a little pizza'+(box.sticker?' for the occasion: '+box.sticker+'!':'.');
  if(box.method==='text')return{subj:'',body:'Hi '+f+'! '+line+' Open the box here: '+link};
  return{subj:thanks?from+' sent you a slice of thanks':'A special pizza delivery for you from '+from,
-  body:'Hi '+f+',\n\n'+line+' Open the box here:\n'+link+'\n\n'+profile.name+(profile.business&&!pers?'\n'+profile.business:'')}}
+  body:'Hi '+f+',\n\n'+line+' Open the box here:\n'+link+(replyLineText(profile.name||profile.business)?'\n\n'+replyLineText(profile.name||profile.business):'')+'\n\n'+profile.name+(profile.business&&!pers?'\n'+profile.business:'')}}
 function renderMsg(){try{renderMtgSay()}catch(e){}const m=msgText();$('#msgLabel').textContent=box.method==='text'?'Your text':'Your email';$('#msgSubj').textContent=m.subj;$('#msgSubj').hidden=!m.subj;$('#msgBody').textContent=m.body}
 function renderSend(){
  $('#sendHeading').textContent=editingSignature?'Save your signature pizza':'Send it';
@@ -1735,7 +1737,7 @@ $('#upSheet').addEventListener('click',e=>{if(e.target.id==='upSheet')closeUp()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#upSheet').hidden)closeUp()});
 refreshPlan(true);
 
-/* ===== Slice of Thanks live layer v0.21.0 =====
+/* ===== Slice of Thanks live layer v0.22.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -2195,7 +2197,8 @@ handleLogo = function (file) {
 (function settingsExtras() {
   const pb = $('#pBiz'); if (!pb) return;
   const r = document.createElement('div'); r.className = 'field';
-  r.innerHTML = '<label for="liveReply">Replies go to</label><input type="text" id="liveReply" maxlength="200" inputmode="email" autocomplete="email"><small class="muted">Your email. When a guest replies, it comes here. We also tell you here when a meeting pizza is waiting.</small>';
+  r.innerHTML = '<label for="liveReply">Your email</label><input type="text" id="liveReply" maxlength="200" inputmode="email" autocomplete="email"><small class="muted">Free tests and notes from us (like a meeting pizza waiting) come here.</small><small id="liveReplyState"></small>' +
+    '<label style="margin-top:10px">When someone replies to your pizza</label><div class="chips" id="liveReplies"><button type="button" class="chip" data-v="me">Replies come to me</button><button type="button" class="chip" data-v="us">Replies go to Slice of Thanks</button></div><small class="muted" id="liveRepliesHint"></small>';
   pb.closest('.field').after(r);
   /* Account card at the bottom of Settings: Log out (BD's /logout ends the session) and Delete my account */
   if (LIVE.TOKEN) {
@@ -2212,8 +2215,10 @@ handleLogo = function (file) {
     $('#liveDelete').onclick = openDeleteSheet;
   }
   let t = 0;
-  const save = () => { clearTimeout(t); t = setTimeout(() => LIVE.call('/profile', { profile: { reply_to: $('#liveReply').value.trim() } }), 800); };
-  $('#liveReply').addEventListener('input', save);
+  /* A new address saves when they leave the box, and gets a confirm link (the login email is confirmed as it is) */
+  const save = () => { clearTimeout(t); t = setTimeout(() => saveReplyTo($('#liveReply').value.trim()), 300); };
+  $('#liveReply').addEventListener('change', save);
+  $('#liveReplies').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (b) setReplies(b.dataset.v); });
   /* Changes save as they type; the Save button saves right away and says so */
   const row = document.createElement('div'); row.className = 'btn-row'; row.style.alignItems = 'center';
   row.innerHTML = '<button class="btn small primary" type="button" id="liveYouSave">Save</button><small class="muted" id="liveYouStatus">Changes save as you type.</small>';
@@ -2223,9 +2228,12 @@ handleLogo = function (file) {
     if (rt && rt.indexOf('@') < 1) { toast('That email address does not look right.'); $('#liveReply').focus(); return; }
     clearTimeout(t); clearTimeout(profTimer); pendingProfile = null;
     const b = $('#liveYouSave'); b.disabled = true; b.textContent = 'Saving...';
-    const res = await LIVE.call('/profile', { profile: { display_name: profile.name, business_name: profile.business, brand_color_1: profile.brand1 || null, brand_color_2: profile.brand2 || null, reply_to: rt } }).catch(() => null);
+    const changed = rt !== ((LIVE.session && LIVE.session.profile.reply_to) || '');
+    const pf = { display_name: profile.name, business_name: profile.business, brand_color_1: profile.brand1 || null, brand_color_2: profile.brand2 || null };
+    if (changed) pf.reply_to = rt;
+    const res = await LIVE.call('/profile', { profile: pf }).catch(() => null);
     b.disabled = false; b.textContent = 'Save';
-    if (res && res.ok) { $('#liveYouStatus').textContent = 'Saved.'; toast('Saved.'); } else toast(MSG.server_error);
+    if (res && res.ok) { $('#liveYouStatus').textContent = 'Saved.'; if (changed) replySaved(rt, res.reply); else toast('Saved.'); } else toast(MSG.server_error);
   };
 })();
 const _renderSettings = renderSettings;
@@ -2235,7 +2243,68 @@ renderSettings = function () {
   const s = LIVE.session; if (!s) return;
   loadBilling();
   if ($('#liveReply') && document.activeElement !== host) $('#liveReply').value = s.profile.reply_to || '';
+  renderReplyState();
 };
+
+/* Where replies to pizza emails go (Stacey, 2026-10-26). "Replies come to me" uses their confirmed email as the reply address;
+   "Replies go to Slice of Thanks" leaves it out, so replies reach pizza@sliceofthanks.app and their email stays private. */
+function replyState() { const s = LIVE.session; return (s && s.reply) || { verified: false, replies: 'me' }; }
+function repliesToMe() { const r = replyState(); return r.replies !== 'us' && r.verified && !!myEmail(); }
+function renderReplyState() {
+  const r = replyState(), st = $('#liveReplyState'), ch = $('#liveReplies'); if (!st || !ch) return;
+  st.innerHTML = '';
+  if (myEmail() && !r.verified) {
+    st.className = 'hint'; st.appendChild(document.createTextNode('Not confirmed yet. Check ' + myEmail() + ' for our link. Until then, replies go to Slice of Thanks. '));
+    const a = mk('button', 'linkish', 'Send the link again'); a.type = 'button'; a.onclick = resendReplyLink; st.appendChild(a);
+  } else { st.className = 'muted'; st.textContent = myEmail() ? 'Confirmed.' : ''; }
+  ch.querySelectorAll('[data-v]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === r.replies)));
+  $('#liveRepliesHint').textContent = r.replies === 'us' ? 'Replies go to our inbox, so your email stays private.' : 'People who get your pizzas see your email when they reply, and the email invites them to say thanks back.';
+  renderReplyLine();
+}
+async function saveReplyTo(v) {
+  if (v && v.indexOf('@') < 1) { toast('That email address does not look right.'); return; }
+  if (v === ((LIVE.session && LIVE.session.profile.reply_to) || '')) return;
+  const res = await LIVE.call('/profile', { profile: { reply_to: v } }).catch(() => null);
+  if (!res || !res.ok) { toast(MSG.server_error); return; }
+  replySaved(v, res.reply);
+}
+function replySaved(v, rs) {
+  const s = LIVE.session; if (!s) return;
+  s.profile.reply_to = v; s.reply = Object.assign({}, replyState(), { verified: !!(rs && rs.verified) });
+  renderReplyState();
+  toast(!v ? 'Saved.' : s.reply.verified ? 'Saved. Replies can come to ' + v + '.' : 'Saved. Check ' + v + ' for a link to confirm it.');
+}
+async function resendReplyLink() {
+  const res = await LIVE.call('/reply/resend', {}).catch(() => null);
+  if (res && res.reply && res.reply.verified) { replySaved(myEmail(), res.reply); return; }
+  toast(res && res.reply && res.reply.confirm_sent ? 'Sent. Check ' + myEmail() + ' for the link.' : MSG.server_error);
+}
+function setReplies(v) {
+  const s = LIVE.session; if (!s || (v !== 'me' && v !== 'us')) return;
+  s.reply = Object.assign({}, replyState(), { replies: v });
+  renderReplyState();
+  LIVE.call('/profile', { profile: { prefs: { replies: v } } }).then(r => { if (!r || !r.ok) toast(MSG.server_error); }).catch(() => toast(MSG.server_error));
+  if (v === 'me' && !replyState().verified && myEmail()) toast('Confirm ' + myEmail() + ' first. Check your inbox for our link.');
+}
+/* Send step: one line under From saying where replies go */
+function renderReplyLine() {
+  const from = $('#fromName'); if (!from || !LIVE.session) return;
+  let l = $('#liveReplyLine');
+  if (!l) { l = mk('small', 'muted', ''); l.id = 'liveReplyLine'; from.after(l); }
+  l.innerHTML = '';
+  l.appendChild(document.createTextNode(repliesToMe() ? 'Replies come to you at ' + myEmail() + '. ' : 'Replies go to Slice of Thanks, so your email stays private. '));
+  const a = mk('button', 'linkish', 'Change in Settings'); a.type = 'button'; a.onclick = () => show('settings'); l.appendChild(a);
+}
+const _renderMsgR = renderMsg;
+renderMsg = function () { _renderMsgR(); try { renderReplyLine(); } catch (e) { /* ignore */ } };
+const _applySessionR = applySession;
+applySession = function (s) { _applySessionR(s); try { renderReplyState(); } catch (e) { /* ignore */ } };
+replyLineText = function (name) { return repliesToMe() ? 'Hit reply to say thanks to ' + name + '. Your reply goes straight to them.' : ''; };
+(function replyConfirmed() {
+  const q = new URLSearchParams(location.search).get('reply'); if (!q) return;
+  try { history.replaceState(null, '', location.pathname); } catch (e) { /* ignore */ }
+  setTimeout(() => toast(q === 'confirmed' ? 'Confirmed. Replies to your pizzas can come to you now.' : 'That link has expired. Open Settings and tap Send the link again.'), 600);
+})();
 
 const _geraldOk = $('#geraldOk').onclick;
 $('#geraldOk').onclick = function () {
@@ -2278,7 +2347,8 @@ const MSG = {
   sending_paused: 'Sending is paused for a few minutes. Try again soon.',
   account_inactive: 'Your account is not active. Contact support.',
   no_credits: 'You are out of emails for this month.',
-  test_inbox_only: 'Test pizzas only go to your own email, the one in Settings under Replies go to.',
+  test_inbox_only: 'Test pizzas only go to your own email, the one in Settings under Your email.',
+  reply_unverified: 'Confirm your email first. Open Settings, then tap Send the link again under Your email.',
   test_limit: 'You have used your 5 free test pizzas. Send it to them for real, or to yourself as a normal pizza.',
   not_signed_in: 'Your session timed out. Reload the page and sign in again.',
   server_error: 'Something went wrong on our side. Your pizza was not sent. Try again in a minute.'
@@ -3678,7 +3748,7 @@ function renderTestBtn() {
 let lastTestNote = '';
 async function liveTestSend() {
   const me = myEmail();
-  if (!me || me.indexOf('@') < 1) { toast('Add your email in Settings under Replies go to first.'); show('settings'); return; }
+  if (!me || me.indexOf('@') < 1) { toast('Add your email in Settings under Your email first.'); show('settings'); return; }
   const b = $('#liveTestSend'); b.disabled = true; const label = b.textContent; b.textContent = 'Sending your test...';
   const pay = buildPayload();
   pay.idem = 'selftest-' + Date.now(); pay.is_test = true;
@@ -3694,7 +3764,7 @@ async function liveTestSend() {
     toast(lastTestNote);
     burst('envelopes'); return;
   }
-  if (r && (r.code === 'test_limit' || r.code === 'test_inbox_only')) { toast(MSG[r.code]); if (LIVE.session && r.code === 'test_limit') { LIVE.session.self_tests_left = 0; renderTestBtn(); } return; }
+  if (r && (r.code === 'test_limit' || r.code === 'test_inbox_only' || r.code === 'reply_unverified')) { toast(MSG[r.code]); if (LIVE.session && r.code === 'test_limit') { LIVE.session.self_tests_left = 0; renderTestBtn(); } return; }
   sendProblem(r || {}, liveTestSend);
 }
 const _renderStepT = renderStep;

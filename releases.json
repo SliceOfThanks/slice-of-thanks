@@ -347,6 +347,12 @@
       "commit": "a4705977adbe97d7deda8ab8d0013a630eb93768",
       "date": "2026-10-26",
       "notes": "FAQs explain every feature (what it is, why use it, how to set it up, what you get) with a Take me there button, Gerald and Potato introduced, easter egg at the end of the FAQs (+10 Treats). Home page screens retaken and old sample widget removed (bd/home-page.html)."
+    },
+    {
+      "version": "v0.18.3",
+      "commit": "e4efff1c347350d5c7f691fd9b041df33c85ad6c",
+      "date": "2026-10-26",
+      "notes": "Fun receipt on the pizza page (order number, sauce, toppings Gerald counted, star topping, bake, two fun lines, slices devoured, total $0.00 paid in gratitude, footer joke, barcode) above and separate from Gerald's review. Share my receipt makes an image without the note, names, pizza name, spelled letters, gift code or button link. Event receipt_shared."
     }
   ]
 }

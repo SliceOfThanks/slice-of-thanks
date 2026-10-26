@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.19.5 =====
+/* ===== Slice of Thanks live layer v0.20.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -2197,3 +2197,39 @@ const _applySessionInv = applySession;
 applySession = function (s) { _applySessionInv(s); setTimeout(sendReferral, 1200); };
 const _showInv = show;
 show = function (v) { _showInv(v); if (v === 'gerald' && LIVE.session) { if (!invite) loadInvite(); else renderInvite(); } };
+
+/* ===== About us: who makes Slice of Thanks, and the real Potato. Opened from the footer under every tab. ===== */
+const ABOUT_IMG = 'https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@5f2d7532b9e9bdb13641bbcb48fe7c1d1fdff442/brand/about/';
+(function buildAbout() {
+  const anchor = $('#view-settings'); if (!anchor || $('#view-about')) return;
+  const sec = document.createElement('section'); sec.id = 'view-about'; sec.hidden = true;
+  sec.innerHTML =
+    '<div class="card about-hero"><p class="eyebrow">About us</p><h2>Made by Stacey, delivered by Potato</h2>' +
+    '<p class="muted">Slice of Thanks is a small, independent app built by one person and one very serious dog.</p></div>' +
+    '<div class="card about-card"><img class="about-photo" alt="Stacey Lake, founder of Slice of Thanks" loading="lazy">' +
+    '<div><p class="eyebrow">Meet the founder</p><h3>Hi, I\'m Stacey.</h3>' +
+    '<p>I built Slice of Thanks because a thank-you should feel as good to get as it does to send. A plain email gets skimmed. A pizza gets opened, eaten one slice at a time, and remembered.</p>' +
+    '<p>I designed and built every part of it myself: the Kitchen, Gerald\'s reviews, Potato\'s deliveries, the reminders that send pizzas for you, and the tools behind the scenes. I build apps, automations and online platforms for businesses and professionals, and I run Lawfecta.</p>' +
+    '<p><b>Want tools like these for your business?</b> I take on custom builds.</p>' +
+    '<div class="btn-row"><a class="btn primary small" id="aboutHire" href="https://legalstacey.com" target="_blank" rel="noopener">Hire Stacey at legalstacey.com</a></div></div></div>' +
+    '<div class="card about-card"><img class="about-photo potato-photo" alt="Potato, the real dog behind Slice of Thanks, hugging a blue ball" loading="lazy">' +
+    '<div><p class="eyebrow">Meet the real Potato</p><h3>Yes, Potato is real.</h3>' +
+    '<p>Potato is the real dog behind our Head of Delivery. She runs the house, guards her blue ball with her life, and has never once delivered a pizza without trying to eat it first.</p>' +
+    '<p>Gerald is not real. We checked. He would like you to know he is very real to us.</p></div></div>' +
+    '<div class="card about-card about-help"><div><p class="eyebrow">Say hi</p><h3>Questions, ideas or a pizza story?</h3>' +
+    '<p>Email <a href="mailto:pizza@sliceofthanks.app">pizza@sliceofthanks.app</a>, or tap the round help button at the bottom right. A real person reads every message.</p>' +
+    '<div class="btn-row"><button class="btn small" type="button" id="aboutBack">Back to the Kitchen</button></div></div></div>';
+  anchor.after(sec);
+  views.about = sec;
+  const imgs = sec.querySelectorAll('.about-photo'); imgs[0].src = ABOUT_IMG + 'stacey.jpg'; imgs[1].src = ABOUT_IMG + 'potato-real.jpg';
+  sec.querySelector('#aboutBack').onclick = () => show('today');
+  // The footer under every tab
+  const foot = document.createElement('footer'); foot.className = 'app-foot'; foot.id = 'appFoot';
+  const link = (label, fn, href) => { const a = mk(href ? 'a' : 'button', 'linkish', label); if (href) { a.href = href; a.target = '_blank'; a.rel = 'noopener'; } else { a.type = 'button'; a.onclick = fn; } return a; };
+  foot.append(
+    link('About us', () => show('about')),
+    link('Help', () => { try { if (window.Userback && typeof window.Userback.open === 'function') { window.Userback.open(); return; } } catch (e) { /* not loaded */ } toast('Tap the round black button with sparkles at the bottom right, or email pizza@sliceofthanks.app.'); }),
+    link('Privacy', null, '/privacy'), link('Terms', null, '/terms'));
+  foot.appendChild(mk('small', '', 'Slice of Thanks. Made by Stacey and Potato.'));
+  sec.parentNode.appendChild(foot);
+})();

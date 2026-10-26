@@ -133,6 +133,17 @@ button.p-tag{cursor:pointer;font-family:inherit}button.p-tag:hover{background:va
 .invite-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .invite-stats div{border:2px solid var(--line);border-radius:12px;padding:8px;text-align:center;display:flex;flex-direction:column}
 .invite-stats b{font:400 1.4rem var(--display)}.invite-stats small{font-size:.72rem;color:var(--muted);line-height:1.2}
+.about-hero h2{margin:4px 0 6px}
+.about-card{display:flex;flex-direction:column;gap:14px}
+.about-card h3{margin:2px 0 8px;font-family:var(--display);font-weight:400;font-size:1.35rem}
+.about-card p{margin:0 0 10px;line-height:1.55}
+.about-photo{width:100%;max-width:360px;aspect-ratio:1/1;object-fit:cover;border:3px solid var(--edge);border-radius:18px;box-shadow:4px 4px 0 var(--shade);align-self:center;background:var(--sunk)}
+.potato-photo{transform:rotate(-1.5deg)}
+.about-card a:not(.btn){color:var(--tomato-text);font-weight:700}
+@media (min-width:640px){.about-card{flex-direction:row;align-items:flex-start}.about-photo{width:220px;flex:none}}
+.app-foot{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 16px;margin:28px 0 8px;padding-top:16px;border-top:2px dashed var(--line);font-size:.88rem}
+.app-foot .linkish{background:none;border:0;padding:4px;font:700 .88rem var(--body);color:var(--tomato-text);text-decoration:underline;cursor:pointer}
+.app-foot small{flex-basis:100%;text-align:center;color:var(--muted)}
 .invite-note{font-size:.8rem;margin-top:10px}
 .invite-qr{display:flex;gap:14px;align-items:center;margin-top:14px;padding:12px;border:2px dashed var(--line);border-radius:14px}
 .invite-qr canvas{flex:none;width:120px;height:120px;border-radius:8px;border:2px solid var(--edge);background:#fff}

@@ -1,6 +1,7 @@
 # Working on Slice of Thanks
 
-Read docs/Slice_of_Thanks_Build_Blueprint_v7.docx before building. It is the source of truth.
+Start every new session by reading docs/HANDOFF.md (where things stand, open items, how to release), then STATUS.md.
+Read docs/Slice_of_Thanks_Build_Blueprint_v7.docx before building. It is the original source of truth; later decisions in STATUS.md win.
 
 ## Owner
 Stacey (MiniBoss). Not technical with GitHub. She installs code and changes settings; she does not run tests.

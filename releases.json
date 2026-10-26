@@ -311,6 +311,12 @@
       "commit": "2712e7c1aeaf728498ce7653f6a3e437afe5de5c",
       "date": "2026-10-26",
       "notes": "Kitchen buttons under Back and Next; no A pizza for anyone line."
+    },
+    {
+      "version": "v0.16.3",
+      "commit": "d3a386dcf7bc182252fd0d46ee36b96cf1df2f4f",
+      "date": "2026-10-26",
+      "notes": "Compact meeting cards; Kitchen buttons side by side at the top. Brand CSS: Userback type picker as a dropdown."
     }
   ]
 }

@@ -401,6 +401,12 @@
       "commit": "cc8cdc0282fe6db26bbe53521f84682b139ab551",
       "date": "2026-10-26",
       "notes": "Googly eyes are drawn as real eyes (white eyeballs, black pupils). Every emoji topping is drawn on its own clean canvas first, so iPhone Safari no longer tints them (they came out as faded tan blobs). The pizza canvas is always square. New test toppings-test.js checks all 49 toppings."
+    },
+    {
+      "version": "v0.19.5",
+      "commit": "dc72a819a52d6deed9cf3f14d6a6679757871ca8",
+      "date": "2026-10-26",
+      "notes": "Home's This week list shows a meeting until the end of its own day, then it leaves the list."
     }
   ]
 }

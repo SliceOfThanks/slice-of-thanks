@@ -33,7 +33,9 @@ export type Customer = { key: string; email: string; name: string; referrerKey?:
 export async function sendCustomer(apiKey: string, c: Customer, fetchFn?: typeof fetch): Promise<PartneroResult> {
   const [first, ...rest] = (c.name || "").trim().split(/\s+/);
   const body: Record<string, unknown> = { key: c.key, email: c.email || undefined, name: first || undefined, surname: rest.join(" ") || undefined };
-  if (c.referrerKey) body.referring_customer = { key: c.referrerKey };
+  // A Partnero link leaves partnero_partner (affiliate program) or partnero_referral (refer-a-friend program), and the
+  // program behind our API key reads only its own field. The link's key goes in both, so it lands whichever program it is.
+  if (c.referrerKey || c.partnerKey) body.referring_customer = { key: c.referrerKey || c.partnerKey };
   if (c.partnerKey) body.partner = { key: c.partnerKey };
   const r = await partneroCall(apiKey, "POST", "/customers", body, fetchFn);
   return r.ok || alreadyThere(r) ? { ...r, ok: true } : r;

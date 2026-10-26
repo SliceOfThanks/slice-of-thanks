@@ -14,6 +14,9 @@ check(c.body.referring_customer.key === 'm0' && c.body.partner.key === 'lawfecta
 
 f = fake(201, {}); await sendCustomer('k', { key: 'm2', email: '', name: '' }, f);
 check(!('referring_customer' in f.calls[0].body) && !('partner' in f.calls[0].body), 'Nobody referred: no referral fields');
+f = fake(201, { data: { key: 'm2' } });
+r = await sendCustomer('k', { key: 'm2', email: 'c@d.co', name: 'Ana', partnerKey: 'TRtENZ3vYE2V' }, f);
+check(f.calls[0].body.referring_customer.key === 'TRtENZ3vYE2V' && f.calls[0].body.partner.key === 'TRtENZ3vYE2V', 'A link key goes as partner and as referring customer');
 
 r = await sendCustomer('k', { key: 'm1', email: 'a@b.co', name: 'J' }, fake(422, { message: 'The key has already been taken.' }));
 check(r.ok, 'A customer already in Partnero counts as done');

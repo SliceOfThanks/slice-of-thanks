@@ -13,7 +13,7 @@ import { fillNote } from "./lib/merge.ts";
 import { sendCustomer, sendSale } from "./lib/partnero.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.21.2";
+const VERSION = "api-0.21.3";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -95,7 +95,7 @@ async function partneroOutbox(limit: number): Promise<number> {
       ? await sendCustomer(key, { key: o.member_id, email: o.email, name: o.name, referrerKey: o.referred_by ?? null, partnerKey: o.partner_key ?? null })
       : await sendSale(key, { customerKey: o.member_id, key: "bd-" + String(o.payload?.invoice ?? o.id), amountCents: Number(o.payload?.amount_cents ?? 0) });
     // Partnero answers 2xx even when it cannot match the partner, so log which partner it linked (or none)
-    if (o.kind === "customer") console.log("partnero customer", JSON.stringify({ member: o.member_id, sent_partner: o.partner_key ?? null, status: r.status, linked: r.data?.data?.partner ?? r.data?.partner ?? null }));
+    if (o.kind === "customer") console.log("partnero customer", JSON.stringify({ member: o.member_id, sent_partner: o.partner_key ?? null, status: r.status, linked: r.data?.data?.partner ?? r.data?.partner ?? null, referred_by: r.data?.data?.referring_customer ?? r.data?.data?.referrer ?? null }));
     await rpc("sot_partnero_done", { p_id: o.id, p_ok: r.ok, p_error: r.error ?? null });
     if (r.ok) sent++; else console.error("partnero", o.kind, r.error);
   }

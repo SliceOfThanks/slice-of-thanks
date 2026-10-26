@@ -96,9 +96,11 @@ function calData(connected) {
       const tst = 'TidyCal is connected. Your meetings are on Home.';
       check(tst.indexOf('TidyCal is connected') === 0 && page.url() === ORIGIN + '/kitchen', tag + ': coming back from TidyCal says connected and cleans the address: ' + tst + ' ' + page.url());
       const rows = await inRoot(page, "return [...R.querySelectorAll('#meetings .meeting')].map(li=>li.querySelector('h3').textContent+':'+li.querySelector('.pill').textContent).join('|')");
-      check(rows === 'Intro call:Pizza waiting|Partnership call:Sent \u00b7 opened|Demo call:Upcoming|Walk-in:Upcoming|Coffee:Canceled', tag + ': This week lists the meetings with their state: ' + rows);
+      check(rows === 'Priya Shah:Pizza waiting|Jordan Reyes:Sent \u00b7 opened|Marcus Lee:Upcoming|Sam:Upcoming|Ana:Canceled', tag + ': This week lists the guests by name with their state: ' + rows);
+      const sub = await inRoot(page, "return R.querySelector('#meetings [data-id=mt-up] .who').textContent");
+      check(sub === 'Demo call \u00b7 marcus@x.test', tag + ': the meeting type sits under the name: ' + sub);
       const up = await inRoot(page, "const li=R.querySelector('#meetings [data-id=mt-up]');const cb=li.querySelector('input.meetWant');return [cb.checked, li.querySelector('label').textContent.trim(), !R.querySelector('#meetings [data-id=mt-noemail] input'), R.querySelector('#meetings [data-id=mt-noemail]').textContent.indexOf('No guest email')>=0]");
-      check(up[0] === false && up[1] === (plan === 'free' ? 'Have my signature pizza ready when it ends' : 'Send my signature pizza when it ends') && up[2] && up[3], tag + ': upcoming meeting has the right pizza switch, off by default: ' + up);
+      check(up[0] === false && up[1] === (plan === 'free' ? 'Have signature pizza ready' : 'Signature pizza when it ends') && up[2] && up[3], tag + ': upcoming meeting has the right pizza switch, off by default: ' + up);
       await inRoot(page, "R.querySelector('#meetings [data-id=mt-up] input.meetWant').click()"); await wait(300);
       const mb = (st.bodies['/calendar/meeting'] || [])[0] || {};
       check(mb.id === 'mt-up' && mb.want === true, tag + ': switching it on saves it: ' + JSON.stringify(mb));

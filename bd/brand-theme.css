@@ -94,3 +94,15 @@ body .row:has(> [class*="col-"] a[href*="/account/upgrade"]):has(> [class*="col-
 /* Hide BD's own Close My Account. It removes only the BD login and leaves the member's pizzas and People behind.
    Members close their account in the app (Settings, Account, Delete my account and data), which removes everything. */
 body a[href*="deleteaccount"], body form[action*="deleteaccount"] { display: none !important; }
+
+/* Userback feedback widget: the feedback type picker looks like a real dropdown, full width with an arrow,
+   so it reads as a choice and not a half-width button. */
+body [id*="userback"] select, body [class*="userback"] select {
+  display: block !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
+  -webkit-appearance: none !important; appearance: none !important; cursor: pointer !important;
+  margin: 8px 0 0 !important; padding: 11px 40px 11px 14px !important; min-height: 46px !important;
+  font: 600 15px 'Work Sans', Arial, sans-serif !important; color: #3E2416 !important; text-align: left !important;
+  border: 2px solid #3E2416 !important; border-radius: 12px !important; box-shadow: none !important;
+  background: #FFFDF8 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'><path d='M1 1l6 6 6-6' fill='none' stroke='%233E2416' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 14px center / 14px 9px !important;
+}
+body [id*="userback"] select:focus, body [class*="userback"] select:focus { border-color: #D62828 !important; outline: 3px solid #F5C04E !important; outline-offset: 1px; }

@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.16.2 =====
+/* ===== Slice of Thanks live layer v0.16.3 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -1125,17 +1125,20 @@ async function loadCalendar(sync) {
 function wantsPizza(m) { return m.want_pizza === null || m.want_pizza === undefined ? (calAuto() && (m.auto_want !== undefined ? !!m.auto_want : settings.mode === 'auto')) : !!m.want_pizza; }
 function mk(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
 function meetingRow(m) {
-  const li = mk('li', 'meeting'), info = mk('div', 'info'), row = mk('div', 'row');
+  /* Compact card: the guest's name, the meeting type under it, the status on the right, then the pizza controls */
+  const li = mk('li', 'meeting'), info = mk('div', 'info'), row = mk('div', 'row'), head = mk('div', 'mhead');
   li.dataset.id = m.id;
-  info.append(mk('h3', '', m.title || 'Meeting'), mk('span', 'who', [m.name, m.email].filter(Boolean).join(' · ') || 'No guest details'));
   const pill = mk('span', 'pill');
+  head.append(mk('h3', '', m.name || m.email || 'Guest'), pill);
+  info.append(head, mk('span', 'who', (m.title || 'Meeting') + (m.name && m.email ? ' · ' + m.email : '')));
   const btn = (label, fn, primary) => { const b = mk('button', 'btn small' + (primary ? ' primary' : ''), label); b.type = 'button'; b.onclick = () => fn(b); row.appendChild(b); return b; };
   if (m.state === 'upcoming') {
-    pill.textContent = 'Upcoming'; row.appendChild(pill);
+    pill.textContent = 'Upcoming';
     if (!m.email) row.appendChild(mk('small', 'muted', 'No guest email on this booking'));
     else {
-      const lab = mk('label', 'check'), cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = wantsPizza(m); cb.className = 'meetWant';
-      lab.append(cb, document.createTextNode(calAuto() ? ' Send my signature pizza when it ends' : ' Have my signature pizza ready when it ends'));
+      const lab = mk('label', 'meet-sw'), cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = wantsPizza(m); cb.className = 'meetWant';
+      cb.setAttribute('role', 'switch');
+      lab.append(cb, mk('span', '', calAuto() ? 'Signature pizza when it ends' : 'Have signature pizza ready'));
       cb.onchange = async () => {
         m.want_pizza = cb.checked;
         const r = await LIVE.call('/calendar/meeting', { id: m.id, want: cb.checked }).catch(() => ({}));
@@ -1143,26 +1146,25 @@ function meetingRow(m) {
         toast(cb.checked ? (calAuto() ? 'Your signature pizza goes to ' + first(m.name || 'them') + ' when it ends.' : 'Your signature pizza will be waiting here when it ends.') : 'No pizza for this one.');
       };
       row.appendChild(lab);
-      if (cb.checked && calAuto() && (settings.mode === 'auto' || settings.mode === 'tags')) row.appendChild(mk('small', 'muted', 'Untick to skip this one.'));
-      btn('Plan a pizza now', () => planMeeting(m));
+      btn('Plan a pizza', () => planMeeting(m));
     }
   } else if (m.state === 'sent' && m.send_status === 'queued') {
-    pill.classList.add('ok'); pill.textContent = 'Pizza planned'; row.appendChild(pill);
+    pill.classList.add('ok'); pill.textContent = 'Pizza planned';
     row.appendChild(mk('small', 'muted', 'Goes out when it ends, ' + new Date(m.send_at || m.ends_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + '.'));
   } else if (m.state === 'ready') {
-    pill.classList.add('wait'); pill.textContent = m.note === 'no_credits' ? 'Waiting · out of emails' : 'Pizza waiting'; row.appendChild(pill);
+    pill.classList.add('wait'); pill.textContent = m.note === 'no_credits' ? 'Out of emails' : 'Pizza waiting';
     btn('Send signature pizza', b => sendMeetingSignature(m, b), true);
     btn('Make a fresh one', () => startFresh(m.id));
     btn('Skip', async () => { await LIVE.call('/calendar/skip', { id: m.id }).catch(() => null); loadCalendar(); });
   } else if (m.state === 'sent') {
-    pill.classList.add('ok'); pill.textContent = 'Sent' + (m.opened ? ' · opened' : ''); row.appendChild(pill);
+    pill.classList.add('ok'); pill.textContent = 'Sent' + (m.opened ? ' · opened' : '');
   } else if (m.state === 'ended') {
-    pill.textContent = 'Ended'; row.appendChild(pill);
+    pill.textContent = 'Ended';
     if (m.email) btn('Make one', () => startFresh(m.id));
   } else {
-    pill.textContent = m.note === 'canceled' ? 'Canceled' : 'Skipped'; row.appendChild(pill);
+    pill.textContent = m.note === 'canceled' ? 'Canceled' : 'Skipped';
   }
-  info.appendChild(row);
+  if (row.childElementCount) info.appendChild(row);
   li.append(mk('span', 'time', meetingTime(m)), info);
   return li;
 }

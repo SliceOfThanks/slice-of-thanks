@@ -71,9 +71,9 @@ const MEETINGS = [
     const planned = await inRoot(page, "return R.querySelector('#meetings [data-id=m-plan]').textContent");
     check(planned.indexOf('Pizza planned') >= 0 && planned.indexOf('Goes out when it ends') >= 0, plan + ': a planned pizza shows as planned');
     if (plan === 'pro') {
-      const t = await inRoot(page, "const x1=R.querySelector('#meetings [data-id=m-this]'),x2=R.querySelector('#meetings [data-id=m-next]');return [x1.querySelector('input.meetWant').checked,x1.textContent.indexOf('Untick to skip')>=0,x2.querySelector('input.meetWant').checked].join(',')");
-      check(t === 'true,true,false', 'pro: tagged guest is ticked with an untick hint, untagged is not: ' + t);
-      await inRoot(page, "[...R.querySelectorAll('#meetings [data-id=m-this] button')].find(b=>b.textContent==='Plan a pizza now').click()"); await wait(300);
+      const t = await inRoot(page, "const x1=R.querySelector('#meetings [data-id=m-this]'),x2=R.querySelector('#meetings [data-id=m-next]');return [x1.querySelector('input.meetWant').checked,x1.querySelector('.meet-sw input').getAttribute('role')==='switch',x2.querySelector('input.meetWant').checked].join(',')");
+      check(t === 'true,true,false', 'pro: tagged guest has the switch on, untagged has it off: ' + t);
+      await inRoot(page, "[...R.querySelectorAll('#meetings [data-id=m-this] button')].find(b=>b.textContent==='Plan a pizza').click()"); await wait(300);
       await page.evaluate(() => window.__SOT_DEBUG.goSend()); await wait(300);
       const s1 = await inRoot(page, "return [R.querySelector('#toName').value, R.querySelector('#sendNow').textContent]");
       check(s1[0] === 'Ann Lee' && s1[1].indexOf('Send when the meeting ends') === 0, 'pro: Plan a pizza fills the guest and the send button says when: ' + s1.join(' / '));
@@ -92,7 +92,7 @@ const MEETINGS = [
       await inRoot(page, "const r=R.querySelector('#mode-ask');r.checked=true;r.dispatchEvent(new Event('change'))"); await wait(200);
       check(await inRoot(page, "return R.querySelector('#modeTags').hidden"), 'pro: other modes hide the tags');
     } else {
-      await inRoot(page, "[...R.querySelectorAll('#meetings [data-id=m-this] button')].find(b=>b.textContent==='Plan a pizza now').click()"); await wait(300);
+      await inRoot(page, "[...R.querySelectorAll('#meetings [data-id=m-this] button')].find(b=>b.textContent==='Plan a pizza').click()"); await wait(300);
       check((await inRoot(page, "const o=R.querySelector('#upTitle');return o?o.textContent:''")) === 'Plan pizzas ahead', 'free: Plan a pizza shows the upgrade');
       await inRoot(page, "R.querySelector('#tab-settings').click()"); await wait(300);
       await inRoot(page, "const r=R.querySelector('#mode-tags');r.click()"); await wait(300);

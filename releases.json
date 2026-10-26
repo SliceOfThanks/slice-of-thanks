@@ -341,6 +341,12 @@
       "commit": "8a9ce7a7b46820f73d6e7e89f91096c4ccca56d7",
       "date": "2026-10-26",
       "notes": "FAQs on the Crew tab: 20 questions, 6 shown, See more for the rest, help email pizza@sliceofthanks.app."
+    },
+    {
+      "version": "v0.18.2",
+      "commit": "a4705977adbe97d7deda8ab8d0013a630eb93768",
+      "date": "2026-10-26",
+      "notes": "FAQs explain every feature (what it is, why use it, how to set it up, what you get) with a Take me there button, Gerald and Potato introduced, easter egg at the end of the FAQs (+10 Treats). Home page screens retaken and old sample widget removed (bd/home-page.html)."
     }
   ]
 }

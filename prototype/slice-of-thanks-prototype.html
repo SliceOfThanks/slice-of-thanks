@@ -129,6 +129,29 @@ button.p-tag{cursor:pointer;font-family:inherit}button.p-tag:hover{background:va
 .pill.wait{background:var(--warn-bg);color:var(--warn-ink)}
 .mode-line{font-size:.9rem;color:var(--muted)}
 .kx-reset{display:flex;justify-content:flex-start;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.step-lede{margin:-4px 0 4px;color:var(--muted);font-size:.92rem}
+.bsec{display:block;gap:0;border:2.5px solid var(--edge);border-radius:18px;background:var(--surface);box-shadow:3px 3px 0 var(--shade);overflow:hidden}
+.bsec-head{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;font-family:var(--body);color:var(--ink)}
+.bsec-head:focus-visible{outline:3px solid var(--mustard);outline-offset:-3px}
+.bsec-num{flex:none;width:30px;height:30px;border-radius:50%;background:var(--tomato);color:var(--tomato-ink);display:flex;align-items:center;justify-content:center;font-weight:800;border:2px solid var(--edge)}
+.bsec-t{display:flex;flex-direction:column;min-width:0;flex:1}.bsec-t b{font-family:var(--display);font-weight:400;font-size:1.1rem;line-height:1.2}.bsec-t small{color:var(--muted);font-size:.8rem;line-height:1.3}
+.bsec-sum{display:none;font-size:.78rem;color:var(--muted);max-width:40%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bsec:not(.open) .bsec-sum{display:block}
+.bsec-ic{transition:transform .15s}.bsec.open .bsec-ic{transform:rotate(180deg)}
+.bsec-body{display:flex;flex-direction:column;gap:14px;padding:0 14px 16px;border-top:2px dashed var(--line)}
+.bsec:not(.open) .bsec-body{display:none}
+.g-tip{display:flex;gap:10px;align-items:center;margin:12px 0 0;font-size:.86rem;color:var(--ink);background:var(--sunk);border-radius:12px;padding:8px 10px}
+.g-tip .g-av{flex:none;width:30px;height:30px}
+.preset-cards{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x mandatory}
+.preset-card{all:unset;box-sizing:border-box;flex:none;width:132px;scroll-snap-align:start;cursor:pointer;border:2.5px solid var(--edge);border-radius:14px;background:var(--surface);padding:6px;display:flex;flex-direction:column;gap:6px;font-family:var(--body);color:var(--ink)}
+.preset-card:focus-visible{outline:3px solid var(--mustard)}
+.preset-card[aria-pressed="true"]{background:var(--mustard);color:#3E2416}
+.preset-card .lid.mini{min-height:62px;padding:6px;border-radius:9px;gap:2px}
+.preset-card .mini-st{font-size:.62rem;font-weight:700;background:#D62828;color:#fff;border-radius:999px;padding:1px 6px;position:relative;z-index:1}
+.preset-card b{font-size:.82rem;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preset-card small{font-size:.7rem;color:inherit;opacity:.75;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.preset-card.add{justify-content:center;align-items:center;text-align:center;border-style:dashed;min-height:110px}
+.preset-card.add .plus{font-size:1.6rem;font-weight:800;line-height:1}
 .cfold>.cf-head{cursor:pointer;display:flex;align-items:center;gap:8px;border:2px solid var(--ink);border-radius:14px;padding:10px 12px;background:var(--surface);margin:0}
 .cfold>.cf-head .cf-val{margin-left:auto;font-weight:600;color:var(--muted);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
 .cfold>.cf-head .cf-ic{transition:transform .15s}
@@ -634,6 +657,7 @@ body.is-free .pro-tag{display:inline-block}
 
     <div class="panel" data-step="4" hidden>
       <h2>Box it up</h2>
+      <p class="step-lede" id="boxLede">Dress the box in three quick parts. Only your note is needed; everything else has a good default.</p>
       <div class="field"><label>What kind of pizza is this?</label><div class="chips" id="kindChips"></div><small id="kindHelp"></small></div>
       <div class="box-float" id="boxFloat">
         <button class="box-pin" id="boxPin" type="button"></button>
@@ -642,6 +666,10 @@ body.is-free .pro-tag{display:inline-block}
           <div class="inside"><p class="eyebrow" style="color:#7a5a3c">Inside the lid</p><p class="hand" id="notePreview"></p><p class="hand sign" id="signPreview"></p></div>
         </div>
       </div>
+      <section class="bsec open" id="bsecOutside" data-sec="outside">
+        <button class="bsec-head" type="button" aria-expanded="true"><span class="bsec-num">1</span><span class="bsec-t"><b>The outside of the box</b><small>What they see first when Potato delivers it.</small></span><span class="bsec-sum" aria-hidden="true"></span><span class="bsec-ic" aria-hidden="true">▾</span></button>
+        <div class="bsec-body">
+        <p class="g-tip"><span class="g-av" aria-hidden="true"></span><span>Gerald's tip: a logo and one bold sticker read best on a phone.</span></p>
       <div class="field" data-personal hidden><label for="lidText">Message on the lid</label><input type="text" id="lidText" maxlength="40" placeholder="Happy Retirement, Rebecca!"><small>Big letters on the lid. Leave it blank to show your name.</small></div>
       <div class="field" data-personal hidden>
         <label>Photo on the box<span class="pro-tag">Pro</span></label>
@@ -657,11 +685,23 @@ body.is-free .pro-tag{display:inline-block}
       <div class="field"><label>Box topper<span class="pro-tag">Pro</span></label><div class="chips" id="topperChips"></div><small id="topperHelp">A little decoration on the lid. Seasonal ones show up in their month.</small></div>
       <div class="field"><label for="stickerSel">Occasion sticker</label><select id="stickerSel"></select></div>
       <div class="field"><label>Confetti when they open the box</label><div class="chips" id="confettiChips"></div><small>Tap one to see it.</small></div>
+        </div>
+      </section>
+      <section class="bsec open" id="bsecNote" data-sec="note">
+        <button class="bsec-head" type="button" aria-expanded="true"><span class="bsec-num">2</span><span class="bsec-t"><b>Your note inside the lid</b><small>They read it the moment the box opens.</small></span><span class="bsec-sum" aria-hidden="true"></span><span class="bsec-ic" aria-hidden="true">▾</span></button>
+        <div class="bsec-body">
+        <p class="g-tip"><span class="g-av" aria-hidden="true"></span><span>Gerald's tip: name one specific thing you appreciated. Two sentences beat a long note.</span></p>
       <div class="field"><label for="noteText">Your note</label><textarea id="noteText" maxlength="280"></textarea><div class="chips tokens" data-for="noteText" aria-label="Add a detail that changes for each person"></div><small>Tap a detail to add it. Each person gets their own.</small></div><small id="geraldNoteLine" class="muted" hidden>Gerald wrote this note in your style. Change anything you like.</small>
       <div class="field"><label for="signText">Sign-off</label><input type="text" id="signText" maxlength="40"></div>
-      <div class="field"><label>Tone of Gerald's review</label><div class="chips" id="toneChips"></div></div>
+        </div>
+      </section>
+      <section class="bsec" id="bsecExtras" data-sec="extras">
+        <button class="bsec-head" type="button" aria-expanded="false"><span class="bsec-num">3</span><span class="bsec-t"><b>Around the pizza</b><small>Optional. Your button, a gift and Gerald's review.</small></span><span class="bsec-sum" aria-hidden="true"></span><span class="bsec-ic" aria-hidden="true">▾</span></button>
+        <div class="bsec-body">
+        <p class="g-tip"><span class="g-av" aria-hidden="true"></span><span>Gerald's tip: one clear ask works best, like Book a follow-up or Leave a review. A gift gets every slice eaten.</span></p>
+      <div class="field"><label>Tone of Gerald's review</label><div class="chips" id="toneChips"></div><small>How Gerald writes the review on their receipt.</small></div>
       <div class="two" data-biz>
-        <div class="field"><label for="linkLabel">Next-step button<span class="pro-tag">Pro</span></label><input type="text" id="linkLabel" maxlength="30"></div>
+        <div class="field"><label for="linkLabel">Button under the pizza<span class="pro-tag">Pro</span></label><input type="text" id="linkLabel" maxlength="30"></div>
         <div class="field"><label for="linkUrl">Button link</label><input type="url" id="linkUrl"></div>
       </div>
       <div class="reward-set" data-biz>
@@ -674,6 +714,8 @@ body.is-free .pro-tag{display:inline-block}
         </div>
         <div class="field"><label for="rwExp">Expires (optional)</label><input type="date" id="rwExp"></div>
       </div>
+        </div>
+      </section>
     </div>
 
     <div class="panel" data-step="5" hidden>
@@ -1918,7 +1960,14 @@ const chipVal=id=>()=>{const c=$(id)&&$(id).querySelector('.chip[aria-pressed="t
 function refreshBoxFolds(){
  [['#styleChips','style'],['#topperChips','topper'],['#confettiChips','confetti'],['#toneChips','tone']].forEach(([id,k])=>{const c=$(id);if(!c)return;const f=c.closest('.field');boxFold(f,k,f&&f.querySelector(':scope > label'),chipVal(id))});
  const rs=$('#rwHead')&&$('#rwHead').closest('.reward-set');boxFold(rs,'gift',$('#rwHead'),()=>(box.reward&&box.reward.code)?box.reward.code:'None')}
-const _renderBoxF=renderBox;renderBox=function(){_renderBoxF.apply(this,arguments);refreshBoxFolds()};
+/* Box step sections: tap a header to fold it. A folded section shows a short summary of what is in it. */
+document.querySelectorAll('.bsec').forEach(sec=>{const h=sec.querySelector('.bsec-head');h.onclick=()=>{const o=!sec.classList.contains('open');sec.classList.toggle('open',o);h.setAttribute('aria-expanded',String(o))}});
+function refreshBoxSecs(){const sum=(id,t)=>{const e=$(id+' .bsec-sum');if(e)e.textContent=t};
+ sum('#bsecOutside',[STYLES[box.style]||'',box.sticker||''].filter(Boolean).join(' · '));
+ sum('#bsecNote',box.note?'"'+box.note.slice(0,28)+(box.note.length>28?'..."':'"'):'Add a note');
+ sum('#bsecExtras',[box.linkLabel?'Button':'',box.reward&&box.reward.code?'Gift':''].filter(Boolean).join(' · ')||'None yet')}
+['#noteText','#linkLabel','#rwCode'].forEach(x=>{const e=$(x);if(e)e.addEventListener('input',()=>setTimeout(()=>{try{refreshBoxSecs()}catch(_){}},0))});
+const _renderBoxF=renderBox;renderBox=function(){_renderBoxF.apply(this,arguments);refreshBoxFolds();try{refreshBoxSecs()}catch(_){}};
 $('#homeNew').onclick=()=>{toggleHire(false);startFresh(null)};
 $('#homeHire').onclick=()=>{startFresh(null);toggleHire(true);setTimeout(()=>{const c=$('#kxHireWrap');if(c.scrollIntoView)c.scrollIntoView({behavior:'smooth',block:'start'})},50)};
 function syncHireVegan(){const m=hirePick();$('#hireNew').hidden=$('#hireNewMail').hidden=$('#hireFor').value!=='new';$('#hireVegan').checked=!!settings.veganDefault||!!(m&&m.vegan);$('#hireVeganNote').textContent=m&&m.vegan?' ('+first(m.who)+' is marked vegan)':''}

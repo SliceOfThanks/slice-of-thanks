@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.18.5 =====
+/* ===== Slice of Thanks live layer v0.18.6 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -889,11 +889,14 @@ function renderPresetPicker() {
   let row = $('#presetRow');
   if (!row) {
     row = document.createElement('div'); row.id = 'presetRow'; row.className = 'field';
-    row.innerHTML = '<label for="presetSel">Start from a preset</label><div class="inline"><select id="presetSel"></select><button class="btn small" type="button" id="presetSave">Save as preset</button></div>';
-    panel.querySelector('h2').after(row);
+    /* Presets show as cards with a mini lid. Tap one to fill the whole box. The hidden select keeps one code path for loading. */
+    row.innerHTML = '<label>Your box presets</label><small id="presetHelp">Tap a preset to fill the whole box in one go. Save any box you like to reuse it.</small>' +
+      '<div class="preset-cards" id="presetCards"><button class="preset-card add" type="button" id="presetSave"><span class="plus">+</span><b>Save this box</b><small>as a new preset</small></button></div>' +
+      '<select id="presetSel" hidden aria-hidden="true" tabindex="-1"></select>';
+    (panel.querySelector('#boxLede') || panel.querySelector('h2')).after(row);
     row.querySelector('#presetSel').addEventListener('change', e => {
       const pr = presets.find(x => x.id === e.target.value); if (!pr) return;
-      applyPreset(pr); toast('Loaded "' + pr.name + '".'); e.target.value = '';
+      applyPreset(pr); lastPresetId = pr.id; toast('Loaded "' + pr.name + '". Change anything you like.'); e.target.value = ''; renderPresetCards();
     });
     const saveNew = () => {
       if (presets.length >= presetLimit) { presetFull(); return; }
@@ -919,10 +922,29 @@ function renderPresetPicker() {
   sel.innerHTML = '<option value="">' + (presets.length ? 'Choose a preset' : 'No presets yet') + '</option>';
   presets.forEach(pr => { const o = document.createElement('option'); o.value = pr.id; o.textContent = pr.name; sel.appendChild(o); });
   sel.disabled = !presets.length;
+  renderPresetCards();
   row.hidden = !account || !!editingPreset;
   $('#presetSaveRow').hidden = !account || !!editingPreset;
   $('#presetBanner').hidden = !editingPreset;
   if (editingPreset) $('#presetBannerName').textContent = editingPreset.name;
+}
+let lastPresetId = null;
+function renderPresetCards() {
+  const wrap = $('#presetCards'); if (!wrap) return;
+  wrap.querySelectorAll('.preset-card:not(.add)').forEach(x => x.remove());
+  const add = $('#presetSave');
+  presets.forEach(pr => {
+    const d = pr.data || {};
+    const b = mk('button', 'preset-card'); b.type = 'button'; b.setAttribute('aria-pressed', String(pr.id === lastPresetId));
+    const lid = mk('div', 'lid mini'); lid.dataset.style = d.style || 'kraft';
+    if (d.sticker) lid.appendChild(mk('span', 'mini-st', String(d.sticker).slice(0, 18)));
+    b.appendChild(lid); b.appendChild(mk('b', '', pr.name));
+    b.appendChild(mk('small', '', d.note ? d.note.slice(0, 60) : ((typeof STYLES !== 'undefined' && STYLES[d.style]) || 'Box')));
+    b.onclick = () => { const sel = $('#presetSel'); sel.value = pr.id; sel.dispatchEvent(new Event('change')); };
+    wrap.insertBefore(b, add);
+  });
+  const help = $('#presetHelp');
+  if (help) help.textContent = presets.length ? 'Tap a preset to fill the whole box in one go. Save any box you like to reuse it.' : 'No presets yet. Set up a box you love, then tap Save this box to reuse it in one tap.';
 }
 function editPreset(pr) {
   editingPreset = pr ? { id: pr.id, name: pr.name } : null;

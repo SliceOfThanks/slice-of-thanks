@@ -365,6 +365,12 @@
       "commit": "e1498f873da493b770c7a04c9b4b2affffb7eba6",
       "date": "2026-10-26",
       "notes": "Gift card: A gift from <business> with their logo, the offer in large type, Your code label, and Use code X at <website> (or with <business>). Kitchen gift field label asks what the gift is for."
+    },
+    {
+      "version": "v0.18.6",
+      "commit": "6cdd6275df6c2c0d5847c4a5efa36e280f034aa0",
+      "date": "2026-10-26",
+      "notes": "Box step redesign: a short lede, presets as tappable cards with a mini lid (plus a Save this box card), then three numbered sections that fold: 1 The outside of the box, 2 Your note inside the lid, 3 Around the pizza (button, gift, review tone; starts folded with a summary). Each section has a Gerald tip."
     }
   ]
 }

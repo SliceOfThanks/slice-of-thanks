@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.19.4 =====
+/* ===== Slice of Thanks live layer v0.19.5 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -1140,7 +1140,10 @@ async function loadCalendar(sync) {
   if (!LIVE.TOKEN || !account) return;
   let r; try { r = sync ? await LIVE.call('/calendar/sync', {}) : await LIVE.call('/calendar'); } catch (e) { return; }
   if (!r || !r.ok) return;
-  cal = { integrations: r.integrations || [], meetings: r.meetings || [], loaded: true };
+  // A meeting shows until the end of its own day (local time), then leaves the list
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const onOrAfterToday = m => { const d = new Date(m.starts_at || m.ends_at || 0); return !isNaN(d) && d >= today; };
+  cal = { integrations: r.integrations || [], meetings: (r.meetings || []).filter(onOrAfterToday), loaded: true };
   meetings = cal.meetings.map(calProto);
   if (!views.today.hidden) renderToday();
   renderCalendarCard();

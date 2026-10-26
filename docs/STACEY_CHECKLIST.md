@@ -16,12 +16,12 @@
    4. If you pasted an older SOT-Back there before, delete it first.
    5. Paste at the very end, below everything else, and save.
 
-3. Re-paste the Join widget in BD (Pizza Party now says Coming soon)
+3. DONE: Re-paste the Join widget in BD (Pizza Party now says Coming soon)
    1. Open github.com/SliceOfThanks/slice-of-thanks/blob/main/widgets/SOT-Join.html
    2. Click Raw. Select all and copy.
    3. In BD admin, edit the SOT-Join widget. Replace everything in it with the copy and save.
 
-3b. Re-paste the Login widget in BD (show password eye)
+3b. DONE (SOT-Login 1.8.0 with the real logo): Re-paste the Login widget in BD
    1. Open github.com/SliceOfThanks/slice-of-thanks/blob/main/widgets/SOT-Login.html
    2. Click Raw. Select all and copy.
    3. In BD admin, edit the SOT-Login widget. Replace everything in it with the copy and save.
@@ -35,7 +35,7 @@
    2. Replace the Launching Soon content with the SOT-Join widget, or point the home page to the Join page. Save.
    3. Open sliceofthanks.app logged out and check that the plans show.
 
-6. Make the free trial length match
+6. DONE (14 days): Make the free trial length match
    1. Pick 7 or 14 days.
    2. In BD admin, Membership Plans, set that number on The Whole Pie and Pizza Party.
    3. Tell Claude the number so the Join page says the same thing.
@@ -62,5 +62,5 @@
 
 1. Paste docs/CHATGPT_LAUNCH_TEST.md into ChatGPT (agent mode) about 2 hours before 11 PM. Send Claude the results.
 2. Delete the test people from People.
-3. Check email packs and Special Delivery with a $0 manual invoice in BD (never a real payment).
+3. DONE (2026-10-26): Email packs and Special Delivery checked with manual invoices in BD.
 4. Later, with the birthday gift feature: add one line to the privacy policy saying Slice of Thanks keeps a member's birthday (month and day only) to send a birthday gift.

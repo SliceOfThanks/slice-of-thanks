@@ -317,6 +317,12 @@
       "commit": "d3a386dcf7bc182252fd0d46ee36b96cf1df2f4f",
       "date": "2026-10-26",
       "notes": "Compact meeting cards; Kitchen buttons side by side at the top. Brand CSS: Userback type picker as a dropdown."
+    },
+    {
+      "version": "v0.17.0",
+      "commit": "efcd9866a02e71b5bae988983c8273652b90044d",
+      "date": "2026-10-26",
+      "notes": "14 day Pro trial with welcome, Home card and Get set up checklist; Send one back adds the sender to People and fills in the Send step; reply email starts as the login email; open box finish on the pizza page; api-0.17.0."
     }
   ]
 }

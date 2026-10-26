@@ -60,6 +60,7 @@ async function run(browser, sess, extra) {
   };
   const { page, ctx } = await setup(browser, Object.assign(st, extra || {}));
   await page.setViewportSize({ width: 402, height: 874 });
+  await page.addInitScript(() => { window.Userback = { identify: (id, d) => { window.__ub = { id, d }; } }; });
   await page.goto(ORIGIN + '/kitchen' + ((extra && extra.qs) || '')); await wait(1800);
   return { page, ctx, st };
 }
@@ -72,6 +73,8 @@ async function run(browser, sess, extra) {
   check((await inRoot(p, "const b=R.querySelector('#liveTestSend');return b&&!b.hidden?b.textContent:''")) === 'Send a test to myself (5 free left)', 'Send step has the free test button');
   await inRoot(p, "R.querySelector('#liveTestSend').click()"); await wait(800);
   const sd = r.st.sends[0] || {};
+  const ub = await p.evaluate(() => window.__ub || null);
+  check(!!ub && ub.id === 'm1' && ub.d.email === 'me@test.com' && ub.d.name === 'Test Member', 'Userback knows who the member is: ' + JSON.stringify(ub));
   check(sd.is_test === true && sd.recipient.email === 'me@test.com' && sd.consent.basis === 'permission', 'Test goes to my own email as a test');
   check((await inRoot(p, "return R.querySelector('#liveTestSend').textContent")) === 'Send a test to myself (4 free left)', 'Count goes down to 4');
   check((await toastText(p)).indexOf('used no emails') >= 0, 'Toast says it used no emails');

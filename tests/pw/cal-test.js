@@ -49,6 +49,8 @@ function calData(connected) {
   return { ok: true, integrations: [{ provider: 'tidycal', status: 'connected', label: 'me@x.test' }, { provider: 'calendly', status: 'needs_reconnect' }],
     meetings: [
       { id: 'mt-old', provider: 'tidycal', title: 'Yesterday call', starts_at: iso(-60 * 30), ends_at: iso(-60 * 30 + 30), name: 'Old Guest', email: 'old@x.test', state: 'ended' }, // a past day: never listed
+      { id: 'mt-wait', provider: 'tidycal', title: 'Coffee', starts_at: iso(-60 * 48), ends_at: iso(-60 * 48 + 30), name: 'Wen Wait', email: 'wen@x.test', want_pizza: true, state: 'ready' }, // pizza waiting from 2 days ago: still listed
+      { id: 'mt-stale', provider: 'tidycal', title: 'Old coffee', starts_at: iso(-60 * 24 * 5), ends_at: iso(-60 * 24 * 5 + 30), name: 'Stale Guest', email: 'stale@x.test', want_pizza: true, state: 'ready' }, // waiting 5 days: gone
       { id: 'mt-ready', provider: 'tidycal', title: 'Intro call', starts_at: iso(-90), ends_at: iso(-60), name: 'Priya Shah', email: 'priya@x.test', want_pizza: true, state: 'ready' },
       { id: 'mt-sent', provider: 'tidycal', title: 'Partnership call', starts_at: iso(-200), ends_at: iso(-170), name: 'Jordan Reyes', email: 'jordan@x.test', state: 'sent', opened: true },
       { id: 'mt-up', provider: 'tidycal', title: 'Demo call', starts_at: iso(120), ends_at: iso(150), name: 'Marcus Lee', email: 'marcus@x.test', want_pizza: null, state: 'upcoming' },
@@ -97,7 +99,7 @@ function calData(connected) {
       const tst = 'TidyCal is connected. Your meetings are on Home.';
       check(tst.indexOf('TidyCal is connected') === 0 && page.url() === ORIGIN + '/kitchen', tag + ': coming back from TidyCal says connected and cleans the address: ' + tst + ' ' + page.url());
       const rows = await inRoot(page, "return [...R.querySelectorAll('#meetings .meeting')].map(li=>li.querySelector('h3').textContent+':'+li.querySelector('.pill').textContent).join('|')");
-      check(rows === 'Priya Shah:Pizza waiting|Jordan Reyes:Sent \u00b7 opened|Marcus Lee:Upcoming|Sam:Upcoming|Ana:Canceled', tag + ': This week lists the guests by name with their state, and a meeting from a past day is gone: ' + rows);
+      check(rows === 'Wen Wait:Pizza waiting|Priya Shah:Pizza waiting|Jordan Reyes:Sent \u00b7 opened|Marcus Lee:Upcoming|Sam:Upcoming|Ana:Canceled', tag + ': This week lists the guests by name with their state, a past day is gone, a waiting pizza stays 3 days: ' + rows);
       const sub = await inRoot(page, "return R.querySelector('#meetings [data-id=mt-up] .who').textContent");
       check(sub === 'Demo call \u00b7 marcus@x.test', tag + ': the meeting type sits under the name: ' + sub);
       const up = await inRoot(page, "const li=R.querySelector('#meetings [data-id=mt-up]');const cb=li.querySelector('input.meetWant');return [cb.checked, li.querySelector('label').textContent.trim(), !R.querySelector('#meetings [data-id=mt-noemail] input'), R.querySelector('#meetings [data-id=mt-noemail]').textContent.indexOf('No guest email')>=0]");

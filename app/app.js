@@ -2894,9 +2894,10 @@ async function loadCalendar(sync) {
   if (!LIVE.TOKEN || !account) return;
   let r; try { r = sync ? await LIVE.call('/calendar/sync', {}) : await LIVE.call('/calendar'); } catch (e) { return; }
   if (!r || !r.ok) return;
-  // A meeting shows until the end of its own day (local time), then leaves the list
+  // A meeting shows until the end of its own day (local time), then leaves the list. One with a pizza waiting to send stays 3 more days.
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const onOrAfterToday = m => { const d = new Date(m.starts_at || m.ends_at || 0); return !isNaN(d) && d >= today; };
+  const waitFrom = new Date(today); waitFrom.setDate(waitFrom.getDate() - 3);
+  const onOrAfterToday = m => { const d = new Date(m.starts_at || m.ends_at || 0); return !isNaN(d) && (d >= today || (m.state === 'ready' && d >= waitFrom)); };
   cal = { integrations: r.integrations || [], meetings: (r.meetings || []).filter(onOrAfterToday), loaded: true };
   meetings = cal.meetings.map(calProto);
   if (!views.today.hidden) renderToday();
@@ -3954,6 +3955,22 @@ async function downloadInviteQr() {
 }
 const _applySessionInv = applySession;
 applySession = function (s) { _applySessionInv(s); setTimeout(sendReferral, 1200); };
+
+/* Userback (help and feedback panel, loaded by BD): tell it who the member is, so it greets them by name and feedback shows who sent it */
+let ubWho = '';
+function identifyUserback() {
+  const s = LIVE.session; if (!s || !s.member_id || ubWho === s.member_id) return;
+  let n = 0;
+  const t = setInterval(() => {
+    const U = window.Userback;
+    if (U && typeof U.identify === 'function') {
+      clearInterval(t); ubWho = s.member_id;
+      try { U.identify(s.member_id, { name: profile.name || '', email: myEmail(), plan: s.plan || '' }); } catch (e) { /* ignore */ }
+    } else if (++n > 40) clearInterval(t);
+  }, 500);
+}
+const _applySessionUb = applySession;
+applySession = function (s) { _applySessionUb(s); identifyUserback(); };
 const _showInv = show;
 show = function (v) { _showInv(v); if (v === 'gerald' && LIVE.session) { if (!invite) loadInvite(); else renderInvite(); } };
 

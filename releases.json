@@ -329,6 +329,12 @@
       "commit": "ee5cc8c165c1821b8a0a48861cdb9dd705b53860",
       "date": "2026-10-26",
       "notes": "One trial: the 14 days come with the free account. Upgrade wording fixed. Home page (bd/home-page.html) with pricing, who it is for and screen grabs; SOT-Join 1.2.0 points at the free plan."
+    },
+    {
+      "version": "v0.18.0",
+      "commit": "17c26a63d540818e12d6dc4c60e6ce3785294518",
+      "date": "2026-10-26",
+      "notes": "Free test sends to yourself (5, no emails), trial reminder emails (3 days left, last day), Gerald's Birthday Special (birthday field, 8 AM send from Gerald and Potato, gift, unlock, sharing, 2026 topper, party hat, candles and sprinkles), Kitchen-first home page with our real pizza, crumbs in the empty box, trial and checklist settings now saved. api-0.18.0, migration launch_extras.sql."
     }
   ]
 }

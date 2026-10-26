@@ -63,4 +63,4 @@
 1. Paste docs/CHATGPT_LAUNCH_TEST.md into ChatGPT (agent mode) about 2 hours before 11 PM. Send Claude the results.
 2. Delete the test people from People.
 3. DONE (2026-10-26): Email packs and Special Delivery checked with manual invoices in BD.
-4. Later, with the birthday gift feature: add one line to the privacy policy saying Slice of Thanks keeps a member's birthday (month and day only) to send a birthday gift.
+4. NOW (birthday gift is live): add one line to the privacy policy saying Slice of Thanks keeps a member's birthday (month and day only) to send a birthday gift.

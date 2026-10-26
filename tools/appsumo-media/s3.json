@@ -1,0 +1,5 @@
+[
+ {"js":"pizza = P_demo(); step = 2; saidStep = 2; show('make'); renderStep(); window.scrollTo(0,0)","wait":900,"name":"k2b","full":true},
+ {"js":"step = 4; renderStep(); window.scrollTo(0,0)","wait":900,"name":"k4b","full":true},
+ {"root":"R.querySelector('#tab-people').click();window.scrollTo(0,0)","wait":700,"name":"peopleb","full":true}
+]

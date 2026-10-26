@@ -274,7 +274,8 @@ textarea{min-height:92px;resize:vertical}
 .radio{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:12px;border:2px solid var(--line);cursor:pointer;background:var(--surface)}
 .radio:has(input:checked){border-color:var(--tomato);background:var(--sunk)}
 .radio input{margin-top:4px;accent-color:var(--tomato)}
-.radio span{display:flex;flex-direction:column;gap:2px}
+.radio>span{display:flex;flex-direction:column;gap:2px}
+.radio .pro-tag{align-self:flex-start}
 .radio small{color:var(--muted);font-size:.85rem}
 .check{display:flex;gap:10px;align-items:center;font-size:.95rem}
 .check input{accent-color:var(--tomato);width:18px;height:18px}

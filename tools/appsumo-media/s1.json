@@ -1,0 +1,13 @@
+[
+ {"root":"R.querySelector('#tab-today').click();window.scrollTo(0,0)","wait":1200,"name":"home"},
+ {"root":"R.querySelector('#tab-today').click()","name":"home-full","full":true},
+ {"js":"pizza = P_demo(); step = 0; saidStep = 0; show('make'); renderStep(); window.scrollTo(0,0)","name":"k0","full":true},
+ {"js":"step = 1; renderStep()","name":"k1","full":true},
+ {"js":"step = 2; renderStep()","name":"k2","full":true},
+ {"js":"step = 3; renderStep()","name":"k3","full":true},
+ {"js":"step = 4; renderStep()","name":"k4","full":true},
+ {"js":"step = 5; renderStep()","name":"k5","full":true},
+ {"root":"R.querySelector('#tab-people').click()","name":"people","full":true},
+ {"root":"R.querySelector('#tab-gerald').click()","name":"crew","full":true},
+ {"root":"R.querySelector('#tab-settings').click()","name":"settings","full":true}
+]

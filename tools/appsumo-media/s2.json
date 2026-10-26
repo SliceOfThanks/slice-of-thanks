@@ -1,0 +1,6 @@
+[
+ {"root":"R.querySelector('#tab-today').click();window.scrollTo(0,0)","wait":1200,"name":"home2","full":true},
+ {"root":"R.querySelector('#homeHire').click()","wait":900,"name":"hire","full":true},
+ {"root":"R.querySelector('#tab-settings').click(); [...R.querySelectorAll('#view-settings .card h2')].forEach(h=>{if(/After a meeting|never forgets/.test(h.textContent)){const c=h.closest('.card');const b=c.querySelector('[aria-expanded]')||h;b.click()}})","wait":900,"name":"settings2","full":true},
+ {"js":"pizza = P_demo(); step = 5; saidStep = 5; show('make'); renderStep();","root":"const n=R.querySelector('#toName');n.value='Jordan Reyes';n.dispatchEvent(new Event('input'));const e=R.querySelector('#toContact');e.value='jordan@summit.test';e.dispatchEvent(new Event('input'));const m=R.querySelector('#mtgTitle');m.value='strategy call';m.dispatchEvent(new Event('input'))","wait":900,"name":"send2","full":true}
+]

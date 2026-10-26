@@ -58,12 +58,25 @@ function pep(c,r,b,vg){c.fillStyle=vg?mix('#c96a3c','#8f4422',b):mix('#c0392b','
  if(vg){c.fillStyle='rgba(70,120,40,.75)';for(let i=0;i<6;i++){const a=i*1.05+.2,d=r*.6;c.beginPath();c.ellipse(Math.cos(a)*d,Math.sin(a)*d,r*.11,r*.05,a,0,6.283);c.fill()}}
  c.fillStyle=vg?'rgba(255,235,205,.22)':'rgba(255,215,195,.35)';for(let i=0;i<5;i++){const a=i*1.3+.4,d=r*.55;c.beginPath();c.arc(Math.cos(a)*d,Math.sin(a)*d,r*.1,0,6.283);c.fill()}
  c.strokeStyle='rgba(70,8,4,.35)';c.lineWidth=r*.12;c.beginPath();c.arc(0,0,r*.9,0,6.283);c.stroke()}
+/* Emoji toppings are drawn once on their own clean canvas, then placed on the pizza.
+   Drawing them straight onto the pizza let iPhone Safari tint them with the color and see-through
+   setting of the topping drawn just before (googly eyes came out as faded tan blobs). */
+const EMOJI_CACHE={};
+function emojiImg(e,px){const k=e+'|'+px;if(EMOJI_CACHE[k])return EMOJI_CACHE[k];
+ const cv=document.createElement('canvas'),sz=Math.ceil(px*1.35);cv.width=cv.height=sz;const g=cv.getContext('2d');
+ g.globalAlpha=1;g.fillStyle='#000';g.font=px+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(e,sz/2,sz/2);
+ return EMOJI_CACHE[k]=cv}
+// Googly eyes: two white eyeballs with black pupils, looking a different way on each one
+function googly(c,u,rot){const look=((rot*5)%6.283),ox=Math.cos(look)*2.6*u,oy=Math.sin(look)*2.6*u;
+ [-6.5,6.5].forEach(dx=>{c.globalAlpha=1;c.fillStyle='#fff';c.strokeStyle='#2c2420';c.lineWidth=1.6*u;c.beginPath();c.arc(dx*u,0,6.2*u,0,6.283);c.fill();c.stroke();
+  c.fillStyle='#1a1410';c.beginPath();c.arc(dx*u+ox,oy,3*u,0,6.283);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(dx*u+ox-1*u,oy-1*u,.9*u,0,6.283);c.fill()})}
 function drawTop(c,t,cx,cy,R,u,b,now,vg){
  let x=cx+t.x*R,y=cy+t.y*R,s=t.s||1;
  if(t.born){const a=(now-t.born)/320;if(a<0)return;if(a<1){y-=(1-ease(a))*40*u;s*=1+.3*(1-a)}}
  c.save();c.translate(x,y);c.scale(s,s);
  const def=TOPS[t.k];
- if(def&&def.e){c.rotate((((t.rot*7)%1+1)%1-.5)*.7);c.font=(22*u)+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(def.e,0,1*u);c.restore();return}
+ if(t.k==='eyes'){googly(c,u,t.rot||0);c.restore();return}
+ if(def&&def.e){c.rotate((((t.rot*7)%1+1)%1-.5)*.7);const P=Math.max(12,Math.round(44*u)),im=emojiImg(def.e,P),w=im.width*22*u/P;c.drawImage(im,-w/2,-w/2+1*u,w,w);c.restore();return}
  c.rotate(t.rot||0);
  switch(t.k){
   case 'pepperoni':pep(c,13*u,b,vg);break;
@@ -118,7 +131,7 @@ function drawTop(c,t,cx,cy,R,u,b,now,vg){
  c.restore()}
 function drawPizza(cv,p,px,now){
  const dpr=Math.min(2,window.devicePixelRatio||1);const W=px||cv.clientWidth||300;
- const want=Math.round(W*dpr);if(cv.width!==want){cv.width=want;cv.height=want}
+ const want=Math.round(W*dpr);if(cv.width!==want||cv.height!==want){cv.width=want;cv.height=want}
  const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,W);
  now=now||performance.now();const u=W/300;let fl=null;
  if(p._slap){const a=(now-p._slap)/720;if(a<1)fl=a}

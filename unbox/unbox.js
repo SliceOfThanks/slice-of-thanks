@@ -1,4 +1,4 @@
-/* Slice of Thanks recipient page (unbox) v0.4.1
+/* Slice of Thanks recipient page (unbox) v0.4.2
    Delivery by Potato, open the box, six-slice pizza, sender's button under the pizza,
    the fun receipt (shareable) and Gerald's review on the same screen, gift after the sixth slice, send a pizza back.
    Needs shared/pizza-core.js loaded first. Mounts into #sot-unbox. */
@@ -21,7 +21,7 @@
       togo: function (n) { return n + ' to go.'; }, lines: ['Mmm.', 'Gerald is watching. He approves.', 'Halfway there.', 'Potato is drooling.', 'One more slice.'],
       tease: function (s) { return s + ' hid something under this pizza. Eat all 6 slices to find out.'; },
       gone: 'All gone.', received: 'All gone. Thanks received.', to: 'To', ate: 'You ate all 6 slices. Gerald is impressed. Potato is a little jealous.',
-      under: 'Under the pizza', copy: 'Copy code', copied: 'Copied!', use: 'Use it now', useBy: function (d) { return 'Use it by ' + d; },
+      under: 'Under the pizza', giftFrom: function (s) { return 'A gift from ' + s; }, yourCode: 'Your code', useAt: function (c, h) { return 'Use code ' + c + ' at ' + h + '.'; }, useWith: function (c, s) { return 'Use code ' + c + ' with ' + s + '.'; }, copy: 'Copy code', copied: 'Copied!', use: 'Use it now', useBy: function (d) { return 'Use it by ' + d; },
       back: function (s) { return 'Send ' + s + ' a pizza back'; }, review: "GERALD'S REVIEW", critic: 'Head Chef, Slice of Thanks',
       rating: function (n) { return 'Rating: ' + n + ' of 5 slices'; }, eaten: function (n) { return 'Slices eaten: ' + '●'.repeat(n) + '○'.repeat(6 - n) + ' ' + n + ' of 6'; },
       from: 'From', potato: 'Delivered by Potato, Head of Delivery.', why: 'Why did I get this?',
@@ -45,7 +45,7 @@
       togo: function (n) { return 'Faltan ' + n + '.'; }, lines: ['Mmm.', 'Gerald te está mirando. Lo aprueba.', 'Vas a la mitad.', 'A Potato se le hace agua la boca.', 'Una porción más.'],
       tease: function (s) { return s + ' escondió algo debajo de esta pizza. Come las 6 porciones para descubrirlo.'; },
       gone: 'Se acabó.', received: 'Se acabó. Gracias recibidas.', to: 'Para', ate: 'Te comiste las 6 porciones. Gerald está impresionado. Potato tiene un poco de envidia.',
-      under: 'Debajo de la pizza', copy: 'Copiar código', copied: '¡Copiado!', use: 'Úsalo ahora', useBy: function (d) { return 'Úsalo antes del ' + d; },
+      under: 'Debajo de la pizza', giftFrom: function (s) { return 'Un regalo de ' + s; }, yourCode: 'Tu código', useAt: function (c, h) { return 'Usa el código ' + c + ' en ' + h + '.'; }, useWith: function (c, s) { return 'Usa el código ' + c + ' con ' + s + '.'; }, copy: 'Copiar código', copied: '¡Copiado!', use: 'Úsalo ahora', useBy: function (d) { return 'Úsalo antes del ' + d; },
       back: function (s) { return 'Envíale una pizza a ' + s; }, review: 'RESEÑA DE GERALD', critic: 'Chef principal, Slice of Thanks',
       rating: function (n) { return 'Calificación: ' + n + ' de 5 porciones'; }, eaten: function (n) { return 'Porciones comidas: ' + '●'.repeat(n) + '○'.repeat(6 - n) + ' ' + n + ' de 6'; },
       from: 'De', potato: 'Entregada por Potato, jefa de entregas.', why: '¿Por qué recibí esto?',
@@ -251,8 +251,16 @@
             try { navigator.clipboard.writeText(gift.code).then(function () { copyBtn.textContent = t.copied; }); } catch (e) { /* ignore */ }
           } });
           var useUrl = safeUrl(gift.url);
+          // Say who the gift is from (with their logo) and where the code works, so "20% off" is never a mystery
+          var giver = (sender.send_as === 'business' && sender.business) ? sender.business : (sender.business || sender.name || who);
+          var host = ''; try { host = useUrl ? new URL(useUrl).hostname.replace(/^www[.]/, '') : ''; } catch (e) { host = ''; }
+          var giftLogo = !sender.personal && sender.logo_url ? el('img', { class: 'u-gift-logo', src: sender.logo_url, alt: giver + ' logo' }) : null;
           var card = el('div', { class: 'u-gift' }, [
-            el('span', { class: 'u-eyebrow', text: t.under }), el('strong', { text: gift.text || '' }), codeEl,
+            el('span', { class: 'u-eyebrow', text: t.under }), giftLogo,
+            el('span', { class: 'u-gift-from', text: t.giftFrom(giver) }),
+            el('strong', { class: 'u-gift-what', text: gift.text || '' }),
+            el('span', { class: 'u-gift-label', text: t.yourCode }), codeEl,
+            el('span', { class: 'u-gift-how', text: host ? t.useAt(gift.code, host) : t.useWith(gift.code, giver) }),
             gift.expires ? el('span', { class: 'u-why', text: t.useBy(new Date(gift.expires + 'T12:00').toLocaleDateString(lang === 'es' ? 'es' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })) }) : null,
             el('div', { class: 'u-row' }, [copyBtn, useUrl ? el('a', { class: 'u-btn small primary', href: useUrl, target: '_blank', rel: 'noopener', text: gift.cta ? String(gift.cta).slice(0, 30) : t.use, onclick: function () { track('gift_clicked'); } }) : null])
           ]);

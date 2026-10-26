@@ -22,6 +22,12 @@ let fails = 0; const check = (ok, m) => { console.log((ok ? 'PASS ' : 'FAIL ') +
   await wait(1500);
   const txt = await u.evaluate(() => document.querySelector('.fun-receipt').textContent);
   check(txt.includes('6/6'), 'Slices devoured shows 6/6');
+  if (DEMO === '1') {
+    const g = await u.evaluate(() => document.querySelector('.u-gift').textContent);
+    check(g.includes('A gift from Mountain Studio') && g.includes('Use code SLICE20 at example.com.') && g.includes('Your code'), 'Gift card says who it is from and where to use it: ' + g);
+    await u.evaluate(() => { const o = document.querySelector('.u-gift'); window.scrollTo(0, o.getBoundingClientRect().top + scrollY - 20); }); await wait(300);
+    await u.screenshot({ path: OUT + '/gift-' + DEMO + '.png' });
+  }
   check(txt.includes('$0.00'), 'Total $0.00');
   await u.evaluate(() => { const o = document.querySelector('.fun-receipt'); window.scrollTo(0, o.getBoundingClientRect().top + scrollY - 10); }); await wait(400);
   await u.screenshot({ path: OUT + '/rcpt-' + DEMO + '.png' });

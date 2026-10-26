@@ -73,6 +73,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const stats = await inRoot(page, "return R.querySelector('.invite-stats').textContent");
   check(stats.includes('2friends joined') && stats.includes('1sent their first pizza') && stats.includes('20emails earned'), 'Shows friends joined, first pizzas and emails earned: ' + stats);
   check(await inRoot(page, "const c=R.querySelector('#inviteCard'),f=R.querySelector('#faqCard');return !!(c.compareDocumentPosition(f)&4)"), 'Card sits above the FAQs');
+  check(await inRoot(page, "const c=R.querySelector('#inviteCard'),n=R.querySelector('#feed').closest('.card');return !!(c.compareDocumentPosition(n)&4)"), 'Card sits above What\'s new');
   await wait(800);
   const dark = await inRoot(page, "const c=R.querySelector('#inviteQr');if(!c)return -1;const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let n=0;for(let i=0;i<d.length;i+=4)if(d[i]<80)n++;return n");
   check(dark > 2000, 'QR code is drawn on the card (' + dark + ' dark pixels)');

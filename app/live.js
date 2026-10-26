@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.19.1 =====
+/* ===== Slice of Thanks live layer v0.19.2 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -2103,7 +2103,7 @@ function renderInvite() {
   const crew = $('#view-gerald'); if (!crew) return;
   let c = $('#inviteCard');
   if (!invite || invite.off) { if (c) c.hidden = true; return; }
-  if (!c) { c = mk('div', 'card invite-card'); c.id = 'inviteCard'; const faq = $('#faqCard'); if (faq) faq.before(c); else crew.appendChild(c); }
+  if (!c) { c = mk('div', 'card invite-card'); c.id = 'inviteCard'; const news = $('#feed') && $('#feed').closest('.card'), faq = $('#faqCard'); if (news) news.before(c); else if (faq) faq.before(c); else crew.appendChild(c); }
   c.hidden = false; c.innerHTML = '';
   c.appendChild(mk('h2', '', 'Invite friends, earn emails'));
   c.appendChild(mk('p', 'muted', 'Share your link. When a friend signs up, they get ' + invite.friend_emails + ' bonus emails. When they send their first pizza, you get ' + invite.referrer_emails + '.'));

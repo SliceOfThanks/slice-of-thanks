@@ -425,6 +425,12 @@
       "commit": "5bd6033207cb44b86833b3635e8bf639ee368e2c",
       "date": "2026-10-26",
       "notes": "Remove people from People. The thanks line uses a typed sentence as is and the tip shows the finished sentence. Userback greets members by name. Meeting pizzas wait on Home 3 days. A Slice birthday gift is 25 bonus emails."
+    },
+    {
+      "version": "v0.22.0",
+      "commit": "36df286b9c76b3e1320e29ed157762440fc50946",
+      "date": "2026-10-26",
+      "notes": "Members choose where replies go: to them (a confirmed email, and the pizza email invites a reply) or to Slice of Thanks to keep their email private. The Send step shows where replies go."
     }
   ]
 }

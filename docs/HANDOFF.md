@@ -4,7 +4,7 @@ Last updated: 2026-10-26. Read this file, then STATUS.md (full release history),
 CLAUDE.md has the standing rules. The blueprint (docs/Slice_of_Thanks_Build_Blueprint_v7.docx) is the original source of truth; where later work changed it, STATUS.md wins.
 
 ## Where things stand
-- App v0.21.0 live (commit 5bd6033). Edge function `api` is api-0.21.4 (version 39). Partnero: refer-a-friend program, PartneroJS universal integration in BD HEAD records sign-ups; our server reports with email as customer key. Unbox v0.5.0.
+- App v0.22.0 live (commit 36df286). Edge function `api` is api-0.22.0 (version 40). Partnero: refer-a-friend program, PartneroJS universal integration in BD HEAD records sign-ups; our server reports with email as customer key. Unbox v0.5.0.
 - Live version is whatever `app_settings.code_version` says (live and staging rows). Every release is a row in `releases` and an entry in releases.json.
 - Launch work is done except the open items below. Everything not launch-critical goes to docs/ROADMAP.md (and Userback) only with Stacey's approval.
 
@@ -42,7 +42,10 @@ CLAUDE.md has the standing rules. The blueprint (docs/Slice_of_Thanks_Build_Blue
 10. Decided 2026-10-26: A Slice birthday gift 25 emails, waiting meeting pizzas stay 3 days, referral rewards kept at 20 and 20, cap 25. AppSumo approved: Tiers 1 and 2 get automations now, Tier 3 option A (Whole Pie, 1,000 emails, no team promise), one hidden BD plan Lifetime (AppSumo) with tiers and limits in Supabase, built so a tier can map to Pizza Party later; wait for SendFox for email budget.
 11. SendFox backup: built and switched off (api-0.19.0). On hold until SendFox approves transactional email. Do not raise it again until she asks.
 
+12. Privacy policy line about replies (given 2026-10-26), hide SOT-3 and SOT-5 in Userback, delete test people, AppSumo: hidden BD plan Lifetime (AppSumo) id and Partner Portal screenshot.
+
 ## Things built but not verified against the real service
+- The reply confirm email and link (built 2026-10-26; a bad link was checked to redirect to ?reply=expired).
 - Partnero API calls (customer and transaction formats taken from search results of their docs; partnero.com is blocked here).
 - SendFox transactional endpoint.
 - Userback.open() from the FAQ and footer Help button (only the fallback message is tested).

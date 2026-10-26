@@ -62,6 +62,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   check(tc === month + ' tip 1 of 8', "Gerald's tips are this month's: " + tc);
   await inRoot(page, "R.querySelector('#tab-make').click()"); await wait(400);
   check(await inRoot(page, "const b=R.querySelector('#kxReset');return !!b&&b.offsetParent!==null"), 'Start over shows in the Kitchen');
+  check(await inRoot(page, "const r=R.querySelector('.kx-reset'),n=R.querySelector('.nav-row');return r.previousElementSibling===n&&R.querySelector('#kxSig').classList.contains('btn')&&R.querySelector('#kxReset').classList.contains('btn')&&R.querySelector('#makeFor').hidden"), 'Signature and Start over are buttons under Back and Next, and the A pizza for anyone line is gone');
+  if (process.env.SHOT2) { const r = await inRoot(page, "const b=R.querySelector('.kx-reset').getBoundingClientRect();return {y:b.top+scrollY}"); await page.screenshot({ path: process.env.SHOT2, fullPage: true, clip: { x: 0, y: Math.max(0, r.y - 320), width: 402, height: 420 } }); }
   await page.evaluate(() => window.__SOT_DEBUG.goSend()); await wait(200);
   await inRoot(page, "R.querySelector('#back').click()"); await wait(300);
   const before = await inRoot(page, "return R.querySelector('#steps li.on').textContent");

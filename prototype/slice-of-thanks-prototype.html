@@ -112,7 +112,7 @@ button.p-tag{cursor:pointer;font-family:inherit}button.p-tag:hover{background:va
 .vegan-tag{display:inline-block;margin-top:4px;font-size:.72rem;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--ok-bg);color:var(--ok-ink);border:1.5px solid var(--ok-ink)}
 .pill.wait{background:var(--warn-bg);color:var(--warn-ink)}
 .mode-line{font-size:.9rem;color:var(--muted)}
-.kx-reset{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 6px}
+.kx-reset{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:14px 0 0}
 .cfold>.cf-head{cursor:pointer;display:flex;align-items:center;gap:8px;border:2px solid var(--ink);border-radius:14px;padding:10px 12px;background:var(--surface);margin:0}
 .cfold>.cf-head .cf-val{margin-left:auto;font-weight:600;color:var(--muted);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
 .cfold>.cf-head .cf-ic{transition:transform .15s}
@@ -527,7 +527,6 @@ body.is-free .pro-tag{display:inline-block}
         </div>
       </div>
     </div>
-    <div class="kx-reset"><button class="linkish" id="kxSig" type="button">Use my signature pizza</button><button class="linkish" id="kxReset" type="button">Start over</button></div>
     <ol class="steps" id="steps"></ol>
     <div class="stage" id="stage">
       <canvas id="pizza" aria-label="Your pizza. Tap to add to it."></canvas>
@@ -680,6 +679,7 @@ body.is-free .pro-tag{display:inline-block}
     </div>
 
     <div class="nav-row"><button class="btn" id="back">Back</button><button class="btn primary" id="next">Next</button></div>
+    <div class="kx-reset"><button class="btn small" id="kxSig" type="button">Use my signature pizza</button><button class="btn small" id="kxReset" type="button">Start over</button></div>
   </section>
 
   <!-- PEOPLE (mini CRM) -->
@@ -1366,7 +1366,7 @@ function renderStep(){
  document.querySelectorAll('.panel').forEach(p=>p.hidden=Number(p.dataset.step)!==step);
  $('#stage').hidden=step>3;
  const m=meetings.find(x=>x.id===currentMeetingId);
- $('#makeFor').textContent=editingSignature?'Editing your signature pizza':(m?'Thank-you pizza for '+m.who:(account?'A pizza for anyone':'Make a pizza. No sign-up needed.'));
+ $('#makeFor').textContent=editingSignature?'Editing your signature pizza':(m?'Thank-you pizza for '+m.who:(account?'':'Make a pizza. No sign-up needed.'));$('#makeFor').hidden=!$('#makeFor').textContent;
  $('#back').style.visibility=step===0?'hidden':'visible';
  $('#next').hidden=step===5;
  $('#next').textContent=step===4?'Next: send it':'Next';

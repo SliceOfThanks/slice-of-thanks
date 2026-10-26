@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.16.1 =====
+/* ===== Slice of Thanks live layer v0.16.2 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -935,7 +935,7 @@ const _renderStep = renderStep;
 renderStep = function () {
   _renderStep();
   const ep = !!editingPreset && step === 4;
-  if (ep) { $('#makeFor').textContent = 'Editing preset: ' + editingPreset.name; $('#next').hidden = true; $('#back').style.visibility = 'hidden'; }
+  if (ep) { $('#makeFor').textContent = 'Editing preset: ' + editingPreset.name; $('#makeFor').hidden = false; $('#next').hidden = true; $('#back').style.visibility = 'hidden'; }
   renderPresetPicker();
   if (step === 5) showCoRole();
 };

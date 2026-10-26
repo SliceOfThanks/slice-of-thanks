@@ -75,6 +75,7 @@ async function run(browser, sess, extra) {
   check(sd.is_test === true && sd.recipient.email === 'me@test.com' && sd.consent.basis === 'permission', 'Test goes to my own email as a test');
   check((await inRoot(p, "return R.querySelector('#liveTestSend').textContent")) === 'Send a test to myself (4 free left)', 'Count goes down to 4');
   check((await toastText(p)).indexOf('used no emails') >= 0, 'Toast says it used no emails');
+  check(await inRoot(p, "const n=R.querySelector('#liveTestNote');return !!n&&!n.hidden&&n.textContent==='Test sent to me@test.com. It used no emails. 4 free tests left.'"), 'Confirmation stays under the button');
   // birthday ask card on Home (not on a trial)
   await inRoot(p, "R.querySelector('#tab-today').click()"); await wait(300);
   check(await inRoot(p, "const c=R.querySelector('#bdayCard');return !!c&&c.textContent.indexOf('When is your birthday?')>=0"), 'Home asks for the birthday once');

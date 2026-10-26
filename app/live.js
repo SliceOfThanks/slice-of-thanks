@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.20.0 =====
+/* ===== Slice of Thanks live layer v0.20.1 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -1916,7 +1916,11 @@ function renderTestBtn() {
   if (!b) { b = mk('button', 'btn', ''); b.type = 'button'; b.id = 'liveTestSend'; send.after(b); b.onclick = liveTestSend; }
   const n = testsLeft(); b.hidden = n <= 0;
   b.textContent = 'Send a test to myself (' + n + ' free left)';
+  let note = $('#liveTestNote');
+  if (!note) { note = mk('p', 'hint', ''); note.id = 'liveTestNote'; note.setAttribute('role', 'status'); b.after(note); }
+  note.hidden = !lastTestNote; note.textContent = lastTestNote;
 }
+let lastTestNote = '';
 async function liveTestSend() {
   const me = myEmail();
   if (!me || me.indexOf('@') < 1) { toast('Add your email in Settings under Replies go to first.'); show('settings'); return; }
@@ -1930,8 +1934,9 @@ async function liveTestSend() {
   b.disabled = false; b.textContent = label;
   if (r && r.ok) {
     if (LIVE.session) LIVE.session.self_tests_left = Math.max(0, testsLeft() - 1);
+    lastTestNote = 'Test sent to ' + me + '. It used no emails. ' + testsLeft() + ' free tests left.';
     renderTestBtn(); markSetup('test', 'done');
-    toast('Test sent to ' + me + '. It used no emails. ' + testsLeft() + ' free tests left.');
+    toast(lastTestNote);
     burst('envelopes'); return;
   }
   if (r && (r.code === 'test_limit' || r.code === 'test_inbox_only')) { toast(MSG[r.code]); if (LIVE.session && r.code === 'test_limit') { LIVE.session.self_tests_left = 0; renderTestBtn(); } return; }

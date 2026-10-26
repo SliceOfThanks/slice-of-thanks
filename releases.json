@@ -305,6 +305,12 @@
       "commit": "7283a909301c316d2412f7dcade97beefa5d91ac",
       "date": "2026-10-25",
       "notes": "Launch test fixes."
+    },
+    {
+      "version": "v0.16.2",
+      "commit": "2712e7c1aeaf728498ce7653f6a3e437afe5de5c",
+      "date": "2026-10-26",
+      "notes": "Kitchen buttons under Back and Next; no A pizza for anyone line."
     }
   ]
 }

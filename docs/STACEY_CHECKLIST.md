@@ -47,6 +47,14 @@
    4. In Supabase, open Edge Functions, then Secrets. Click Add new secret. Name: SENDFOX_API_KEY. Value: the key. Save.
    5. Tell Claude "SendFox done".
 
+8. Turn on Partnero for partner commissions (built 2026-10-26, waiting on you)
+   1. In Partnero, create a new Partner program called Slice of Thanks Partners. Website: sliceofthanks.app. Set the commission you want.
+   2. In that program, open Integration and pick Partnero API. Copy the PartneroJS tracking snippet.
+   3. In BD admin, paste the snippet in the additional HEAD code (Design Settings), as Partnero's Brilliant Directories guide step 1 says. Skip its other steps (conversion tracking widget and Stripe); our server reports sign-ups and sales, so doing both would count them twice.
+   4. In Partnero, create an API key for that program. In Supabase, open Edge Functions, then Secrets, and add PARTNERO_API_KEY with that key. Do not paste it in chat.
+   5. Add your first partner (for example Lawfecta) in Partnero and copy their partner link.
+   6. Tell Claude "Partnero done".
+
 ## B. Decisions to send Claude
 
 1. Free trial: 7 days or 14 days.

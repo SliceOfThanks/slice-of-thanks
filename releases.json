@@ -371,6 +371,12 @@
       "commit": "6cdd6275df6c2c0d5847c4a5efa36e280f034aa0",
       "date": "2026-10-26",
       "notes": "Box step redesign: a short lede, presets as tappable cards with a mini lid (plus a Save this box card), then three numbered sections that fold: 1 The outside of the box, 2 Your note inside the lid, 3 Around the pizza (button, gift, review tone; starts folded with a summary). Each section has a Gerald tip."
+    },
+    {
+      "version": "v0.19.0",
+      "commit": "dec8ffb2eb4d29dd5a64095bfc6bf789ea526735",
+      "date": "2026-10-26",
+      "notes": "Invite friends: invite links (/kitchen?ref=CODE), Send one back credits the sender, friend gets 20 bonus emails on joining, inviter gets 20 when the friend sends a first real pizza (25 a year max). Invite friends card on Crew, FAQ entry, QR code with the sender's invite link on the shared receipt image. Partnero partner program: partner-referred members and their paid BD invoices go to Partnero through an outbox (api-0.20.0). Migrations referrals.sql, partnero_partners_only.sql."
     }
   ]
 }

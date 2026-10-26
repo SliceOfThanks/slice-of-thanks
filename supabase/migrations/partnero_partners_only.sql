@@ -1,0 +1,8 @@
+-- Applied 2026-10-26 after referrals.sql. Partnero gets only members a Partnero partner brought in (one partner program,
+-- one API key). Member-to-member invites and their bonus emails stay in Slice of Thanks.
+-- sot_referral_capture: enqueue a Partnero customer only when partner_key is set.
+-- sot_referral_state: no longer enqueues every member.
+-- sot_partnero_sale and sot_referral_billing_due: partner referrals only.
+-- sot_partnero_due: referred_by is sent as null (a partner program does not know member inviters).
+-- Pending outbox rows for other members were set to status 'skipped'.
+-- The live functions were changed in place with replace() on pg_get_functiondef, guarded by anchor checks.

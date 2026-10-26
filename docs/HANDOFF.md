@@ -4,7 +4,7 @@ Last updated: 2026-10-26. Read this file, then STATUS.md (full release history),
 CLAUDE.md has the standing rules. The blueprint (docs/Slice_of_Thanks_Build_Blueprint_v7.docx) is the original source of truth; where later work changed it, STATUS.md wins.
 
 ## Where things stand
-- App v0.21.0 live (commit 5bd6033). Edge function `api` is api-0.21.1. Unbox v0.5.0.
+- App v0.21.0 live (commit 5bd6033). Edge function `api` is api-0.21.4 (version 39). Partnero: refer-a-friend program, PartneroJS universal integration in BD HEAD records sign-ups; our server reports with email as customer key. Unbox v0.5.0.
 - Live version is whatever `app_settings.code_version` says (live and staging rows). Every release is a row in `releases` and an entry in releases.json.
 - Launch work is done except the open items below. Everything not launch-critical goes to docs/ROADMAP.md (and Userback) only with Stacey's approval.
 

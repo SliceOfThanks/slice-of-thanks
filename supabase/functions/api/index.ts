@@ -8,11 +8,11 @@ import { buildDateEmail, buildEmail, buildTrialEmail, buildWaitingEmail, SITE } 
 import { birthdaySpecial, dateBox, datePizza, type DateKind } from "./lib/gerald.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, deleteBdUser, fetchBdEmail, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
-import { pickProvider } from "./lib/mail/index.ts";
+import { sendWithFallback, type EmailMessage } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.18.0";
+const VERSION = "api-0.19.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -85,6 +85,17 @@ async function fillReplyTo(memberId: string, bdUserId: number): Promise<boolean>
   }
 }
 
+// Every email goes out here: the main service, then the backup if the main one refused it (app_settings email_provider)
+async function sendMail(msg: EmailMessage) {
+  const setting = await rpc("sot_setting", { p_env: "live", p_key: "email_provider" }).catch(() => null);
+  const r = await sendWithFallback(msg, setting, env);
+  if (r.ok && r.tried.length > 1) {
+    console.log("email fallback", JSON.stringify({ used: r.provider, tried: r.tried }));
+    await db().from("events").insert({ type: "email_fallback", props: { used: r.provider, tried: r.tried, tags: msg.tags ?? [] } }).then(() => null, () => null);
+  }
+  return r;
+}
+
 async function deliver(sendId: string, pizzaImageUrl?: string) {
   const job = await rpc<Record<string, any> | null>("sot_claim_send", { p_send: sendId });
   if (!job) return { delivered: false, reason: "not_due" };
@@ -100,20 +111,19 @@ async function deliver(sendId: string, pizzaImageUrl?: string) {
   });
   const fromName = (snap.sender?.send_as === "business" && snap.sender?.business) ? snap.sender.business : (snap.sender?.name || "Slice of Thanks");
   // Which service sends is a setting (app_settings email_provider); everything above is ours
-  const provider = pickProvider(await rpc("sot_setting", { p_env: "live", p_key: "email_provider" }).catch(() => null));
-  const r = await provider.send({
+  const r = await sendMail({
     from: { name: `${fromName} via Slice of Thanks`, email: SENDER_EMAIL },
     to: { email: job.email, name: job.name || undefined },
     replyTo: job.reply_to || undefined,
     subject: mail.subject, html: mail.html, text: mail.text,
     headers: { "List-Unsubscribe": `<${SITE}/unsubscribe?t=${encodeURIComponent(token)}&s=sender>` },
     tags: [job.is_test ? "test" : "live", job.send_type],
-  }, env(provider.secret));
+  });
   if (!r.ok) {
     await rpc("sot_mark_failed", { p_send: sendId, p_reason: r.error, p_retry: r.retry });
     return { delivered: false, reason: r.retry ? "provider_retrying" : "provider_error" };
   }
-  await rpc("sot_mark_sent_via", { p_send: sendId, p_provider_id: r.messageId, p_provider: provider.key });
+  await rpc("sot_mark_sent_via", { p_send: sendId, p_provider_id: r.messageId, p_provider: r.provider });
   return { delivered: true };
 }
 
@@ -175,8 +185,7 @@ async function notifyWaiting(m: Record<string, any>, reason?: string) {
   const to = String(m.reply_to ?? "").trim();
   if (!to || to.indexOf("@") < 1) return;
   const mail = buildWaitingEmail({ guest: m.name ?? "", meeting: m.title ?? "", link: SITE + (m.return_path || "/"), reason });
-  const provider = pickProvider(await rpc("sot_setting", { p_env: "live", p_key: "email_provider" }).catch(() => null));
-  const r = await provider.send({ from: { name: "Slice of Thanks", email: SENDER_EMAIL }, to: { email: to }, subject: mail.subject, html: mail.html, text: mail.text, tags: ["member_notice"] }, env(provider.secret));
+  const r = await sendMail({ from: { name: "Slice of Thanks", email: SENDER_EMAIL }, to: { email: to }, subject: mail.subject, html: mail.html, text: mail.text, tags: ["member_notice"] });
   if (!r.ok) console.error("waiting notice", r.error);
 }
 
@@ -219,8 +228,7 @@ async function dateDue(d: Record<string, any>) {
     const to = String(d.reply_to ?? "").trim();
     if (!to || to.indexOf("@") < 1) return;
     const mail = buildDateEmail({ guest: c.name ?? "", kind, sent, reason, link: SITE + "/kitchen" });
-    const provider = pickProvider(await rpc("sot_setting", { p_env: "live", p_key: "email_provider" }).catch(() => null));
-    const r = await provider.send({ from: { name: "Slice of Thanks", email: SENDER_EMAIL }, to: { email: to }, subject: mail.subject, html: mail.html, text: mail.text, tags: ["member_notice"] }, env(provider.secret));
+    const r = await sendMail({ from: { name: "Slice of Thanks", email: SENDER_EMAIL }, to: { email: to }, subject: mail.subject, html: mail.html, text: mail.text, tags: ["member_notice"] });
     if (!r.ok) console.error("date notice", r.error);
   };
   const why = d.mode !== "auto" ? undefined : !d.auto ? "needs_upgrade" : !d.has_consent ? "needs_permission" : undefined;
@@ -245,8 +253,7 @@ async function dateDue(d: Record<string, any>) {
 // A trial reminder to the member: 3 days left, or the last day
 async function trialNotice(n: Record<string, any>) {
   const mail = buildTrialEmail({ kind: n.kind === "end" ? "end" : "3d", name: n.name ?? "", days: Number(n.days ?? 3), upgradeLink: `${SITE}/account/upgrade`, kitchenLink: `${SITE}/kitchen` });
-  const provider = pickProvider(await rpc("sot_setting", { p_env: "live", p_key: "email_provider" }).catch(() => null));
-  const r = await provider.send({ from: { name: "Gerald and Potato", email: SENDER_EMAIL }, to: { email: n.email, name: n.name || undefined }, subject: mail.subject, html: mail.html, text: mail.text, tags: ["member_notice", "trial_" + n.kind] }, env(provider.secret));
+  const r = await sendMail({ from: { name: "Gerald and Potato", email: SENDER_EMAIL }, to: { email: n.email, name: n.name || undefined }, subject: mail.subject, html: mail.html, text: mail.text, tags: ["member_notice", "trial_" + n.kind] });
   if (!r.ok) console.error("trial notice", r.error);
 }
 

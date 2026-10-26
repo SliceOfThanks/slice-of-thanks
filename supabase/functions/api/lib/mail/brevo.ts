@@ -19,10 +19,10 @@ export const brevo: EmailProvider = {
         }),
       });
       const out = await res.json().catch(() => ({}));
-      if (!res.ok) return { ok: false, retry: res.status >= 500 || res.status === 429, error: `brevo ${res.status} ${out?.code ?? ""}`.trim() };
+      if (!res.ok) return { ok: false, retry: res.status >= 500 || res.status === 429, reached: true, error: `brevo ${res.status} ${out?.code ?? ""}`.trim() };
       return { ok: true, messageId: String(out.messageId ?? "") };
     } catch (e) {
-      return { ok: false, retry: true, error: "brevo network " + String(e).slice(0, 180) };
+      return { ok: false, retry: true, reached: false, error: "brevo network " + String(e).slice(0, 180) };
     }
   },
 };

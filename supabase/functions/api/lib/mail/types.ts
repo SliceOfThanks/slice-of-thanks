@@ -17,11 +17,13 @@ export type EmailMessage = {
 export type SendResult =
   | { ok: true; messageId: string }
   // retry: true only for temporary failures (rate limit, provider outage, network)
-  | { ok: false; retry: boolean; error: string };
+  // reached: the service answered and refused the email, so it was not sent and another service can safely try.
+  // A network error or timeout leaves it unknown, so the email is never handed to a second service.
+  | { ok: false; retry: boolean; reached?: boolean; error: string };
 
 export type EmailProvider = {
   key: string;
   name: string;
   secret: string; // Supabase secret that holds this provider's API key
-  send(msg: EmailMessage, apiKey: string, fetchFn?: typeof fetch): Promise<SendResult>;
+  send(msg: EmailMessage, apiKey: string, fetchFn?: typeof fetch, url?: string): Promise<SendResult>;
 };

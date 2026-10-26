@@ -40,6 +40,13 @@
    2. In BD admin, Membership Plans, set that number on The Whole Pie and Pizza Party.
    3. Tell Claude the number so the Join page says the same thing.
 
+7. Turn on SendFox as the backup email sender (built 2026-10-26, waiting on you)
+   1. In SendFox, make sure you are on a paid plan (transactional email needs one).
+   2. In SendFox, open Settings, then Domains (or Sending domains). Add sliceofthanks.app and add the DNS records it shows where your domain is managed. Wait until SendFox says verified.
+   3. In SendFox, open Settings, then API. Create a new API key and copy it. Do not paste it in chat.
+   4. In Supabase, open Edge Functions, then Secrets. Click Add new secret. Name: SENDFOX_API_KEY. Value: the key. Save.
+   5. Tell Claude "SendFox done".
+
 ## B. Decisions to send Claude
 
 1. Free trial: 7 days or 14 days.

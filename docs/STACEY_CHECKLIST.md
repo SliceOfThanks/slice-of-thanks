@@ -9,7 +9,7 @@
    4. Paste and click Run. If it warns about "destructive" steps, run it anyway. It only adds a new table and new functions.
    5. Tell Claude "done".
 
-2. Paste the Back to the Kitchen bar and plan details into BD
+2. DONE (SOT-Back 1.3.0, checked 2026-10-26): Paste the Back to the Kitchen bar and plan details into BD
    1. Open github.com/SliceOfThanks/slice-of-thanks/blob/main/widgets/SOT-Back.html
    2. Click Raw. Select all and copy.
    3. In BD admin, open the widgets list and edit the widget called Footer - Scripts.
@@ -26,7 +26,7 @@
    2. Click Raw. Select all and copy.
    3. In BD admin, edit the SOT-Login widget. Replace everything in it with the copy and save.
 
-4. Hide the Pizza Party plan in BD
+4. DONE: Hide the Pizza Party plan in BD
    1. In BD admin, open Membership Plans and edit Pizza Party.
    2. Turn off the settings that show it on the sign up page and the upgrade page, and save.
 

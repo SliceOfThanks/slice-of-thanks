@@ -407,6 +407,12 @@
       "commit": "dc72a819a52d6deed9cf3f14d6a6679757871ca8",
       "date": "2026-10-26",
       "notes": "Home's This week list shows a meeting until the end of its own day, then it leaves the list."
+    },
+    {
+      "version": "v0.20.0",
+      "commit": "c091b9839ce6643f032e8d1c1c19851dad615404",
+      "date": "2026-10-26",
+      "notes": "About us screen: Meet the founder (Stacey, what she built, Hire Stacey at legalstacey.com), Meet the real Potato (her photo), and how to say hi. A footer under every tab links About us, Help, Privacy and Terms."
     }
   ]
 }

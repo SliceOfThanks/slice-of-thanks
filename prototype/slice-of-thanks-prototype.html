@@ -320,6 +320,14 @@ textarea{min-height:92px;resize:vertical}
 .progress span{display:block;height:100%;width:0;background:repeating-linear-gradient(45deg,var(--tomato) 0 10px,var(--mustard) 10px 20px);transition:width .1s}
 .tip{display:flex;gap:10px;align-items:flex-start}
 .tip .g-av{width:44px;height:44px}
+.faq-list{display:flex;flex-direction:column;margin:10px 0 4px}
+.faq{border-top:2px dashed var(--line)}.faq:first-child{border-top:0}
+.faq>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;font-weight:700;line-height:1.3}
+.faq>summary::-webkit-details-marker{display:none}
+.faq>summary::after{content:'+';flex:none;width:26px;height:26px;border:2.5px solid var(--edge);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;background:var(--surface)}
+.faq[open]>summary::after{content:'-';background:var(--mustard);color:#3E2416}
+.faq p{margin:0 0 12px;color:var(--muted);font-size:.92rem;line-height:1.5}
+.faq-help{margin:12px 0 0;font-size:.9rem}.faq-help a{color:var(--tomato-text);font-weight:700}
 .feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
 .feed li{display:flex;flex-direction:column;gap:2px;padding-bottom:12px;border-bottom:2px dashed var(--line)}
 .feed li:last-child{border-bottom:0;padding-bottom:0}
@@ -777,6 +785,14 @@ body.is-free .pro-tag{display:inline-block}
       <p class="muted" style="font-size:.9rem">Updates from the Slice of Thanks kitchen. Tap Try it to see something new in action.</p>
       <ul class="feed" id="feed"></ul>
       <div class="btn-row"><button class="btn small" id="feedMore" type="button">See all updates</button></div>
+    </div>
+
+    <div class="card" id="faqCard">
+      <h2>FAQs</h2>
+      <p class="muted" style="font-size:.9rem">How the app works, what each plan includes, and how to get set up.</p>
+      <div class="faq-list" id="faqList"></div>
+      <div class="btn-row"><button class="btn small" id="faqMore" type="button">See more questions</button></div>
+      <p class="faq-help">Questions or need help? Email <a href="mailto:pizza@sliceofthanks.app">pizza@sliceofthanks.app</a> and a real person writes back.</p>
     </div>
   </section>
 
@@ -1974,6 +1990,35 @@ $('#csvFile').addEventListener('change',e=>{const f=e.target.files[0];if(!f)retu
 $('#sampleCsv').onclick=()=>loadList(SAMPLE_CSV);
 $('#copyHeader').onclick=()=>{try{navigator.clipboard.writeText('Name,Email,Phone,Company,Vegan').then(()=>toast('Column headers copied. Paste them into row 1 of your spreadsheet.'),()=>toast('Headers: Name, Email, Phone, Company, Vegan'))}catch(e){toast('Headers: Name, Email, Phone, Company, Vegan')}};
 $('#bulkBack').onclick=()=>show('people');
+/* FAQs on the Crew tab: the first 6 show, See more opens the rest */
+const FAQS=[
+ ['What is Slice of Thanks?','A thank-you that people actually open. You make a digital pizza with a personal note and send it by email. They open the box, read your note and eat it one slice at a time. Anything you hid under the pizza, like a gift code, shows up after the last slice.'],
+ ['How do I make and send a pizza?','Tap Kitchen and go through the steps: Dough, Sauce, Toppings, Bake, Box and Send. On the Send step, pick someone from People or type a new name and email, then tap Send pizza. Short on time? Tap Hire Gerald on Home and he makes the whole pizza for you.'],
+ ['What does the person I send it to get?','An email from Potato with a link to their pizza. They open the box, read your note, eat six slices, and see Gerald\'s review on the receipt. Your button, like Book a follow-up, sits under the pizza. They do not need an account, and they can send one back.'],
+ ['What are the plans?','A Slice is free forever: 10 emails a month, Kraft and Classic boxes, classic toppings, People, Hire Gerald and date reminders. The Whole Pie is $9 a month or $90 a year: 250 emails a month, your logo and brand colors, every box style and topping, gift codes, your own button, pizzas after meetings and on birthdays that send on their own, and sending to a whole list. Pizza Party for teams is coming soon. Plans count emails sent, not pizzas made.'],
+ ['How does the free trial work?','Every new account gets 14 days of The Whole Pie, with no card needed and 50 emails to use. We email you 3 days before it ends and again on the last day. After the trial you move to A Slice, free forever, unless you upgrade. Nothing you made is lost.'],
+ ['How do I get set up?','Follow the Get set up checklist on Home: your name and business, where replies go, your logo and colors, your signature pizza, a test pizza to yourself, your people, your calendar, Gerald never forgets a date, and your birthday. Each step has a Do it button, and you can skip any of them.'],
+ ['Can I see a pizza before I send it?','Yes. On the Send step, tap Preview what they\'ll see. Or tap Send a test to myself: it goes to your own email, is marked TEST SEND, and does not use any of your emails. You get 5 free tests.'],
+ ['What is Hire Gerald?','Gerald, our Head Chef, makes a pizza for you. Tell him who it is for, the message and the vibe. He builds, bakes, names and boxes it, writes the note, and you sign it and send. Hire Gerald is free on every plan.'],
+ ['Can pizzas go out after my meetings?','Yes. Connect Calendly or TidyCal in Settings. Your meetings show on Home, and when one ends your signature pizza goes to the guest. You choose which meetings get one: all of them, the ones you pick, or people with certain tags. On A Slice the pizza waits on Home for you to send.'],
+ ['What is Gerald never forgets a date?','Add birthdays and work anniversaries to people in People and turn it on in Settings. On the day, Gerald makes a pizza for that person at 8 AM. On The Whole Pie it can send on its own. On A Slice it waits on Home for you to send.'],
+ ['How do gift codes and buttons work?','On The Whole Pie, add a gift or coupon code on the Box step. It stays hidden until the last slice is eaten. You can also add your own button, like Book a follow-up or Leave a review, which sits right under the pizza.'],
+ ['What are signature pizzas and box presets?','A signature pizza is your go-to pizza, ready to send in one tap and the one that goes out after meetings. A box preset saves a whole box setup: style, sticker, confetti, note, button and gift. Find both in Settings and in the Kitchen.'],
+ ['What if I run out of emails?','On The Whole Pie, buy an email pack: 100 for $5, 500 for $15 or 1,000 for $25. Pack emails last 12 months and are used after your monthly ones. On A Slice, Special Delivery is $2.99 and unlocks Pro features for one pizza, including its send.'],
+ ['Can I send to a group or a list?','Yes, on The Whole Pie. In People, tap Send to a group and pick people by tag, or upload a CSV list. Each person gets their own pizza with their name filled in the note.'],
+ ['Who are Gerald and Potato?','Gerald is a raccoon and our Head Chef. He makes pizzas on request and reviews every pizza on the receipt. Potato is a bulldog and our Head of Delivery. She drives the scooter and brings every pizza to the door. Meet them in Crew.'],
+ ['What is Potato\'s Treat Jar?','Potato hid easter eggs all over the app. Find them to earn Treats, then spend Treats on Secret Menu items like Potato confetti and the Gold Bow Tie box. Treats cannot be bought.'],
+ ['What is Gerald\'s Birthday Special?','Add your birthday (month and day only) in Settings, and on the day Gerald and Potato send you a Birthday Special with a gift under the pizza. For 30 days after, you can send the Birthday Special to anyone in People.'],
+ ['Do I need permission to send a pizza?','Yes. Only send to people who know you, like clients, customers, colleagues or friends. On the Send step, pick how you know them. Every email has an unsubscribe link, and people who opt out never get another pizza from you.'],
+ ['How do I change my plan or cancel?','Go to Settings, then Billing. Tap Change plan to upgrade or downgrade, or Update card or billing address. You can cancel anytime. Payments go through our secure checkout, and we never see your card number. To close your account, use Delete my account and data in Settings.'],
+ ['How do I get help?','Email pizza@sliceofthanks.app with your question, and a real person writes back. You can also tap the feedback button on any screen to report a bug or suggest an idea.']];
+const FAQ_SHOWN=6;let faqAll=false;
+function renderFaq(){const el=$('#faqList');if(!el)return;el.innerHTML='';
+ FAQS.forEach(([q,a],i)=>{if(!faqAll&&i>=FAQ_SHOWN)return;const d=document.createElement('details');d.className='faq';
+  const s=document.createElement('summary');s.textContent=q;const p=document.createElement('p');p.textContent=a;d.appendChild(s);d.appendChild(p);el.appendChild(d)});
+ const b=$('#faqMore');b.hidden=FAQS.length<=FAQ_SHOWN;b.textContent=faqAll?'Show fewer questions':'See more questions ('+(FAQS.length-FAQ_SHOWN)+')'}
+$('#faqMore').onclick=()=>{faqAll=!faqAll;renderFaq();if(!faqAll)$('#faqCard').scrollIntoView({block:'start'})};
+renderFaq();
 $('#feedMore').onclick=()=>show('news');$('#newsBack').onclick=()=>show('gerald');
 function merge(t,r){return fillNote(t,r)}
 function bulkBox(r){return{style:bulk.style,sticker:bulk.sticker,confetti:bulk.confetti,tone:'playful',note:merge(bulk.note,r),sign:bulk.sign,to:r.name,contact:r.contact,meeting:bulk.sticker,linkLabel:profile.linkLabel,link:profile.link,method:'email',reward:Object.assign({text:'',code:'',link:'',exp:''},profile.reward||{})}}

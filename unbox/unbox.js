@@ -1,4 +1,4 @@
-/* Slice of Thanks recipient page (unbox) v0.4.0
+/* Slice of Thanks recipient page (unbox) v0.4.1
    Delivery by Potato, open the box, six-slice pizza, sender's button under the pizza,
    the fun receipt (shareable) and Gerald's review on the same screen, gift after the sixth slice, send a pizza back.
    Needs shared/pizza-core.js loaded first. Mounts into #sot-unbox. */
@@ -35,6 +35,8 @@
         slices: 'Slices devoured', total: 'TOTAL', paid: 'Paid in gratitude',
         extras: [['Calories', 'Emotionally significant'], ['Good vibes', 'EXTRA LARGE'], ['Crust', 'Structurally sound'], ['Cheese pull', 'Legendary'], ['Napkins used', 'Not enough'], ['Delivery', 'Fast. Potato had the zoomies.'], ['Tip', 'One belly rub for Potato'], ['Leftovers', 'None. Impressive.']],
         footers: ['THANK YOU FOR EATING YOUR FEELINGS', 'NO REFUNDS ON GOOD VIBES', 'CRUST IS NOT A VEGETABLE. WE CHECKED.', 'COME BACK HUNGRY', 'GERALD SAYS: NICE BITE TECHNIQUE'],
+        stamp: ['PAID', 'WITH GRATITUDE'], approved: 'Approved by Gerald', paw: 'Inspected by Potato',
+        cheers: ['Gerald signed it. Potato tried to eat it.', 'Stamped and approved. Gerald is framing a copy.', 'Potato added a paw print. She insists it is official.', 'Receipt printed. Gerald says it is his best work.'],
         share: 'Share my receipt', making: 'Printing your receipt...', saved: 'Receipt saved. Share it anywhere.', privacy: 'Your note, names and codes stay private. Only the receipt and the pizza are shared.',
         shareText: 'I just ate a thank-you pizza. Make your own at sliceofthanks.app', get: 'Send your own at sliceofthanks.app' }
     },
@@ -57,6 +59,8 @@
         slices: 'Porciones devoradas', total: 'TOTAL', paid: 'Pagado con gratitud',
         extras: [['Calorías', 'Emocionalmente importantes'], ['Buena onda', 'EXTRA GRANDE'], ['Corteza', 'Muy sólida'], ['Queso', 'Legendario'], ['Servilletas', 'No alcanzaron'], ['Entrega', 'Rápida. Potato iba corriendo.'], ['Propina', 'Una rascadita de panza para Potato'], ['Sobras', 'Ninguna. Impresionante.']],
         footers: ['GRACIAS POR COMERTE TUS SENTIMIENTOS', 'NO HAY REEMBOLSOS DE BUENA ONDA', 'LA CORTEZA NO ES UNA VERDURA. LO REVISAMOS.', 'VUELVE CON HAMBRE', 'GERALD DICE: BUENA TÉCNICA DE MORDIDA'],
+        stamp: ['PAGADO', 'CON GRATITUD'], approved: 'Aprobado por Gerald', paw: 'Inspeccionado por Potato',
+        cheers: ['Gerald lo firmó. Potato intentó comérselo.', 'Sellado y aprobado. Gerald va a enmarcar una copia.', 'Potato le puso su huella. Dice que es oficial.', 'Recibo impreso. Gerald dice que es su mejor obra.'],
         share: 'Compartir mi recibo', making: 'Imprimiendo tu recibo...', saved: 'Recibo guardado. Compártelo donde quieras.', privacy: 'Tu nota, los nombres y los códigos son privados. Solo se comparten el recibo y la pizza.',
         shareText: 'Me acabo de comer una pizza de agradecimiento. Crea la tuya en sliceofthanks.app', get: 'Envía la tuya en sliceofthanks.app' }
     }
@@ -182,8 +186,12 @@
       el('span', { class: 'u-critic' }, [el('img', { class: 'u-av', src: BASE + '/brand/characters/potato-avatar.png', alt: 'Potato the dog' }), el('span', { text: t.potato })])
     ]);
     var done = el('div', { class: 'u-stage', hidden: true });
-    s2.appendChild(eatBtn); s2.appendChild(hint); if (cta) s2.appendChild(cta); if (tease) s2.appendChild(tease); s2.appendChild(done); s2.appendChild(fun.card); s2.appendChild(receipt);
-    var backBtn = el('a', { class: 'u-btn', href: SITE + '/kitchen?from=pizza' + (TOKEN && !DEMO ? '&back=' + encodeURIComponent(TOKEN) : ''), text: t.back(whoFirst), onclick: function () { track('send_back_started'); } });
+    // Send one back shows twice: under the sender's button, and again at the end of the page
+    var backHref = SITE + '/kitchen?from=pizza' + (TOKEN && !DEMO ? '&back=' + encodeURIComponent(TOKEN) : '');
+    var backOf = function () { return el('a', { class: 'u-btn u-back', href: backHref, text: t.back(whoFirst), onclick: function () { track('send_back_started'); } }); };
+    var backTop = backOf(), backBtn = backOf();
+    if (tease) s2.appendChild(tease);
+    s2.appendChild(eatBtn); s2.appendChild(hint); if (cta) s2.appendChild(cta); s2.appendChild(backTop); s2.appendChild(done); s2.appendChild(fun.card); s2.appendChild(receipt);
     s2.appendChild(backBtn);
     ROOT.appendChild(s2);
     ROOT.appendChild(footer(who, sender));
@@ -251,6 +259,7 @@
           done.appendChild(card);
         }
         if (cta) done.appendChild(cta);
+        done.appendChild(backTop);
         done.appendChild(el('p', { class: 'u-why', text: t.ate }));
         done.hidden = false;
         P.burst(gift ? 'gold' : 'crumbs');
@@ -281,42 +290,54 @@
     var slicesVal = el('span', { text: '0/6' });
     var status = el('p', { class: 'fr-status', 'aria-live': 'polite' });
     var shareBtn = el('button', { class: 'u-btn small primary', type: 'button', text: f.share });
+    var stamp = el('div', { class: 'fr-stamp', 'aria-hidden': 'true' }, [el('b', { text: f.stamp[0] }), el('span', { text: f.stamp[1] })]);
     var card = el('div', { class: 'fun-receipt' }, [
-      el('div', { class: 'fr-head' }, [el('strong', { text: 'SLICE OF THANKS' }), el('span', { text: f.order + facts.order + ' · ' + new Date().toLocaleDateString(lang === 'es' ? 'es' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }),
+      el('div', { class: 'fr-head' }, [el('img', { class: 'fr-logo', src: BASE + '/brand/logo/slice-of-thanks-logo-240.png', alt: 'Slice of Thanks' }), el('span', { text: f.order + facts.order + ' · ' + new Date().toLocaleDateString(lang === 'es' ? 'es' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }),
         el('span', { text: f.kitchen }), el('span', { text: f.driver })]),
       el('hr'), row('1x ' + (pizza.name || f.item), f.house)
     ].concat(facts.rows.map(function (x) { return row(x[0], x[1]); })).concat([
       el('div', { class: 'fr-row' }, [el('span', { text: f.slices }), slicesVal]),
       el('hr'), el('div', { class: 'fr-row fr-total' }, [el('span', { text: f.total }), el('span', { text: '$0.00' })]), el('span', { class: 'fr-paid', text: f.paid }),
-      el('hr'), el('p', { class: 'fr-foot', text: facts.footer + ' ♥' }), el('div', { class: 'fr-bar', 'aria-hidden': 'true' }),
+      el('hr'), el('p', { class: 'fr-foot', text: facts.footer + ' ♥' }), el('div', { class: 'fr-bar', 'aria-hidden': 'true' }), stamp,
       shareBtn, el('p', { class: 'fr-note', text: f.privacy }), status
     ]));
     shareBtn.addEventListener('click', function () {
       status.textContent = f.making;
+      // The fun part: Gerald stamps it, a little burst, and a line from the crew
+      card.classList.remove('stamped'); void card.offsetWidth; card.classList.add('stamped');
+      setTimeout(function () { try { P.burst('pizza'); } catch (e) { /* ignore */ } }, 420);
       shareImage(pizza, facts, eatenN).then(function (blob) {
         if (!blob) { status.textContent = ''; return; }
         track('receipt_shared');
-        var file = null; try { file = new File([blob], 'slice-of-thanks-receipt.png', { type: 'image/png' }); } catch (e) { /* older browsers */ }
+        var cheer = f.cheers[Math.floor(Math.random() * f.cheers.length)];
+        var file = null; try { file = new File([blob], 'slice-of-thanks-receipt.jpg', { type: 'image/jpeg' }); } catch (e) { /* older browsers */ }
         if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], text: f.shareText }).then(function () { status.textContent = ''; }, function () { status.textContent = ''; });
+          status.textContent = cheer; navigator.share({ files: [file], text: f.shareText }).then(function () { /* shared */ }, function () { /* closed */ });
         } else {
-          var a = el('a', { href: URL.createObjectURL(blob), download: 'slice-of-thanks-receipt.png' }); document.body.appendChild(a); a.click(); a.remove();
-          status.textContent = f.saved;
+          var a = el('a', { href: URL.createObjectURL(blob), download: 'slice-of-thanks-receipt.jpg' }); document.body.appendChild(a); a.click(); a.remove();
+          status.textContent = cheer + ' ' + f.saved;
         }
       });
     });
     return { card: card, setSlices: function (n) { eatenN = n; slicesVal.textContent = n + '/6'; } };
   }
+  function loadImg(src) {
+    return new Promise(function (res) { var i = new Image(); i.crossOrigin = 'anonymous'; i.onload = function () { res(i); }; i.onerror = function () { res(null); }; i.src = src; });
+  }
   function shareImage(pizza, facts, eatenN) {
+    return Promise.all([loadImg(BASE + '/brand/logo/slice-of-thanks-logo-240.png'), loadImg(BASE + '/brand/characters/gerald-avatar.svg'), loadImg(BASE + '/brand/characters/potato-avatar.png')])
+      .then(function (imgs) { return drawShare(pizza, facts, eatenN, imgs[0], imgs[1], imgs[2]); });
+  }
+  function drawShare(pizza, facts, eatenN, logo, gAv, pAv) {
     var f = t.fun, W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     var c = cv.getContext('2d'), mono = '"Courier Prime","Courier New",monospace';
     c.fillStyle = '#FFF3E0'; c.fillRect(0, 0, W, H);
     for (var x = 0; x < W; x += 40) for (var y = 0; y < 2; y++) { c.fillStyle = (x / 40 + y) % 2 ? '#FFF3E0' : '#D62828'; c.fillRect(x, y * 40, 40, 40); }
     // The pizza without any spelled letters
     var pc = P.clonePizza(pizza); pc.sign = null; pc.toppings = (pc.toppings || []).filter(function (x) { return x.k !== 'label'; });
-    var pcv = document.createElement('canvas'); P.drawPizza(pcv, pc, 350); c.drawImage(pcv, (W - 350) / 2, 96, 350, 350);
+    var pcv = document.createElement('canvas'); P.drawPizza(pcv, pc, 260); c.drawImage(pcv, (W - 260) / 2, 100, 260, 260);
     // The paper
-    var px = 150, py = 466, pw = W - 300, ph = 530 + 44 * facts.rows.length;
+    var px = 150, py = 376, pw = W - 300, ph = 664 + 44 * facts.rows.length;
     c.fillStyle = 'rgba(62,36,22,.18)'; c.fillRect(px + 10, py + 12, pw, ph);
     c.fillStyle = '#fffdf5'; c.fillRect(px, py, pw, ph);
     c.fillStyle = '#FFF3E0'; for (var z = px; z < px + pw; z += 28) { c.beginPath(); c.arc(z + 14, py + ph + 1, 10, Math.PI, 0); c.fill(); }
@@ -325,16 +346,29 @@
     function center(txt, size, bold, color) { c.font = (bold ? '700 ' : '400 ') + size + 'px ' + mono; c.fillStyle = color || '#2c2420'; c.textAlign = 'center'; c.fillText(txt, W / 2, yy); }
     function line(a, b, bold) { c.font = (bold ? '700 ' : '400 ') + '28px ' + mono; c.fillStyle = '#2c2420'; c.textAlign = 'left'; c.fillText(a, L, yy); c.textAlign = 'right'; c.fillText(b, Rt, yy); yy += 44; }
     function dash() { c.strokeStyle = '#b9aea3'; c.setLineDash([8, 8]); c.lineWidth = 2; c.beginPath(); c.moveTo(L, yy - 14); c.lineTo(Rt, yy - 14); c.stroke(); c.setLineDash([]); yy += 26; }
-    center('SLICE OF THANKS', 44, true, '#D62828'); yy += 44;
+    if (logo) { var lh = 96, lw = lh * logo.width / logo.height; c.drawImage(logo, (W - lw) / 2, yy - 40, lw, lh); yy += 92; } else { center('SLICE OF THANKS', 44, true, '#D62828'); yy += 44; }
     center(f.order + facts.order, 26, false); yy += 44; dash();
     line('1x ' + f.item, f.house, true);
     facts.rows.forEach(function (r) { line(r[0], r[1].length > 30 ? r[1].slice(0, 29) + '.' : r[1]); });
     line(f.slices, (eatenN || 6) + '/6'); dash();
     line(f.total, '$0.00', true); center(f.paid, 26, false); yy += 52;
     center(facts.footer, 26, true); yy += 30;
+    var barY = yy;
     for (var b = 0; b < 60; b++) { c.fillStyle = '#2c2420'; var bw = (hashOf(String(facts.order + b)) % 3) + 2; c.fillRect(W / 2 - 270 + b * 9, yy, bw, 50); }
-    c.font = '700 30px ' + mono; c.fillStyle = '#3E2416'; c.textAlign = 'center'; c.fillText(f.get, W / 2, Math.min(H - 30, py + ph + 70));
-    return new Promise(function (res) { try { cv.toBlob(function (bl) { res(bl); }, 'image/png'); } catch (e) { res(null); } });
+    yy += 120;
+    // Gerald signs, Potato inspects
+    function badge(img, label, x) { if (img) { c.save(); c.beginPath(); c.arc(x + 30, yy - 10, 30, 0, 6.283); c.clip(); c.drawImage(img, x, yy - 40, 60, 60); c.restore(); }
+      c.font = '700 22px ' + mono; c.fillStyle = '#2c2420'; c.textAlign = 'left'; c.fillText(label, x + 72, yy - 2); }
+    badge(gAv, f.approved, L); badge(pAv, f.paw, L + 340);
+    // The PAID stamp, a little crooked
+    c.save(); c.translate(Rt - 96, barY + 30); c.rotate(-0.22); c.scale(0.8, 0.8); c.globalAlpha = 0.85; c.strokeStyle = '#D62828'; c.lineWidth = 7; c.fillStyle = '#D62828';
+    c.strokeRect(-130, -62, 260, 124); c.lineWidth = 2; c.strokeRect(-120, -52, 240, 104);
+    c.textAlign = 'center'; c.font = '700 58px ' + mono; c.fillText(f.stamp[0], 0, 6); c.font = '700 20px ' + mono; c.fillText(f.stamp[1], 0, 38); c.restore();
+    // Potato's paw print in the corner
+    c.save(); c.translate(px + pw - 54, py + 62); c.rotate(0.3); c.fillStyle = 'rgba(62,36,22,.55)';
+    c.beginPath(); c.ellipse(0, 10, 20, 16, 0, 0, 6.283); c.fill(); [[-22, -14], [-8, -26], [8, -26], [22, -14]].forEach(function (q) { c.beginPath(); c.ellipse(q[0], q[1], 7, 9, 0, 0, 6.283); c.fill(); }); c.restore();
+    c.font = '700 30px ' + mono; c.fillStyle = '#3E2416'; c.textAlign = 'center'; c.fillText(f.get, W / 2, Math.min(H - 18, py + ph + 56));
+    return new Promise(function (res) { try { cv.toBlob(function (bl) { res(bl); }, 'image/jpeg', 0.92); } catch (e) { res(null); } });
   }
 
   function footer(who, sender) {

@@ -16,6 +16,7 @@ html:has(.sot-u),body:has(.sot-u){background:#FFF3E0!important}
 .sot-u .u-eyebrow{margin:0;font-size:.8rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .sot-u h1,.sot-u h2,.sot-u h3{font-family:var(--display);font-weight:400;margin:0}
 .sot-u h1{font-size:1.65rem}
+.sot-u h1,.sot-u h2,.sot-u h3{color:var(--ink)!important}
 .sot-u .u-btn{display:flex;align-items:center;justify-content:center;min-height:52px;padding:0 22px;border-radius:999px!important;font:700 1.05rem var(--body)!important;text-decoration:none!important;
   border:2.5px solid var(--edge)!important;box-shadow:3px 3px 0 var(--shade);cursor:pointer;background:var(--surface)!important;color:var(--ink)!important}
 .sot-u .u-btn.primary{background:var(--tomato)!important;color:var(--tomato-ink)!important}
@@ -129,3 +130,13 @@ html:has(.sot-u),body:has(.sot-u){background:#FFF3E0!important}
 .sot-u .fun-receipt .u-btn{align-self:center}
 .sot-u .fr-note{margin:6px 0 0;font-size:.74rem;text-align:center;color:#6b5a4e;font-family:var(--body)}
 .sot-u .fr-status{margin:0;font-size:.8rem;text-align:center;font-family:var(--body)}
+.sot-u .u-btn.u-back{background:var(--mustard)!important;color:#3E2416!important}
+.sot-u .fun-receipt{position:relative}
+.sot-u .fr-logo{width:104px;height:auto;margin:0 auto 4px;display:block}
+.sot-u .fr-stamp{position:absolute;right:16px;bottom:150px;border:4px solid #D62828;outline:2px solid #D62828;outline-offset:-9px;color:#D62828;padding:8px 14px;text-align:center;transform:rotate(-14deg) scale(2.4);opacity:0;pointer-events:none;font-family:var(--mono);line-height:1.05;background:rgba(255,253,245,.55)}
+.sot-u .fr-stamp b{display:block;font-size:1.9rem;letter-spacing:.08em}.sot-u .fr-stamp span{font-size:.62rem;font-weight:700;letter-spacing:.1em}
+.sot-u .fun-receipt.stamped .fr-stamp{animation:sotStamp .45s cubic-bezier(.3,1.6,.5,1) forwards}
+.sot-u .fun-receipt.stamped{animation:sotThunk .45s .3s ease}
+@keyframes sotStamp{0%{opacity:0;transform:rotate(-14deg) scale(2.4)}100%{opacity:.9;transform:rotate(-14deg) scale(1)}}
+@keyframes sotThunk{0%,100%{transform:none}40%{transform:translateY(3px)}}
+@media (prefers-reduced-motion: reduce){.sot-u .fun-receipt.stamped .fr-stamp{animation:none;opacity:.9;transform:rotate(-14deg)}.sot-u .fun-receipt.stamped{animation:none}}

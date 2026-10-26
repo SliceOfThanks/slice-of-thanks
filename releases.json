@@ -359,6 +359,12 @@
       "commit": "8a0f65be820556f7b066e6830c302cb09903abf5",
       "date": "2026-10-26",
       "notes": "Receipt: Slice of Thanks logo, PAID WITH GRATITUDE stamp lands when shared, pizza confetti and a crew line, share image is a JPG with Approved by Gerald, Inspected by Potato and a paw print. Hidden gift note moved above the pizza. Send a pizza back also shows right under the sender's button, in mustard so it reads in dark mode. Headings readable in dark mode."
+    },
+    {
+      "version": "v0.18.5",
+      "commit": "e1498f873da493b770c7a04c9b4b2affffb7eba6",
+      "date": "2026-10-26",
+      "notes": "Gift card: A gift from <business> with their logo, the offer in large type, Your code label, and Use code X at <website> (or with <business>). Kitchen gift field label asks what the gift is for."
     }
   ]
 }

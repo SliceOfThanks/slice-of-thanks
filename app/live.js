@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.19.0 =====
+/* ===== Slice of Thanks live layer v0.19.1 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -2112,8 +2112,11 @@ function renderInvite() {
   inp.onclick = () => inp.select();
   row.appendChild(inp); c.appendChild(row);
   const btns = mk('div', 'btn-row');
-  const copy = mk('button', 'btn primary small', 'Copy my link'); copy.type = 'button';
-  copy.onclick = () => { try { navigator.clipboard.writeText(invite.link).then(() => toast('Link copied. Paste it anywhere.'), () => { inp.select(); toast('Select the link and copy it.'); }); } catch (e) { inp.select(); } };
+  const copy = mk('button', 'btn primary small', 'Copy link'); copy.type = 'button'; copy.id = 'inviteCopy';
+  copy.onclick = () => {
+    const done = () => { copy.textContent = 'Copied!'; toast('Link copied. Paste it anywhere.'); setTimeout(() => { copy.textContent = 'Copy link'; }, 2000); };
+    try { navigator.clipboard.writeText(invite.link).then(done, () => { inp.select(); toast('Select the link and copy it.'); }); } catch (e) { inp.select(); }
+  };
   btns.appendChild(copy);
   if (navigator.share) {
     const sh = mk('button', 'btn small', 'Share'); sh.type = 'button';
@@ -2121,12 +2124,71 @@ function renderInvite() {
     btns.appendChild(sh);
   }
   c.appendChild(btns);
+  /* The same link as a QR code: shown here, and saved as a picture for print, slides or an email signature */
+  const qb = mk('div', 'invite-qr');
+  const qc = mk('canvas'); qc.id = 'inviteQr'; qc.width = 240; qc.height = 240; qc.setAttribute('aria-label', 'QR code for your invite link');
+  qb.appendChild(qc);
+  const qt = mk('div', 'invite-qr-t');
+  qt.appendChild(mk('b', '', 'Your QR code'));
+  qt.appendChild(mk('small', '', 'Print it, put it on a slide, or add it to your email signature. Scanning it opens your invite link.'));
+  const dl = mk('button', 'btn small', 'Download QR code'); dl.type = 'button'; dl.id = 'inviteQrDl';
+  dl.onclick = downloadInviteQr; qt.appendChild(dl);
+  qb.appendChild(qt); c.appendChild(qb);
+  loadQrLib().then(q => { if (q) drawQr(qc.getContext('2d'), q, invite.link, 0, 0, 240); else qb.hidden = true; });
   const st = mk('div', 'invite-stats');
   [[invite.joined, invite.joined === 1 ? 'friend joined' : 'friends joined'], [invite.rewarded, 'sent their first pizza'], [invite.emails_earned, 'emails earned']].forEach(([n, l]) => {
     const d = mk('div'); d.appendChild(mk('b', '', String(n || 0))); d.appendChild(mk('small', '', l)); st.appendChild(d);
   });
   c.appendChild(st);
   c.appendChild(mk('p', 'muted invite-note', 'Your link is also on every receipt your pizzas share, so their friends can find you too.'));
+}
+// QR codes: the qrcode-generator library loads only when needed, pinned to one version
+let qrLibP = null;
+function loadQrLib() {
+  if (window.qrcode) return Promise.resolve(window.qrcode);
+  if (!qrLibP) qrLibP = new Promise(res => {
+    const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js'; sc.async = true;
+    sc.onload = () => res(window.qrcode || null); sc.onerror = () => { qrLibP = null; res(null); };
+    document.head.appendChild(sc);
+    setTimeout(() => res(window.qrcode || null), 5000);
+  });
+  return qrLibP;
+}
+function drawQr(ctx, lib, text, x, y, size) {
+  const q = lib(0, 'M'); q.addData(text); q.make();
+  const n = q.getModuleCount(), quiet = 2, cell = size / (n + quiet * 2);
+  ctx.fillStyle = '#fff'; ctx.fillRect(x, y, size, size); ctx.fillStyle = '#2c2420';
+  for (let r = 0; r < n; r++) for (let k = 0; k < n; k++) if (q.isDark(r, k)) ctx.fillRect(x + (k + quiet) * cell, y + (r + quiet) * cell, Math.ceil(cell), Math.ceil(cell));
+}
+async function downloadInviteQr() {
+  const lib = await loadQrLib();
+  if (!lib || !invite || !invite.link) { toast('The QR code could not load. Copy your link instead.'); return; }
+  try { await Promise.race([Promise.all(['88px Shrikhand', '700 44px "Work Sans"', '700 40px "Courier Prime"'].map(f => document.fonts.load(f))), new Promise(r => setTimeout(r, 1500))]); } catch (e) { /* draw with fallback fonts */ }
+  const W = 1200, H = 1500, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#FFF3E0'; c.fillRect(0, 0, W, H);
+  for (let x = 0; x < W; x += 50) for (let y = 0; y < 2; y++) { c.fillStyle = (x / 50 + y) % 2 ? '#FFF3E0' : '#D62828'; c.fillRect(x, y * 50, 50, 50); }
+  c.textAlign = 'center'; c.fillStyle = '#C21F1F'; c.font = '88px Shrikhand, "Cooper Black", Georgia, serif'; c.fillText('Slice of Thanks', W / 2, 240);
+  c.fillStyle = '#3E2416'; c.font = '700 44px "Work Sans", system-ui, sans-serif'; c.fillText('Scan to send a thank-you pizza', W / 2, 330);
+  c.fillStyle = '#3E2416'; c.fillRect(W / 2 - 390, 400, 780, 780);
+  drawQr(c, lib, invite.link, W / 2 - 375, 415, 750);
+  c.fillStyle = '#3E2416'; c.font = '600 40px "Work Sans", system-ui, sans-serif';
+  c.fillText('Join free and get ' + invite.friend_emails + ' bonus emails', W / 2, 1270);
+  const who = (LIVE.session && LIVE.session.profile && (LIVE.session.profile.business_name || LIVE.session.profile.display_name)) || '';
+  if (who) { c.fillStyle = '#6B4A3A'; c.font = '400 36px "Work Sans", system-ui, sans-serif'; c.fillText('Invited by ' + who.slice(0, 40), W / 2, 1330); }
+  c.fillStyle = '#C21F1F'; c.font = '700 40px "Courier Prime", "Courier New", monospace'; c.fillText('sliceofthanks.app', W / 2, 1430);
+  cv.toBlob(blob => {
+    if (!blob) { toast('The QR code could not be saved.'); return; }
+    const name = 'slice-of-thanks-invite-qr.png';
+    let file = null; try { file = new File([blob], name, { type: 'image/png' }); } catch (e) { /* older browsers */ }
+    // Phones save pictures from the share sheet; computers download the file
+    if (file && navigator.canShare && navigator.canShare({ files: [file] }) && /iPhone|iPad|Android/i.test(navigator.userAgent)) {
+      navigator.share({ files: [file] }).catch(() => {}); return;
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast('QR code saved. Print it or add it anywhere.');
+  }, 'image/png');
 }
 const _applySessionInv = applySession;
 applySession = function (s) { _applySessionInv(s); setTimeout(sendReferral, 1200); };

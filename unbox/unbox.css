@@ -26,6 +26,7 @@ html:has(.sot-u),body:has(.sot-u){background:#FFF3E0!important}
 .sot-u .u-scoot .u-pet{position:absolute;left:12%;top:0;width:34%;height:62%;background:none;border:0;padding:0;cursor:pointer;border-radius:50%;z-index:2}
 .sot-u .u-scoot .u-pet.hop+img,.sot-u .u-scoot .u-pet.hop~.u-scoot-logo{animation:sotHop .7s ease}
 .sot-u .u-scoot-logo{position:absolute;left:43%;top:41.5%;width:32.5%;height:27%;transform-origin:21.5% 31.5%;display:flex;align-items:center;justify-content:center;font:800 .78rem/1.1 var(--body);color:#3E2416;padding:4px;overflow:hidden;word-break:break-word}
+.sot-u .u-party-hat{position:absolute;left:24%;top:-17%;width:13%;z-index:3;transform:rotate(-12deg);pointer-events:none}.sot-u .u-party-hat svg{display:block;width:100%;height:auto}
 .sot-u .u-scoot-logo img{max-width:100%;max-height:100%;object-fit:contain}
 .sot-u .u-bark{position:absolute;left:50%;top:-6px;transform:translateX(-50%);background:#fffaef;border:2.5px solid var(--basil);border-radius:14px;padding:4px 10px;font-weight:700;z-index:3}
 @keyframes sotDrive{from{transform:translateX(140%)}to{transform:none}}
@@ -51,7 +52,7 @@ html:has(.sot-u),body:has(.sot-u){background:#FFF3E0!important}
 .sot-u .u-note-sign{margin:0;color:#6b4a3a;font-size:.95rem}
 .sot-u .u-note-gift{align-self:flex-start;font:700 .9rem var(--mono);letter-spacing:.08em;color:#2f6b2a;border:2px dashed #2f6b2a;border-radius:8px;padding:6px 12px}
 .sot-u .u-base{background:#c99a62;border:3px solid #3E2416;border-top-width:0;border-radius:0 0 16px 16px;padding:16px}
-.sot-u .u-base-in{background:#ecd5b0;border:2px solid rgba(62,36,22,.25);border-radius:6px;min-height:200px;display:flex;align-items:center;justify-content:center;padding:16px}
+.sot-u .u-base-in{background:radial-gradient(circle at 18% 24%,#b07a3a 0 3px,transparent 4px),radial-gradient(circle at 26% 30%,#c98a52 0 2px,transparent 3px),radial-gradient(circle at 72% 20%,#b07a3a 0 2.5px,transparent 3.5px),radial-gradient(circle at 80% 70%,#c98a52 0 3px,transparent 4px),radial-gradient(circle at 66% 78%,#d9a35e 0 2px,transparent 3px),radial-gradient(ellipse 9px 5px at 14% 76%,#c98a52 0 70%,transparent 75%),radial-gradient(circle at 34% 84%,#b07a3a 0 2px,transparent 3px),radial-gradient(circle at 88% 40%,#d9a35e 0 2px,transparent 3px),radial-gradient(ellipse 11px 6px at 58% 14%,#c23a28 0 60%,transparent 66%),radial-gradient(circle at 44% 66%,#c98a52 0 1.5px,transparent 2.5px),#ecd5b0;border:2px solid rgba(62,36,22,.25);border-radius:6px;min-height:200px;display:flex;align-items:center;justify-content:center;padding:16px}
 .sot-u .u-base-in p{margin:0;font:400 1.6rem/1.15 var(--display);color:#a06a3a;text-align:center}
 .sot-u .u-empty{width:100%;max-width:260px;height:auto;margin:0 auto}
 .sot-u .u-celebrate{width:140px;height:auto;margin:-6px auto 0}

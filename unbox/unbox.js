@@ -1,4 +1,4 @@
-/* Slice of Thanks recipient page (unbox) v0.2.1
+/* Slice of Thanks recipient page (unbox) v0.3.0
    Delivery by Potato, open the box, six-slice pizza, sender's button under the pizza,
    Gerald's receipt on the same screen, gift after the sixth slice, send a pizza back.
    Needs shared/pizza-core.js loaded first. Mounts into #sot-unbox. */
@@ -12,7 +12,7 @@
   var P = window.SOTPizza;
   var qs = new URLSearchParams(location.search);
   var TOKEN = qs.get('t') || '';
-  var DEMO = qs.get('demo') === '1';
+  var DEMO = qs.get('demo') === '1' || qs.get('demo') === 'birthday';
   var lang = (qs.get('lang') || navigator.language || 'en').slice(0, 2) === 'es' ? 'es' : 'en';
 
   var T = {
@@ -122,6 +122,8 @@
     if (sender.personal) scootLogo.appendChild(el('img', { src: BASE + '/brand/logo/slice-of-thanks-logo-240.png', alt: 'Slice of Thanks' }));
     else if (sender.logo_url) scootLogo.appendChild(el('img', { src: sender.logo_url, alt: (sender.business || who) + ' logo' })); else scootLogo.textContent = sender.business || who;
     var scoot = el('div', { class: 'u-scoot' }, [bark, pet, el('img', { src: BASE + '/brand/characters/potato-delivery-side.png', alt: 'Potato the bulldog driving a red delivery scooter in her helmet and goggles' }), scootLogo]);
+    // Gerald's Birthday Special: Potato wears a party hat
+    if (box.birthday_special) { var hat = el('span', { class: 'u-party-hat', 'aria-hidden': 'true' }); hat.innerHTML = "<svg viewBox='0 0 40 48'><path d='M20 4 34 44H6z' fill='#2b6cb0' stroke='#3E2416' stroke-width='3' stroke-linejoin='round'/><path d='M13 24h14M10 33h20' stroke='#f5c518' stroke-width='3.5'/><circle cx='20' cy='5' r='5' fill='#e86a92' stroke='#3E2416' stroke-width='2.5'/></svg>"; scoot.appendChild(hat); }
     var pets = 0;
     pet.addEventListener('click', function () { pets++; pet.classList.remove('hop'); void pet.offsetWidth; pet.classList.add('hop'); bark.hidden = false; setTimeout(function () { bark.hidden = true; }, 900); if (pets === 5) P.burst('potato'); });
     s1.appendChild(scoot);
@@ -135,7 +137,7 @@
     // Pro box topper: a seasonal decoration on the lid
     var topper = box.topper && P.topperEl ? P.topperEl(box.topper) : null; if (topper) lid.appendChild(topper);
     /* Notes can start with their own greeting, like "Hi [first name]": then the page does not add another */
-    var ownGreeting = /^\s*(hi|hello|hey|dear|hola|good (morning|afternoon|evening))\b/i.test(box.note || '');
+    var ownGreeting = /^\s*(hi|hello|hey|dear|hola|happy|feliz|good (morning|afternoon|evening))\b/i.test(box.note || '');
     var greet = d.recipient_name && !ownGreeting ? (lang === 'es' ? 'Hola ' : 'Hi ') + first(d.recipient_name) + ', ' : '';
     var inside = el('div', { class: 'inside' }, [el('p', { class: 'hand', text: greet + (box.note || '') }), el('p', { class: 'hand sign', text: box.sign || '' })]);
     var rbox = el('div', { class: 'rbox' }, [inside, lid]);
@@ -229,7 +231,7 @@
           var card = el('div', { class: 'u-gift' }, [
             el('span', { class: 'u-eyebrow', text: t.under }), el('strong', { text: gift.text || '' }), codeEl,
             gift.expires ? el('span', { class: 'u-why', text: t.useBy(new Date(gift.expires + 'T12:00').toLocaleDateString(lang === 'es' ? 'es' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })) }) : null,
-            el('div', { class: 'u-row' }, [copyBtn, useUrl ? el('a', { class: 'u-btn small primary', href: useUrl, target: '_blank', rel: 'noopener', text: t.use, onclick: function () { track('gift_clicked'); } }) : null])
+            el('div', { class: 'u-row' }, [copyBtn, useUrl ? el('a', { class: 'u-btn small primary', href: useUrl, target: '_blank', rel: 'noopener', text: gift.cta ? String(gift.cta).slice(0, 30) : t.use, onclick: function () { track('gift_clicked'); } }) : null])
           ]);
           done.appendChild(card);
         }
@@ -255,6 +257,16 @@
   }
 
   function demoData() {
+    if (qs.get('demo') === 'birthday') {
+      var tops = [], kinds = [['pepStar', 12], ['pepHeart', 12], ['sprinkle', 22], ['candle', 6]];
+      kinds.forEach(function (kn) { for (var i = 0; i < kn[1]; i++) { var a = Math.random() * 6.283, dd = Math.sqrt(Math.random()) * 0.8; tops.push({ k: kn[0], x: Math.cos(a) * dd, y: Math.sin(a) * dd, rot: Math.random() * 6.283 }); } });
+      return { recipient_name: 'Jordan Reyes', locale: lang, slices_eaten: 0, snapshot: {
+        pizza: { size: 0.92, seed: 4, sauce: 'red', cheese: 'mozz', vegan: false, toppings: tops, bake: 1, baked: true, byGerald: true, bakeLevel: 3, sign: { text: 'Jordan' }, name: "Gerald's Birthday Special" },
+        box: { style: 'hearts', sticker: 'Happy Birthday', confetti: 'party', tone: 'playful', topper: 'bday2026', birthday_special: true,
+          note: 'Happy birthday, Jordan! The whole kitchen made this one just for you. Potato ate one slice. Sorry.', sign: 'Gerald, Head Chef, and Potato, Head of Delivery',
+          gift: { text: '14 days of The Whole Pie, on the house. Unlock them within 30 days.', code: 'HAPPY-BIRTHDAY', url: SITE + '/kitchen?birthday=unlock', cta: 'Unlock my 14 days' } },
+        sender: { name: '', business: 'Gerald and Potato', send_as: 'business', show_made_with: false } } };
+    }
     return { recipient_name: 'Jordan Reyes', locale: lang, slices_eaten: 0, snapshot: {
       pizza: P.defaultSignature(),
       box: { style: 'kraft', sticker: 'Thank You', confetti: 'classic', tone: 'playful', note: 'Thank you for making time to meet today. I loved hearing about your plans.', sign: 'Warmly, Stacey',

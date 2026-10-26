@@ -177,3 +177,29 @@ export function buildDateEmail(i: { guest: string; kind: "birthday" | "anniversa
 </td></tr></table></td></tr></table></body></html>`;
   return { subject, html, text: `${lead}\n\n${button}: ${i.link}` };
 }
+
+// To a trial member: 3 days left of The Whole Pie, or the last day. Sent to their reply-to address. It uses no email credit.
+export function buildTrialEmail(i: { kind: "3d" | "end"; name?: string; days: number; upgradeLink: string; kitchenLink: string }): { subject: string; html: string; text: string } {
+  const f = String(i.name ?? "").trim().split(" ")[0];
+  const subject = i.kind === "end" ? "Your free trial of The Whole Pie ends today" : `${i.days} days left of The Whole Pie`;
+  const lead = i.kind === "end"
+    ? `${f ? f + ", y" : "Y"}our free trial of The Whole Pie ends today.`
+    : `${f ? f + ", y" : "Y"}our free trial of The Whole Pie ends in ${i.days} days.`;
+  const keep = ["Your logo and brand colors on the box", "Gift codes and your own button", "Pizzas after meetings and on birthdays that send on their own", "Send to a whole list at once", "250 emails a month"];
+  const after = "After the trial you move to A Slice, which is free forever. Nothing you made is lost.";
+  const html = `<!doctype html><html><body style="margin:0;background:#FFF3E0;font-family:Arial,Helvetica,sans-serif;color:#3E2416">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF3E0"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fffaef;border:3px solid #3E2416;border-radius:18px">
+<tr><td style="height:14px;background:#D62828;border-radius:14px 14px 0 0"></td></tr>
+<tr><td style="padding:24px;text-align:left">
+<p style="margin:0 0 12px;font-size:20px;font-weight:bold;line-height:1.3">${esc(lead)}</p>
+<p style="margin:0 0 8px;font-size:15px">Upgrade to keep:</p>
+<ul style="margin:0 0 14px 20px;padding:0;font-size:15px;line-height:1.6">${keep.map((k) => `<li>${esc(k)}</li>`).join("")}</ul>
+<p style="margin:0 0 18px;font-size:14px;color:#6b4a3a">${esc(after)}</p>
+<p style="margin:0 0 12px;text-align:center"><a href="${esc(i.upgradeLink)}" style="display:inline-block;background:#D62828;color:#FFF3E0;text-decoration:none;font-weight:bold;font-size:17px;padding:14px 28px;border-radius:999px;border:2px solid #3E2416">Keep The Whole Pie</a></p>
+<p style="margin:0;text-align:center;font-size:14px"><a href="${esc(i.kitchenLink)}" style="color:#C21F1F">Open my Kitchen</a></p>
+<p style="margin:16px 0 0;font-size:12px;color:#6b4a3a;text-align:center">You get this because you started a free trial of The Whole Pie. Gerald and Potato, Slice of Thanks.</p>
+</td></tr></table></td></tr></table></body></html>`;
+  const text = [lead, "", "Upgrade to keep:", ...keep.map((k) => "- " + k), "", after, "", `Keep The Whole Pie: ${i.upgradeLink}`, `Open my Kitchen: ${i.kitchenLink}`].join("\n");
+  return { subject, html, text };
+}

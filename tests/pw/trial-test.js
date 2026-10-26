@@ -70,14 +70,14 @@ async function run(browser, trial, prefsIn) {
   check(r.st.prefs.some(x => x.trial_welcome === true), 'Welcome is remembered on the account');
   check(await inRoot(p, "const c=R.querySelector('#trialCard');return !!c&&c.textContent.indexOf('You are on The Whole Pie for 14 days')>=0&&c===R.querySelector('#view-today').firstElementChild"), 'Trial card is first on Home with days left');
   const prog = await inRoot(p, "return R.querySelector('#setupCard p.muted').textContent");
-  check(prog === '0 of 8 done', 'Pro checklist has 8 steps: ' + prog);
+  check(prog === '0 of 9 done', 'Pro checklist has 9 steps, with the birthday: ' + prog);
   await inRoot(p, "[...R.querySelectorAll('#setupCard li')].find(l=>l.textContent.indexOf('Where replies go')>=0).querySelector('.linkish').click()"); await wait(200);
   check(r.st.prefs.some(x => x.setup && x.setup.skip.indexOf('reply') >= 0), 'Skip is saved to the account');
   check(await inRoot(p, "return [...R.querySelectorAll('#setupCard li')].find(l=>l.textContent.indexOf('Where replies go')>=0).classList.contains('skip')"), 'Skipped step shows as skipped');
   await inRoot(p, "[...R.querySelectorAll('#setupCard li')].find(l=>l.textContent.indexOf('test pizza')>=0).querySelector('.btn').click()"); await wait(300);
   check(await inRoot(p, "return !R.querySelector('#view-make').hidden"), 'Send a test pizza opens the Kitchen');
   await inRoot(p, "R.querySelector('#tab-today').click()"); await wait(300);
-  check((await inRoot(p, "return R.querySelector('#setupCard p.muted').textContent")) === '1 of 8 done', 'Test step counts as done');
+  check((await inRoot(p, "return R.querySelector('#setupCard p.muted').textContent")) === '0 of 9 done', 'Opening the Kitchen alone does not tick the test step');
   if (process.env.SHOT2) { await inRoot(p, "window.scrollTo(0,0)"); await p.screenshot({ path: process.env.SHOT2, fullPage: true }); }
   await inRoot(p, "R.querySelector('#tab-settings').click()"); await wait(400);
   const pc = await inRoot(p, "return R.querySelector('#planCard h2').textContent+' | '+R.querySelector('#planCard p.muted').textContent");
@@ -93,7 +93,7 @@ async function run(browser, trial, prefsIn) {
   r = await run(browser, { plan: 'pro', active: false, days_left: 0, emails: 40 }, { trial_welcome: true, setup: { done: ['test'], skip: [] } });
   p = r.page;
   check(await inRoot(p, "const c=R.querySelector('#trialCard');return c.textContent.indexOf('You are on A Slice now')>=0&&c.textContent.indexOf('wait for you to send')>=0"), 'Trial over card says what changed');
-  check((await inRoot(p, "return R.querySelector('#setupCard p.muted').textContent")) === '1 of 7 done', 'After the trial the A Slice checklist has 7 steps');
+  check((await inRoot(p, "return R.querySelector('#setupCard p.muted').textContent")) === '1 of 8 done', 'After the trial the A Slice checklist has 8 steps');
   await inRoot(p, "[...R.querySelectorAll('#trialCard .btn')].find(b=>b.textContent==='Got it').click()"); await wait(200);
   check(await inRoot(p, "return !R.querySelector('#trialCard')") && r.st.prefs.some(x => x.trial_end_seen), 'Got it hides the card for good');
   await r.ctx.close();

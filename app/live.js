@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.17.1 =====
+/* ===== Slice of Thanks live layer v0.18.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -541,7 +541,8 @@ const MSG = {
   sending_paused: 'Sending is paused for a few minutes. Try again soon.',
   account_inactive: 'Your account is not active. Contact support.',
   no_credits: 'You are out of emails for this month.',
-  test_inbox_only: 'Test pizzas only go to your test inboxes.',
+  test_inbox_only: 'Test pizzas only go to your own email, the one in Settings under Replies go to.',
+  test_limit: 'You have used your 5 free test pizzas. Send it to them for real, or to yourself as a normal pizza.',
   not_signed_in: 'Your session timed out. Reload the page and sign in again.',
   server_error: 'Something went wrong on our side. Your pizza was not sent. Try again in a minute.'
 };
@@ -592,8 +593,8 @@ function sendProblem(r, retry) {
 $('#sendNow').onclick = () => {
   if (!account) {
     store.set('draft', { pizza: cleanPizza(pizza), box: JSON.parse(JSON.stringify(box)), at: Date.now() });
-    liveSheet('Create your free account to send', (() => { const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'Your pizza is saved. Make a free account, sign in, and you will come right back to send it.'; return p; })(),
-      [{ label: 'Create free account', primary: true, run: () => { location.href = bdLink('checkout_free', '/checkout/10'); } }, { label: 'I already have one', run: () => { location.href = LIVE.LOGIN; } }]);
+    liveSheet('Your pizza is ready to send', (() => { const p = document.createElement('div'); p.innerHTML = '<p>Potato has her helmet on. Make your free account and she delivers it.</p><p class="muted">It takes a minute. Your pizza is saved, and you come right back here to send it. Your first 14 days of The Whole Pie are free, no card needed.</p>'; return p; })(),
+      [{ label: 'Create my free account', primary: true, run: () => { location.href = bdLink('checkout_free', '/checkout/10'); } }, { label: 'I already have an account', run: () => { location.href = LIVE.LOGIN; } }]);
     return;
   }
   liveSend();
@@ -1878,3 +1879,160 @@ async function useSendBack() {
 }
 const _applySessionB = applySession;
 applySession = function (s) { _applySessionB(s); setTimeout(useSendBack, 300); };
+
+
+/* --- Free test pizzas to yourself: up to 5, they use no emails and say TEST SEND (docs/ONBOARDING_PLAN.md) --- */
+function myEmail() { const s = LIVE.session; return s && s.profile && s.profile.reply_to ? String(s.profile.reply_to).trim() : ''; }
+function testsLeft() { const s = LIVE.session; return s && typeof s.self_tests_left === 'number' ? s.self_tests_left : 0; }
+function renderTestBtn() {
+  const send = $('#sendNow'); if (!send) return;
+  let b = $('#liveTestSend');
+  if (!LIVE.session || editingSignature) { if (b) b.hidden = true; return; }
+  if (!b) { b = mk('button', 'btn', ''); b.type = 'button'; b.id = 'liveTestSend'; send.after(b); b.onclick = liveTestSend; }
+  const n = testsLeft(); b.hidden = n <= 0;
+  b.textContent = 'Send a test to myself (' + n + ' free left)';
+}
+async function liveTestSend() {
+  const me = myEmail();
+  if (!me || me.indexOf('@') < 1) { toast('Add your email in Settings under Replies go to first.'); show('settings'); return; }
+  const b = $('#liveTestSend'); b.disabled = true; const label = b.textContent; b.textContent = 'Sending your test...';
+  const pay = buildPayload();
+  pay.idem = 'selftest-' + Date.now(); pay.is_test = true;
+  pay.recipient = Object.assign({}, pay.recipient, { name: profile.name || 'Me', email: me });
+  pay.consent = { basis: 'permission', method: 'Test send to myself' };
+  pay.label = 'Test pizza';
+  let r; try { r = await LIVE.call('/send', pay); } catch (e) { r = { code: 'server_error' }; }
+  b.disabled = false; b.textContent = label;
+  if (r && r.ok) {
+    if (LIVE.session) LIVE.session.self_tests_left = Math.max(0, testsLeft() - 1);
+    renderTestBtn(); markSetup('test', 'done');
+    toast('Test sent to ' + me + '. It used no emails. ' + testsLeft() + ' free tests left.');
+    burst('envelopes'); return;
+  }
+  if (r && (r.code === 'test_limit' || r.code === 'test_inbox_only')) { toast(MSG[r.code]); if (LIVE.session && r.code === 'test_limit') { LIVE.session.self_tests_left = 0; renderTestBtn(); } return; }
+  sendProblem(r || {}, liveTestSend);
+}
+const _renderStepT = renderStep;
+renderStep = function () { _renderStepT(); try { renderTestBtn(); } catch (e) {} };
+
+/* --- Gerald's Birthday Special (docs/MEMBER_BIRTHDAY_PLAN.md) --- */
+const BDAY_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function bdayOf() { const s = LIVE.session; return (s && s.birthday) || {}; }
+function bdayText(md) { if (!md) return ''; const m = +md.slice(0, 2), d = +md.slice(3, 5); return BDAY_MONTHS[m - 1] + ' ' + d; }
+function bdayPicker(id, md) {
+  const w = mk('div', 'btn-row'); w.style.alignItems = 'center';
+  const ms = document.createElement('select'); ms.id = id + 'M'; ms.setAttribute('aria-label', 'Birthday month');
+  ms.innerHTML = '<option value="">Month</option>' + BDAY_MONTHS.map((m, i) => '<option value="' + String(i + 1).padStart(2, '0') + '">' + m + '</option>').join('');
+  const ds = document.createElement('select'); ds.id = id + 'D'; ds.setAttribute('aria-label', 'Birthday day');
+  ds.innerHTML = '<option value="">Day</option>' + Array.from({ length: 31 }, (_, i) => '<option value="' + String(i + 1).padStart(2, '0') + '">' + (i + 1) + '</option>').join('');
+  if (md) { ms.value = md.slice(0, 2); ds.value = md.slice(3, 5); }
+  w.appendChild(ms); w.appendChild(ds);
+  return w;
+}
+function pickedMd(id) { const m = $('#' + id + 'M'), d = $('#' + id + 'D'); return m && d && m.value && d.value ? m.value + '-' + d.value : ''; }
+async function saveBirthday(md, after) {
+  const r = await LIVE.call('/birthday', { md }).catch(() => null);
+  if (!r || !r.ok) {
+    if (r && r.code === 'birthday_locked') toast('Your birthday can be changed once a year. Next change: ' + shortDate(r.until) + '.');
+    else toast(r && r.code === 'bad_date' ? 'Pick a month and a day.' : MSG.server_error);
+    return false;
+  }
+  if (LIVE.session) LIVE.session.birthday = Object.assign({}, bdayOf(), { md: r.birthday });
+  toast(md ? 'Saved. Gerald will remember ' + bdayText(md) + '.' : 'Birthday removed.');
+  if (after) after();
+  renderSetup(); return true;
+}
+/* Settings, You card: the birthday and the switch for Gerald's birthday pizza */
+function renderBdayField() {
+  const row = $('#liveYouSave') && $('#liveYouSave').parentElement; if (!row || !LIVE.session) return;
+  let f = $('#liveBday');
+  if (!f) { f = mk('div', 'field'); f.id = 'liveBday'; row.before(f); }
+  const b = bdayOf(); f.innerHTML = '';
+  const l = mk('label', '', 'Your birthday (optional)'); l.htmlFor = 'liveBdayPickM'; f.appendChild(l);
+  f.appendChild(bdayPicker('liveBdayPick', b.md));
+  const sv = mk('button', 'btn small', 'Save birthday'); sv.type = 'button'; f.querySelector('.btn-row').appendChild(sv);
+  sv.onclick = () => { const md = pickedMd('liveBdayPick'); if (!md) { toast('Pick a month and a day.'); return; } saveBirthday(md, renderBdayField); };
+  f.appendChild(mk('small', 'muted', 'Month and day only. Gerald bakes you a Birthday Special on the day.' + (b.locked_until ? ' It can be changed again on ' + shortDate(b.locked_until) + '.' : ' You can change it once a year.')));
+  const sw = mk('label', 'meet-sw'); sw.style.marginTop = '8px';
+  const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = b.on !== false;
+  cb.onchange = () => { LIVE.call('/profile', { profile: { prefs: { birthday_pizza: cb.checked } } }).catch(() => null); if (LIVE.session) LIVE.session.birthday = Object.assign({}, bdayOf(), { on: cb.checked }); toast(cb.checked ? 'Birthday pizza is on.' : 'Birthday pizza is off.'); };
+  sw.appendChild(cb); sw.appendChild(document.createTextNode('Send me a birthday pizza')); f.appendChild(sw);
+}
+/* Home: ask once for the birthday; on the birthday, the gift and sharing */
+function renderBdayHome() {
+  const home = $('#view-today'); const s = LIVE.session; if (!home || !s) return;
+  const b = bdayOf(), prefs = s.prefs || {}, sp = b.special;
+  let c = $('#bdayCard');
+  const ask = !b.md && !prefs.bday_ask_done && !trialOf();
+  if (!sp && !ask) { if (c) c.remove(); return; }
+  if (!c) { c = mk('div', 'card trial-card'); c.id = 'bdayCard'; const anchor = $('#setupCard') || $('#trialCard'); if (anchor) anchor.after(c); else home.insertBefore(c, home.firstChild); }
+  c.innerHTML = '';
+  if (sp) {
+    c.appendChild(mk('p', 'eyebrow', "Gerald's Birthday Special"));
+    c.appendChild(mk('h2', '', 'Happy birthday from the kitchen!'));
+    const open = sp.gift === 'trial' && !sp.claimed && sp.claim_by && Date.parse(sp.claim_by) > Date.now();
+    c.appendChild(mk('p', 'muted', (open ? 'Your gift: 14 days of The Whole Pie, on the house. Unlock them by ' + shortDate(sp.claim_by) + '. ' : sp.gift === 'trial' ? 'Your 14 days of The Whole Pie are unlocked. ' : 'Your gift: 100 bonus emails for 30 days and the ' + sp.year + ' birthday box topper, yours to keep. ') + 'You can also send the Birthday Special to anyone in People until ' + shortDate(sp.share_until) + '.'));
+    const row = mk('div', 'btn-row');
+    if (open) { const u = mk('button', 'btn primary small', 'Unlock my 14 days'); u.type = 'button'; u.onclick = claimBirthday; row.appendChild(u); }
+    const sh = mk('button', 'btn small', 'Send the Birthday Special'); sh.type = 'button'; sh.onclick = shareBirthday; row.appendChild(sh);
+    c.appendChild(row);
+  } else {
+    c.appendChild(mk('p', 'eyebrow', 'One quick question'));
+    c.appendChild(mk('h2', '', 'When is your birthday?'));
+    c.appendChild(mk('p', 'muted', 'Month and day only. Gerald bakes members a Birthday Special, with a gift under the pizza.'));
+    c.appendChild(bdayPicker('homeBday', ''));
+    const row = mk('div', 'btn-row');
+    const sv = mk('button', 'btn primary small', 'Save'); sv.type = 'button';
+    sv.onclick = () => { const md = pickedMd('homeBday'); if (!md) { toast('Pick a month and a day.'); return; } saveBirthday(md, () => { savePrefs({ bday_ask_done: true }); renderBdayHome(); }); };
+    const no = mk('button', 'btn ghost small', 'No thanks'); no.type = 'button'; no.onclick = () => { savePrefs({ bday_ask_done: true }); c.remove(); };
+    row.appendChild(sv); row.appendChild(no); c.appendChild(row);
+  }
+}
+async function claimBirthday() {
+  const r = await LIVE.call('/birthday/claim', {}).catch(() => null);
+  if (!r || !r.ok) { toast(r && r.code === 'no_gift' ? 'There is no birthday gift to unlock right now.' : MSG.server_error); return; }
+  const s = await LIVE.call('/session').catch(() => null);
+  if (s && s.member_id) applySession(s);
+  toast(r.already ? 'Your 14 days are already unlocked.' : 'Unlocked! The Whole Pie is yours until ' + shortDate(r.ends_at) + '.');
+  burst('party');
+}
+function bdayPizza() {
+  const p = newPizza(); p.sauce = 'red'; p.cheese = 'mozz'; p.toppings = [];
+  [['pepStar', 12], ['pepHeart', 12], ['sprinkle', 22], ['candle', 6]].forEach(([k, n]) => { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, d = Math.sqrt(Math.random()) * 0.8; p.toppings.push({ k, x: Math.cos(a) * d, y: Math.sin(a) * d, rot: Math.random() * 6.283 }); } });
+  p.bake = 1; p.baked = true; p.bakeLevel = 3; p.name = "Gerald's Birthday Special";
+  return p;
+}
+function shareBirthday() {
+  startFresh(null);
+  pizza = bdayPizza();
+  box.style = 'hearts'; box.sticker = 'Happy Birthday'; box.confetti = 'party'; box.birthdaySpecial = true;
+  box.note = 'Happy birthday, [first name]! Gerald made you his Birthday Special.';
+  step = 5; saidStep = 5; show('make'); renderStep();
+  toast('Your Birthday Special is ready. Pick who it is for.');
+}
+const _boxPayloadB = boxPayload;
+boxPayload = function (bx) { const b = _boxPayloadB(bx); if (bx.birthdaySpecial && bdayOf().special) { b.birthday_special = true; b.pro_style = false; b.confetti = 'party'; } return b; };
+(function catchBirthdayUnlock() {
+  const q = new URLSearchParams(location.search);
+  if (q.get('birthday') !== 'unlock') return;
+  store.set('bdayUnlock', Date.now());
+  q.delete('birthday'); try { history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q.toString() : '')); } catch (e) { /* ignore */ }
+})();
+const _applySessionBd = applySession;
+applySession = function (s) {
+  _applySessionBd(s);
+  const b = (s && s.birthday) || {};
+  OWNED_TOPPERS = (b.toppers || []).map(k => [k, k.slice(4) + ' birthday topper (yours to keep)', []]);
+  renderBdayHome(); renderBdayField();
+  const u = store.get('bdayUnlock', 0);
+  if (u && Date.now() - u < 864e5) { store.set('bdayUnlock', 0); setTimeout(claimBirthday, 500); }
+};
+const _showBd = show;
+show = function (v) { _showBd(v); if (LIVE.session) { if (v === 'today') renderBdayHome(); if (v === 'settings') renderBdayField(); } };
+const _setupStepsB = setupSteps;
+setupSteps = function () {
+  const st = _setupStepsB();
+  const t = st.find(x => x.id === 'test'); if (t) { t.manual = false; t.done = () => LIVE.session && typeof LIVE.session.self_tests_left === 'number' && LIVE.session.self_tests_left < 5; t.text = 'See exactly what people get. Your first 5 tests are free.'; t.run = () => { show('make'); toast('Make a pizza, then tap Send a test to myself on the Send step.'); }; }
+  st.push({ id: 'bday', title: 'Your birthday', text: 'Month and day only. Gerald bakes you a Birthday Special on the day.', done: () => !!bdayOf().md, run: () => { show('settings'); setTimeout(() => { const f = $('#liveBday'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120); } });
+  return st;
+};

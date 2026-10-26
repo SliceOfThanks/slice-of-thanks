@@ -4,15 +4,15 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifyBdToken } from "./lib/auth.ts";
 import { recipientToken, tokenHash } from "./lib/crypto.ts";
-import { buildDateEmail, buildEmail, buildWaitingEmail, SITE } from "./lib/email.ts";
-import { dateBox, datePizza, type DateKind } from "./lib/gerald.ts";
+import { buildDateEmail, buildEmail, buildTrialEmail, buildWaitingEmail, SITE } from "./lib/email.ts";
+import { birthdaySpecial, dateBox, datePizza, type DateKind } from "./lib/gerald.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, deleteBdUser, fetchBdEmail, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
 import { pickProvider } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.17.0";
+const VERSION = "api-0.18.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -242,6 +242,24 @@ async function dateDue(d: Record<string, any>) {
   return notice(true);
 }
 
+// A trial reminder to the member: 3 days left, or the last day
+async function trialNotice(n: Record<string, any>) {
+  const mail = buildTrialEmail({ kind: n.kind === "end" ? "end" : "3d", name: n.name ?? "", days: Number(n.days ?? 3), upgradeLink: `${SITE}/account/upgrade`, kitchenLink: `${SITE}/kitchen` });
+  const provider = pickProvider(await rpc("sot_setting", { p_env: "live", p_key: "email_provider" }).catch(() => null));
+  const r = await provider.send({ from: { name: "Gerald and Potato", email: SENDER_EMAIL }, to: { email: n.email, name: n.name || undefined }, subject: mail.subject, html: mail.html, text: mail.text, tags: ["member_notice", "trial_" + n.kind] }, env(provider.secret));
+  if (!r.ok) console.error("trial notice", r.error);
+}
+
+// Gerald's Birthday Special: built here, sent from the house account, delivered like any pizza
+async function birthdayDue(b: Record<string, any>) {
+  const { pizza, box } = birthdaySpecial(b.name ?? "", Number(b.year), b.gift === "trial" ? "trial" : "emails", SITE);
+  const sendId = crypto.randomUUID();
+  const token = await recipientToken(env("LINK_SECRET"), sendId);
+  const r = await rpc<Record<string, any>>("sot_create_birthday_send", { p_birthday: b.id, p_send_id: sendId, p_token_hash: await tokenHash(token), p: { pizza, box } });
+  if (!r?.ok || r.duplicate) return;
+  await deliver(sendId);
+}
+
 async function route(req: Request, path: string): Promise<Response> {
   const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
 
@@ -339,8 +357,20 @@ async function route(req: Request, path: string): Promise<Response> {
         }
       }
     }
-    if (stuck || delivered || failed || synced || ended || dates) console.log("worker", JSON.stringify({ stuck, delivered, failed, synced, ended, dates }));
-    return json(req, { ok: true, stuck, delivered, failed, synced, ended, dates });
+    // Trial reminders, then members' birthdays
+    let notices = 0, birthdays = 0;
+    if (Date.now() - started < 53_000) {
+      for (const n of (await rpc<Record<string, any>[]>("sot_trial_notices_due", { p_limit: 20 }).catch((e) => { console.error("trial due", String(e)); return []; })) ?? []) {
+        try { await trialNotice(n); notices++; } catch (e) { console.error("trial notice", String(e)); }
+      }
+    }
+    if (Date.now() - started < 54_000) {
+      for (const b of (await rpc<Record<string, any>[]>("sot_member_birthdays_due", { p_limit: 10 }).catch((e) => { console.error("birthdays due", String(e)); return []; })) ?? []) {
+        try { await birthdayDue(b); birthdays++; } catch (e) { console.error("birthday", String(e)); }
+      }
+    }
+    if (stuck || delivered || failed || synced || ended || dates || notices || birthdays) console.log("worker", JSON.stringify({ stuck, delivered, failed, synced, ended, dates, notices, birthdays }));
+    return json(req, { ok: true, stuck, delivered, failed, synced, ended, dates, notices, birthdays });
   }
 
   // Member routes
@@ -363,6 +393,13 @@ async function route(req: Request, path: string): Promise<Response> {
     }
     if (!r?.ok) return json(req, { ok: false, code: r?.code ?? "not_found" });
     return json(req, { ok: true, added: !!r.added, person: { id: r.id ?? null, name: r.name, company: r.company ?? "", email: r.email ?? "" } });
+  }
+  // The member's own birthday, month and day, for Gerald's Birthday Special
+  if (path === "/birthday" && req.method === "POST") {
+    return json(req, await rpc("sot_set_member_birthday", { p_member: memberId, p_md: body.md ? String(body.md).slice(0, 5) : null }));
+  }
+  if (path === "/birthday/claim" && req.method === "POST") {
+    return json(req, await rpc("sot_birthday_claim", { p_member: memberId }));
   }
   if (path === "/purchases/check" && req.method === "POST") {
     const b = await syncBilling(memberId, m.claims.uid, 4);

@@ -28,7 +28,7 @@ function swapCheese(k,vg){if(!k)return null;const toV={mozz:'vmozz',parm:'vmozz'
 const TOPS={
  pepStar:{n:'Star pepperoni',g:'special'},pepHeart:{n:'Heart pepperoni',g:'special'},coin:{n:'Gold coin',g:'special'},jackPep:{n:"Jack-o'-lantern pepperoni",g:'special'},
  paw:{n:'Paw print pepperoni',g:'special'},bone:{n:'Bone crust bite',g:'special'},shamrock:{n:'Shamrock basil',g:'special'},flower:{n:'Veggie flower',g:'special'},
- snowMozz:{n:'Snowflake mozzarella',g:'special'},blueChip:{n:'Blue corn chip',g:'special'},cap:{n:'Grad cap',e:'🎓',g:'special'},sparkle:{n:'Sparkler',e:'✨',g:'special'},
+ snowMozz:{n:'Snowflake mozzarella',g:'special'},blueChip:{n:'Blue corn chip',g:'special'},cap:{n:'Grad cap',e:'🎓',g:'special'},sparkle:{n:'Sparkler',e:'✨',g:'special'},sprinkle:{n:'Sprinkles',g:'bday'},candle:{n:'Birthday candle',g:'bday'},
  pumpkin:{n:'Pumpkin',e:'🎃',g:'special'},bat:{n:'Bat',e:'🦇',g:'special'},ghost:{n:'Ghost',e:'👻',g:'special'},leaf:{n:'Fall leaf',e:'🍂',g:'special'},
  turkey:{n:'Turkey',e:'🦃',g:'special'},tree:{n:'Tree',e:'🎄',g:'special'},xstar:{n:'Star',e:'⭐',g:'special'},flake:{n:'Snowflake',e:'❄️',g:'special'},
  pepperoni:{n:'Pepperoni',g:'food',sw:'#b5302a'},olive:{n:'Olives',g:'food',sw:'#26221f'},mushroom:{n:'Mushrooms',g:'food',sw:'#d8c3a5'},
@@ -202,6 +202,8 @@ function drawTop(c,t,cx,cy,R,u,b,now,vg){
    c.beginPath();c.moveTo(-5*u,-1.5*u);c.quadraticCurveTo(0,1.5*u,5*u,-1.5*u);c.moveTo(-4*u,2*u);c.quadraticCurveTo(0,4*u,4*u,1.5*u);c.stroke();break;
   case 'pickle':c.scale(1.4,1.4);c.fillStyle=mix('#98b545','#6b8a2a',b);c.beginPath();for(let i=0;i<=16;i++){const a=i/16*6.283,r=(i%2?7:7.8)*u;i?c.lineTo(Math.cos(a)*r,Math.sin(a)*r):c.moveTo(Math.cos(a)*r,Math.sin(a)*r)}c.closePath();c.fill();
    c.fillStyle='#d9e6a6';c.beginPath();c.arc(0,0,4.6*u,0,6.283);c.fill();c.fillStyle='#8aa23a';[[1.8,0],[-.9,1.6],[-.9,-1.6]].forEach(([x,y])=>{c.beginPath();c.ellipse(x*u,y*u,1.1*u,.7*u,0,0,6.283);c.fill()});break;
+  case 'sprinkle':{const cl=['#e23b2e','#f5c518','#2b6cb0','#e86a92','#4c9b3a'];c.lineCap='round';c.lineWidth=2.4*u;for(let i=0;i<5;i++){const a=i*1.257,x=Math.cos(a)*4.2*u,y=Math.sin(a)*4.2*u,d=a+1.1;c.strokeStyle=cl[i];c.beginPath();c.moveTo(x-Math.cos(d)*2.4*u,y-Math.sin(d)*2.4*u);c.lineTo(x+Math.cos(d)*2.4*u,y+Math.sin(d)*2.4*u);c.stroke()}break}
+  case 'candle':{c.rotate(-(t.rot||0));c.fillStyle='#fff6e3';c.fillRect(-2.8*u,-8*u,5.6*u,16*u);c.fillStyle='#e23b2e';for(let i=0;i<3;i++)c.fillRect(-2.8*u,-7*u+i*5.4*u,5.6*u,2*u);c.strokeStyle='#3a1d12';c.lineWidth=1.1*u;c.strokeRect(-2.8*u,-8*u,5.6*u,16*u);c.fillStyle='#f5c518';c.beginPath();c.ellipse(0,-11.6*u,2.4*u,3.6*u,0,0,6.283);c.fill();c.fillStyle='#f08a24';c.beginPath();c.ellipse(0,-10.8*u,1.1*u,1.9*u,0,0,6.283);c.fill();break}
   case 'pepStar':c.fillStyle=(vg?mix('#c96a3c','#8f4422',b):mix('#c0392b','#8a2017',b));star(c,14*u);break;
   case 'pepHeart':c.fillStyle=(vg?mix('#c96a3c','#8f4422',b):mix('#c0392b','#8a2017',b));c.save();c.translate(0,3*u);heart(c,15*u);c.restore();break;
   case 'coin':c.fillStyle='#e7b931';c.beginPath();c.arc(0,0,9*u,0,6.283);c.fill();c.strokeStyle='#a8801a';c.lineWidth=1.6*u;c.stroke();c.beginPath();c.arc(0,0,5.5*u,0,6.283);c.stroke();break;
@@ -671,6 +673,7 @@ function review(p,b){
   CEL=['retire','birthday','bday','congrat','anniversar','wedding','baby','graduat','promotion','new job','holiday','christmas','new year','engag','new home'],
   pers=b.kind==='personal'||b.personal===true||CEL.some(w=>lw.indexOf(w)>=0)||!!(occ&&occ.indexOf('thank')<0&&!['great meeting','nice to meet you','following up',"let's do this"].includes(occ));
  const lines=[];
+ if(b.birthday_special)return{text:'Birthday Special. On the house. The whole kitchen made this one just for you, and Potato only ate one slice.',stars:5};
  if(b.tone==='polished'){
   lines.push(lab?'A thoughtful touch with the "'+lab+'" spelled in pepperoni. '+(pers?'Someone is very loved.':'Clearly a productive meeting.'):'Balanced, well dressed, and delivered on time.');
   if(p.vegan)lines.push('Fully plant-based and thoughtfully made.');
@@ -816,8 +819,10 @@ function reserveFor(kind){return GERALD_DATA.reserve.filter(r=>r.kind==='both'||
 function noteStyle(){const k=store.get('sendKind','business');return store.get('noteStyle',k==='personal'?'heartfelt':'polished')}
 /* Box toppers (Pro): a seasonal or year-round decoration on the lid. Shared with shared/pizza-core.js for the recipient page. */
 const TOPPERS=[["tree","Christmas tree",[12]],["lights","String lights",[11,12,1]],["ornament","Ornament",[12]],["snowman","Snowman",[12,1,2]],["heart","Heart",[2]],["shamrock","Shamrock",[3]],["flower","Flower",[4,5]],["gradcap","Grad cap",[5,6]],["firework","Firework",[7]],["apple","Apple",[8,9]],["pumpkin","Pumpkin",[10]],["ghost","Ghost",[10]],["leaf","Fall leaf",[10,11]],["bow","Gift bow",[]],["balloons","Balloons",[]],["partyhat","Party hat",[]],["crown","Crown",[]]];
-const TOPPER_SVG={"tree":"<svg viewBox='0 0 64 64'><path d='M32 8 46 27h-8l12 16H40l12 14H12l12-14H14l12-16h-8z' fill='#2e7d3a' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><rect x='28' y='57' width='8' height='6' fill='#8a5a2b' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='m32 1 2 4.2 4.5.6-3.3 3.1.8 4.5L32 11.3l-4 2.1.8-4.5-3.3-3.1 4.5-.6z' fill='#f1ad2d' stroke='#3a1d12' stroke-width='1.6'/><circle cx='26' cy='35' r='2.6' fill='#d62828'/><circle cx='38' cy='48' r='2.6' fill='#f1ad2d'/><circle cx='34' cy='23' r='2.3' fill='#2b5fb8'/><circle cx='22' cy='51' r='2.3' fill='#e86a92'/><circle cx='40' cy='36' r='2.3' fill='#fff'/></svg>","ornament":"<svg viewBox='0 0 64 64'><path d='M32 13c-2-7 6-9 4-3' fill='none' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='32' cy='39' r='20' fill='#d62828' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><rect x='26' y='12' width='12' height='8' rx='2' fill='#f1ad2d' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M13 37q19 9 38 0' fill='none' stroke='#f3d27a' stroke-width='3.2'/><circle cx='24' cy='31' r='3.5' fill='#fff' fill-opacity='.55'/></svg>","snowman":"<svg viewBox='0 0 64 64'><circle cx='32' cy='45' r='15' fill='#fff' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='32' cy='22' r='10' fill='#fff' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><rect x='24' y='5' width='16' height='8' fill='#2b2523' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><rect x='20' y='12' width='24' height='3.5' fill='#2b2523' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='28.5' cy='20' r='1.4' fill='#2b2523'/><circle cx='35.5' cy='20' r='1.4' fill='#2b2523'/><path d='m32 23 8 2-8 1.5z' fill='#f08a24'/><path d='M22 31h20' stroke='#d62828' stroke-width='4'/><circle cx='32' cy='42' r='1.6' fill='#2b2523'/><circle cx='32' cy='49' r='1.6' fill='#2b2523'/></svg>","heart":"<svg viewBox='0 0 64 64'><path d='M32 56C16 45 7 36 7 25A12 12 0 0 1 32 17a12 12 0 0 1 25 8c0 11-9 20-25 31z' fill='#d62828' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M17 24a6 6 0 0 1 6-6' fill='none' stroke='#fff' stroke-opacity='.6' stroke-width='3' stroke-linecap='round'/></svg>","shamrock":"<svg viewBox='0 0 64 64'><path d='M32 36q2 14-6 24' fill='none' stroke='#2e7d3a' stroke-width='4' stroke-linecap='round'/><g fill='#3e9a4a' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'><circle cx='32' cy='17' r='11'/><circle cx='20' cy='33' r='11'/><circle cx='44' cy='33' r='11'/></g></svg>","flower":"<svg viewBox='0 0 64 64'><path d='M32 40v20' stroke='#4c8a3a' stroke-width='4'/><g fill='#f7a8c4' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'><circle cx='32' cy='12' r='9'/><circle cx='46' cy='24' r='9'/><circle cx='40' cy='40' r='9'/><circle cx='24' cy='40' r='9'/><circle cx='18' cy='24' r='9'/></g><circle cx='32' cy='27' r='8' fill='#f1ad2d' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","gradcap":"<svg viewBox='0 0 64 64'><path d='M32 12 60 24 32 36 4 24z' fill='#2b2b2b' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M16 30v12c8 7 24 7 32 0V30l-16 6z' fill='#2b2b2b' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M56 26v18' stroke='#f1ad2d' stroke-width='3'/><circle cx='56' cy='46' r='3' fill='#f1ad2d' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","firework":"<svg viewBox='0 0 64 64'><g stroke-width='3.5' stroke-linecap='round'><path d='M32 30V6M32 30l17-17M32 30h24M32 30l17 17M32 30v24M32 30 15 47M32 30H8M32 30 15 13' stroke='#d62828'/><path d='M32 30l10-24M32 30l24 10M32 30 22 54M32 30 8 20' stroke='#2b5fb8'/></g><circle cx='32' cy='30' r='5' fill='#f1ad2d' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","apple":"<svg viewBox='0 0 64 64'><path d='M32 18c-9-6-24-3-24 14 0 14 10 26 18 26 3 0 4-2 6-2s3 2 6 2c8 0 18-12 18-26 0-17-15-20-24-14z' fill='#d62828' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M32 18c0-6 2-10 5-12' fill='none' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M36 12c6-6 12-4 14-2-5 5-10 5-14 2z' fill='#4c8a3a' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","pumpkin":"<svg viewBox='0 0 64 64'><path d='M32 16c-4-6 0-10 4-11' fill='none' stroke='#4c6b28' stroke-width='4' stroke-linecap='round'/><g fill='#f08a24' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'><ellipse cx='20' cy='38' rx='12' ry='19'/><ellipse cx='44' cy='38' rx='12' ry='19'/><ellipse cx='32' cy='38' rx='12' ry='20'/></g><path d='m24 34 4 4h-8zm16 0 4 4h-8zM22 46q10 6 20 0l-4 4-4-3-4 3-4-3z' fill='#3a1d12'/></svg>","ghost":"<svg viewBox='0 0 64 64'><path d='M12 58V30a20 20 0 0 1 40 0v28l-6-5-7 5-7-5-7 5-6-5z' fill='#fff' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><ellipse cx='25' cy='30' rx='3.2' ry='4.4' fill='#2b2523'/><ellipse cx='39' cy='30' rx='3.2' ry='4.4' fill='#2b2523'/><ellipse cx='32' cy='41' rx='4' ry='3' fill='#2b2523'/></svg>","leaf":"<svg viewBox='0 0 64 64'><path d='M32 60V36' stroke='#8a5a2b' stroke-width='4' stroke-linecap='round'/><path d='m32 4 6 12 9-4-2 12 11 2-9 9 5 6-12 1-8 9-8-9-12-1 5-6-9-9 11-2-2-12 9 4z' fill='#d9661f' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","bow":"<svg viewBox='0 0 64 64'><path d='M32 30C20 12 6 16 8 26s16 8 24 4zM32 30c12-18 26-14 24-4s-16 8-24 4z' fill='#d62828' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M28 32 18 58l7-3 3 7 4-28zM36 32l10 26-7-3-3 7-4-28z' fill='#b0101f' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='32' cy='30' r='6' fill='#d62828' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","balloons":"<svg viewBox='0 0 64 64'><path d='M20 34q2 14 10 26M44 30q-4 16-12 30M32 38v22' fill='none' stroke='#3a1d12' stroke-width='1.8'/><ellipse cx='20' cy='22' rx='10' ry='12' fill='#2b5fb8' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><ellipse cx='44' cy='19' rx='10' ry='12' fill='#f1ad2d' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><ellipse cx='32' cy='28' rx='10' ry='12' fill='#d62828' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","partyhat":"<svg viewBox='0 0 64 64'><path d='M32 4 50 58H14z' fill='#2b5fb8' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='m22 32 20-2m-24 14 28-2' stroke='#f1ad2d' stroke-width='4'/><circle cx='32' cy='5' r='5' fill='#e86a92' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M12 58q20 6 40 0' fill='none' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","crown":"<svg viewBox='0 0 64 64'><path d='M8 52 6 18l14 14 12-22 12 22 14-14-2 34z' fill='#f1ad2d' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><rect x='8' y='50' width='48' height='8' rx='2' fill='#e0b04a' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='32' cy='38' r='4' fill='#d62828' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='18' cy='42' r='3' fill='#2b5fb8' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='46' cy='42' r='3' fill='#2b5fb8' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","lights":"<svg viewBox='0 0 300 36' preserveAspectRatio='xMidYMin meet'><path d='M-5 8Q35 22 75 8T155 8T235 8T315 8' fill='none' stroke='#2e7d3a' stroke-width='2.5'/><rect x='5.5' y='11.3' width='5' height='4' fill='#3a1d12'/><ellipse cx='8.0' cy='20.3' rx='4.2' ry='6.2' fill='#d62828' stroke='#3a1d12' stroke-width='1.6'/><rect x='33.5' y='22.0' width='5' height='4' fill='#3a1d12'/><ellipse cx='36.0' cy='31.0' rx='4.2' ry='6.2' fill='#f1ad2d' stroke='#3a1d12' stroke-width='1.6'/><rect x='61.5' y='10.5' width='5' height='4' fill='#3a1d12'/><ellipse cx='64.0' cy='19.5' rx='4.2' ry='6.2' fill='#2b5fb8' stroke='#3a1d12' stroke-width='1.6'/><rect x='89.5' y='13.4' width='5' height='4' fill='#3a1d12'/><ellipse cx='92.0' cy='22.4' rx='4.2' ry='6.2' fill='#3e9a4a' stroke='#3a1d12' stroke-width='1.6'/><rect x='117.5' y='21.5' width='5' height='4' fill='#3a1d12'/><ellipse cx='120.0' cy='30.5' rx='4.2' ry='6.2' fill='#e86a92' stroke='#3a1d12' stroke-width='1.6'/><rect x='145.5' y='9.0' width='5' height='4' fill='#3a1d12'/><ellipse cx='148.0' cy='18.0' rx='4.2' ry='6.2' fill='#d62828' stroke='#3a1d12' stroke-width='1.6'/><rect x='173.5' y='15.5' width='5' height='4' fill='#3a1d12'/><ellipse cx='176.0' cy='24.5' rx='4.2' ry='6.2' fill='#f1ad2d' stroke='#3a1d12' stroke-width='1.6'/><rect x='201.5' y='20.3' width='5' height='4' fill='#3a1d12'/><ellipse cx='204.0' cy='29.3' rx='4.2' ry='6.2' fill='#2b5fb8' stroke='#3a1d12' stroke-width='1.6'/><rect x='229.5' y='8.2' width='5' height='4' fill='#3a1d12'/><ellipse cx='232.0' cy='17.2' rx='4.2' ry='6.2' fill='#3e9a4a' stroke='#3a1d12' stroke-width='1.6'/><rect x='257.5' y='17.7' width='5' height='4' fill='#3a1d12'/><ellipse cx='260.0' cy='26.7' rx='4.2' ry='6.2' fill='#e86a92' stroke='#3a1d12' stroke-width='1.6'/><rect x='285.5' y='18.7' width='5' height='4' fill='#3a1d12'/><ellipse cx='288.0' cy='27.7' rx='4.2' ry='6.2' fill='#d62828' stroke='#3a1d12' stroke-width='1.6'/></svg>"};
-function toppersFor(m){return TOPPERS.filter(t=>!t[2].length||t[2].includes(m))}
+const TOPPER_SVG={"bday2026":"<svg viewBox='0 0 64 64'><path d='M32 2 41 24H23z' fill='#2b6cb0' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='32' cy='3' r='3.5' fill='#f5c518' stroke='#3a1d12' stroke-width='2'/><path d='M27 14h10M25 19h14' stroke='#f5c518' stroke-width='2.5'/><rect x='8' y='34' width='48' height='26' rx='5' fill='#ffd1dc' stroke='#3a1d12' stroke-width='2.5'/><path d='M8 42c6 6 10-4 16 2s10-4 16 2 10-4 16 2' fill='none' stroke='#e86a92' stroke-width='3'/><rect x='14' y='24' width='36' height='12' rx='4' fill='#fff6e3' stroke='#3a1d12' stroke-width='2.5'/><circle cx='20' cy='52' r='2' fill='#e23b2e'/><circle cx='32' cy='50' r='2' fill='#2b6cb0'/><circle cx='44' cy='53' r='2' fill='#4c9b3a'/></svg>","tree":"<svg viewBox='0 0 64 64'><path d='M32 8 46 27h-8l12 16H40l12 14H12l12-14H14l12-16h-8z' fill='#2e7d3a' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><rect x='28' y='57' width='8' height='6' fill='#8a5a2b' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='m32 1 2 4.2 4.5.6-3.3 3.1.8 4.5L32 11.3l-4 2.1.8-4.5-3.3-3.1 4.5-.6z' fill='#f1ad2d' stroke='#3a1d12' stroke-width='1.6'/><circle cx='26' cy='35' r='2.6' fill='#d62828'/><circle cx='38' cy='48' r='2.6' fill='#f1ad2d'/><circle cx='34' cy='23' r='2.3' fill='#2b5fb8'/><circle cx='22' cy='51' r='2.3' fill='#e86a92'/><circle cx='40' cy='36' r='2.3' fill='#fff'/></svg>","ornament":"<svg viewBox='0 0 64 64'><path d='M32 13c-2-7 6-9 4-3' fill='none' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='32' cy='39' r='20' fill='#d62828' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><rect x='26' y='12' width='12' height='8' rx='2' fill='#f1ad2d' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M13 37q19 9 38 0' fill='none' stroke='#f3d27a' stroke-width='3.2'/><circle cx='24' cy='31' r='3.5' fill='#fff' fill-opacity='.55'/></svg>","snowman":"<svg viewBox='0 0 64 64'><circle cx='32' cy='45' r='15' fill='#fff' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='32' cy='22' r='10' fill='#fff' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><rect x='24' y='5' width='16' height='8' fill='#2b2523' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><rect x='20' y='12' width='24' height='3.5' fill='#2b2523' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='28.5' cy='20' r='1.4' fill='#2b2523'/><circle cx='35.5' cy='20' r='1.4' fill='#2b2523'/><path d='m32 23 8 2-8 1.5z' fill='#f08a24'/><path d='M22 31h20' stroke='#d62828' stroke-width='4'/><circle cx='32' cy='42' r='1.6' fill='#2b2523'/><circle cx='32' cy='49' r='1.6' fill='#2b2523'/></svg>","heart":"<svg viewBox='0 0 64 64'><path d='M32 56C16 45 7 36 7 25A12 12 0 0 1 32 17a12 12 0 0 1 25 8c0 11-9 20-25 31z' fill='#d62828' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M17 24a6 6 0 0 1 6-6' fill='none' stroke='#fff' stroke-opacity='.6' stroke-width='3' stroke-linecap='round'/></svg>","shamrock":"<svg viewBox='0 0 64 64'><path d='M32 36q2 14-6 24' fill='none' stroke='#2e7d3a' stroke-width='4' stroke-linecap='round'/><g fill='#3e9a4a' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'><circle cx='32' cy='17' r='11'/><circle cx='20' cy='33' r='11'/><circle cx='44' cy='33' r='11'/></g></svg>","flower":"<svg viewBox='0 0 64 64'><path d='M32 40v20' stroke='#4c8a3a' stroke-width='4'/><g fill='#f7a8c4' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'><circle cx='32' cy='12' r='9'/><circle cx='46' cy='24' r='9'/><circle cx='40' cy='40' r='9'/><circle cx='24' cy='40' r='9'/><circle cx='18' cy='24' r='9'/></g><circle cx='32' cy='27' r='8' fill='#f1ad2d' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","gradcap":"<svg viewBox='0 0 64 64'><path d='M32 12 60 24 32 36 4 24z' fill='#2b2b2b' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M16 30v12c8 7 24 7 32 0V30l-16 6z' fill='#2b2b2b' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M56 26v18' stroke='#f1ad2d' stroke-width='3'/><circle cx='56' cy='46' r='3' fill='#f1ad2d' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","firework":"<svg viewBox='0 0 64 64'><g stroke-width='3.5' stroke-linecap='round'><path d='M32 30V6M32 30l17-17M32 30h24M32 30l17 17M32 30v24M32 30 15 47M32 30H8M32 30 15 13' stroke='#d62828'/><path d='M32 30l10-24M32 30l24 10M32 30 22 54M32 30 8 20' stroke='#2b5fb8'/></g><circle cx='32' cy='30' r='5' fill='#f1ad2d' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","apple":"<svg viewBox='0 0 64 64'><path d='M32 18c-9-6-24-3-24 14 0 14 10 26 18 26 3 0 4-2 6-2s3 2 6 2c8 0 18-12 18-26 0-17-15-20-24-14z' fill='#d62828' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M32 18c0-6 2-10 5-12' fill='none' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M36 12c6-6 12-4 14-2-5 5-10 5-14 2z' fill='#4c8a3a' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","pumpkin":"<svg viewBox='0 0 64 64'><path d='M32 16c-4-6 0-10 4-11' fill='none' stroke='#4c6b28' stroke-width='4' stroke-linecap='round'/><g fill='#f08a24' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'><ellipse cx='20' cy='38' rx='12' ry='19'/><ellipse cx='44' cy='38' rx='12' ry='19'/><ellipse cx='32' cy='38' rx='12' ry='20'/></g><path d='m24 34 4 4h-8zm16 0 4 4h-8zM22 46q10 6 20 0l-4 4-4-3-4 3-4-3z' fill='#3a1d12'/></svg>","ghost":"<svg viewBox='0 0 64 64'><path d='M12 58V30a20 20 0 0 1 40 0v28l-6-5-7 5-7-5-7 5-6-5z' fill='#fff' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><ellipse cx='25' cy='30' rx='3.2' ry='4.4' fill='#2b2523'/><ellipse cx='39' cy='30' rx='3.2' ry='4.4' fill='#2b2523'/><ellipse cx='32' cy='41' rx='4' ry='3' fill='#2b2523'/></svg>","leaf":"<svg viewBox='0 0 64 64'><path d='M32 60V36' stroke='#8a5a2b' stroke-width='4' stroke-linecap='round'/><path d='m32 4 6 12 9-4-2 12 11 2-9 9 5 6-12 1-8 9-8-9-12-1 5-6-9-9 11-2-2-12 9 4z' fill='#d9661f' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","bow":"<svg viewBox='0 0 64 64'><path d='M32 30C20 12 6 16 8 26s16 8 24 4zM32 30c12-18 26-14 24-4s-16 8-24 4z' fill='#d62828' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M28 32 18 58l7-3 3 7 4-28zM36 32l10 26-7-3-3 7-4-28z' fill='#b0101f' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='32' cy='30' r='6' fill='#d62828' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","balloons":"<svg viewBox='0 0 64 64'><path d='M20 34q2 14 10 26M44 30q-4 16-12 30M32 38v22' fill='none' stroke='#3a1d12' stroke-width='1.8'/><ellipse cx='20' cy='22' rx='10' ry='12' fill='#2b5fb8' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><ellipse cx='44' cy='19' rx='10' ry='12' fill='#f1ad2d' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><ellipse cx='32' cy='28' rx='10' ry='12' fill='#d62828' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","partyhat":"<svg viewBox='0 0 64 64'><path d='M32 4 50 58H14z' fill='#2b5fb8' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='m22 32 20-2m-24 14 28-2' stroke='#f1ad2d' stroke-width='4'/><circle cx='32' cy='5' r='5' fill='#e86a92' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><path d='M12 58q20 6 40 0' fill='none' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","crown":"<svg viewBox='0 0 64 64'><path d='M8 52 6 18l14 14 12-22 12 22 14-14-2 34z' fill='#f1ad2d' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><rect x='8' y='50' width='48' height='8' rx='2' fill='#e0b04a' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='32' cy='38' r='4' fill='#d62828' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='18' cy='42' r='3' fill='#2b5fb8' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/><circle cx='46' cy='42' r='3' fill='#2b5fb8' stroke='#3a1d12' stroke-width='2.5' stroke-linejoin='round'/></svg>","lights":"<svg viewBox='0 0 300 36' preserveAspectRatio='xMidYMin meet'><path d='M-5 8Q35 22 75 8T155 8T235 8T315 8' fill='none' stroke='#2e7d3a' stroke-width='2.5'/><rect x='5.5' y='11.3' width='5' height='4' fill='#3a1d12'/><ellipse cx='8.0' cy='20.3' rx='4.2' ry='6.2' fill='#d62828' stroke='#3a1d12' stroke-width='1.6'/><rect x='33.5' y='22.0' width='5' height='4' fill='#3a1d12'/><ellipse cx='36.0' cy='31.0' rx='4.2' ry='6.2' fill='#f1ad2d' stroke='#3a1d12' stroke-width='1.6'/><rect x='61.5' y='10.5' width='5' height='4' fill='#3a1d12'/><ellipse cx='64.0' cy='19.5' rx='4.2' ry='6.2' fill='#2b5fb8' stroke='#3a1d12' stroke-width='1.6'/><rect x='89.5' y='13.4' width='5' height='4' fill='#3a1d12'/><ellipse cx='92.0' cy='22.4' rx='4.2' ry='6.2' fill='#3e9a4a' stroke='#3a1d12' stroke-width='1.6'/><rect x='117.5' y='21.5' width='5' height='4' fill='#3a1d12'/><ellipse cx='120.0' cy='30.5' rx='4.2' ry='6.2' fill='#e86a92' stroke='#3a1d12' stroke-width='1.6'/><rect x='145.5' y='9.0' width='5' height='4' fill='#3a1d12'/><ellipse cx='148.0' cy='18.0' rx='4.2' ry='6.2' fill='#d62828' stroke='#3a1d12' stroke-width='1.6'/><rect x='173.5' y='15.5' width='5' height='4' fill='#3a1d12'/><ellipse cx='176.0' cy='24.5' rx='4.2' ry='6.2' fill='#f1ad2d' stroke='#3a1d12' stroke-width='1.6'/><rect x='201.5' y='20.3' width='5' height='4' fill='#3a1d12'/><ellipse cx='204.0' cy='29.3' rx='4.2' ry='6.2' fill='#2b5fb8' stroke='#3a1d12' stroke-width='1.6'/><rect x='229.5' y='8.2' width='5' height='4' fill='#3a1d12'/><ellipse cx='232.0' cy='17.2' rx='4.2' ry='6.2' fill='#3e9a4a' stroke='#3a1d12' stroke-width='1.6'/><rect x='257.5' y='17.7' width='5' height='4' fill='#3a1d12'/><ellipse cx='260.0' cy='26.7' rx='4.2' ry='6.2' fill='#e86a92' stroke='#3a1d12' stroke-width='1.6'/><rect x='285.5' y='18.7' width='5' height='4' fill='#3a1d12'/><ellipse cx='288.0' cy='27.7' rx='4.2' ry='6.2' fill='#d62828' stroke='#3a1d12' stroke-width='1.6'/></svg>"};
+/* Toppers a member owns, like a yearly birthday topper; set from the account */
+let OWNED_TOPPERS=[];
+function toppersFor(m){return TOPPERS.filter(t=>!t[2].length||t[2].includes(m)).concat(OWNED_TOPPERS)}
 function topperEl(k){if(!k||!TOPPER_SVG[k])return null;const d=document.createElement('div');d.className='lid-topper'+(k==='lights'?' band':'');d.setAttribute('aria-hidden','true');d.innerHTML=TOPPER_SVG[k];return d}
 let hireVibe='classic',tipIdx=0;
 /* Gerald's tips change every month. Source: shared/gerald-tips.json (tools/sync_gerald.py copies it here) */
@@ -1096,7 +1101,7 @@ let logoImg=null;
 const CPAL={gerald:['#ffffff','#c4122f'],crumbs:['#d9a35e','#c98a52','#b07a3a','#c23a28'],classic:['#c4122f','#f1ad2d','#4c6b28','#2b6cb0','#e86a92','#7d3c98'],hearts:['#c4122f','#e86a92','#ff8fab','#a10e27'],stars:['#f1ad2d','#ffd166','#fff1b8'],
  gold:['#f6d365','#e0b04a','#fff4c2','#c9962c'],snow:['#ffffff','#e6f0ff','#cfe3ff'],pizza:['#f1ad2d'],potato:['#eab983'],shamrocks:['#2e8b3e','#4caf50','#1f6b2c'],
  petals:['#f7a8c4','#f6d365','#ff8a8a','#c9a0f0'],caps:['#2b2b2b','#1f2a5a'],fireworks:['#c4122f','#2b5fb8','#f1ad2d','#ffffff'],paws:['#8a6656','#c98a52','#5a3a2a'],
- suns:['#f1ad2d','#ffcf4a','#f08a24'],bats:['#2b2523','#4a3b55'],leaves:['#d9661f','#b5481c','#e3a33a','#8a5a2b']};
+ suns:['#f1ad2d','#ffcf4a','#f08a24'],bats:['#2b2523','#4a3b55'],leaves:['#d9661f','#b5481c','#e3a33a','#8a5a2b'],party:['#e23b2e','#2b6cb0','#e86a92','#4c9b3a','#f5c518']};
 const FALLING=['snow','leaves','petals'];
 function burst(kind){if(!kind||kind==='none')return;try{if(matchMedia('(prefers-reduced-motion: reduce)').matches)return}catch(e){}
  const W=innerWidth,H=innerHeight,dpr=Math.min(2,devicePixelRatio||1);cfx.width=W*dpr;cfx.height=H*dpr;const c=cfx.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);
@@ -1105,7 +1110,7 @@ function burst(kind){if(!kind||kind==='none')return;try{if(matchMedia('(prefers-
  if(kind==='fireworks'){for(let k=0;k<5;k++){setTimeout(()=>{const ox=W*(.15+.7*Math.random()),oy=H*(.15+.3*Math.random()),col=pal[k%pal.length];
    for(let i=0;i<70;i++){const a=i/70*6.283,sp=2+Math.random()*4.5;cparts.push({kind,col:Math.random()<.25?'#ffffff':col,x:ox,y:oy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,g:.05,s:2.6,rot:0,vr:0,life:80+Math.random()*30,ph:0})}
    if(!cRaf)cRaf=requestAnimationFrame(cFrame)},k*320)}return}
- const fall=FALLING.includes(kind),big=['pizza','potato','caps','bats','paws','logo','gerald','envelopes'].includes(kind);
+ const fall=FALLING.includes(kind),big=['pizza','potato','caps','bats','paws','logo','gerald','envelopes','party'].includes(kind);
  const n=fall?(kind==='snow'?110:90):big?60:150;
  for(let i=0;i<n;i++){cparts.push({kind,col:pal[i%pal.length],
   x:fall?Math.random()*W:W/2+(Math.random()-.5)*80,y:fall?-Math.random()*H*.6:H*.5,
@@ -1122,6 +1127,9 @@ function chefHatC(c,s){c.strokeStyle='#3a1d12';c.lineWidth=Math.max(1,s*.1);c.fi
  c.beginPath();c.arc(0,-s*.5,s*.46,0,6.28);c.fill();c.stroke();c.fillRect(-s*.55,-s*.25,s*1.1,s*.7);c.strokeRect(-s*.55,-s*.05,s*1.1,s*.5)}
 function bowTieC(c,s){c.strokeStyle='#3a1d12';c.lineWidth=Math.max(1,s*.1);c.beginPath();c.moveTo(0,0);c.lineTo(-s,-s*.55);c.lineTo(-s,s*.55);c.closePath();c.moveTo(0,0);c.lineTo(s,-s*.55);c.lineTo(s,s*.55);c.closePath();c.fill();c.stroke();
  c.beginPath();c.arc(0,0,s*.24,0,6.28);c.fill();c.stroke()}
+/* Gerald's Birthday Special only: party hats and birthday candles */
+function partyHatC(c,s){c.beginPath();c.moveTo(0,-s);c.lineTo(s*.6,s*.6);c.lineTo(-s*.6,s*.6);c.closePath();c.fill();c.strokeStyle='#3a1d12';c.lineWidth=Math.max(1,s*.1);c.stroke();c.fillStyle='#f5c518';c.beginPath();c.arc(0,-s,s*.2,0,6.28);c.fill()}
+function candleC(c,s){c.fillRect(-s*.18,-s*.4,s*.36,s*1.2);c.fillStyle='#f5c518';c.beginPath();c.ellipse(0,-s*.65,s*.16,s*.26,0,0,6.28);c.fill()}
 function heart(c,s){c.beginPath();c.moveTo(0,s*.35);c.bezierCurveTo(-s,-s*.3,-s*.4,-s,0,-s*.35);c.bezierCurveTo(s*.4,-s,s,-s*.3,0,s*.35);c.fill()}
 function star(c,s){c.beginPath();for(let i=0;i<10;i++){const r=i%2?s*.45:s,a=i*Math.PI/5-Math.PI/2;c.lineTo(Math.cos(a)*r,Math.sin(a)*r)}c.closePath();c.fill()}
 function slice(c,s){c.fillStyle='#f6cf6a';c.beginPath();c.moveTo(0,s);c.lineTo(-s*.6,-s*.6);c.lineTo(s*.6,-s*.6);c.closePath();c.fill();
@@ -1147,6 +1155,7 @@ function cFrame(){cRaf=0;const c=cfx.getContext('2d'),W=innerWidth,H=innerHeight
   else if(p.kind==='caps')capC(c,p.s);else if(p.kind==='paws')pawC(c,p.s);else if(p.kind==='suns')sunC(c,p.s);else if(p.kind==='bats')batC(c,p.s,p.life);else if(p.kind==='leaves')leafC(c,p.s);
   else if(p.kind==='fireworks'){c.beginPath();c.arc(0,0,p.s,0,6.28);c.fill()}
   else if(p.kind==='envelopes'){if(envImg.complete&&envImg.naturalWidth)c.drawImage(envImg,-p.s,-p.s*.73,p.s*2,p.s*1.46);else{c.fillStyle='#fdf8ec';c.fillRect(-p.s,-p.s*.7,p.s*2,p.s*1.4)}}
+  else if(p.kind==='party'){if(p.ph>3.14)partyHatC(c,p.s);else candleC(c,p.s)}
   else if(p.kind==='gerald'){if(p.col==='#ffffff')chefHatC(c,p.s);else bowTieC(c,p.s*.8)}
   else if(p.kind==='gold'){c.globalAlpha*=.6+.4*Math.sin(p.life/4+p.ph);c.beginPath();c.arc(0,0,p.s,0,6.28);c.fill()}
   else{c.beginPath();c.arc(0,0,p.s*.5,0,6.28);c.fill()}
@@ -1573,7 +1582,7 @@ $('#upSheet').addEventListener('click',e=>{if(e.target.id==='upSheet')closeUp()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#upSheet').hidden)closeUp()});
 refreshPlan(true);
 
-/* ===== Slice of Thanks live layer v0.17.1 =====
+/* ===== Slice of Thanks live layer v0.18.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -2116,7 +2125,8 @@ const MSG = {
   sending_paused: 'Sending is paused for a few minutes. Try again soon.',
   account_inactive: 'Your account is not active. Contact support.',
   no_credits: 'You are out of emails for this month.',
-  test_inbox_only: 'Test pizzas only go to your test inboxes.',
+  test_inbox_only: 'Test pizzas only go to your own email, the one in Settings under Replies go to.',
+  test_limit: 'You have used your 5 free test pizzas. Send it to them for real, or to yourself as a normal pizza.',
   not_signed_in: 'Your session timed out. Reload the page and sign in again.',
   server_error: 'Something went wrong on our side. Your pizza was not sent. Try again in a minute.'
 };
@@ -2167,8 +2177,8 @@ function sendProblem(r, retry) {
 $('#sendNow').onclick = () => {
   if (!account) {
     store.set('draft', { pizza: cleanPizza(pizza), box: JSON.parse(JSON.stringify(box)), at: Date.now() });
-    liveSheet('Create your free account to send', (() => { const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'Your pizza is saved. Make a free account, sign in, and you will come right back to send it.'; return p; })(),
-      [{ label: 'Create free account', primary: true, run: () => { location.href = bdLink('checkout_free', '/checkout/10'); } }, { label: 'I already have one', run: () => { location.href = LIVE.LOGIN; } }]);
+    liveSheet('Your pizza is ready to send', (() => { const p = document.createElement('div'); p.innerHTML = '<p>Potato has her helmet on. Make your free account and she delivers it.</p><p class="muted">It takes a minute. Your pizza is saved, and you come right back here to send it. Your first 14 days of The Whole Pie are free, no card needed.</p>'; return p; })(),
+      [{ label: 'Create my free account', primary: true, run: () => { location.href = bdLink('checkout_free', '/checkout/10'); } }, { label: 'I already have an account', run: () => { location.href = LIVE.LOGIN; } }]);
     return;
   }
   liveSend();
@@ -3453,6 +3463,163 @@ async function useSendBack() {
 }
 const _applySessionB = applySession;
 applySession = function (s) { _applySessionB(s); setTimeout(useSendBack, 300); };
+
+
+/* --- Free test pizzas to yourself: up to 5, they use no emails and say TEST SEND (docs/ONBOARDING_PLAN.md) --- */
+function myEmail() { const s = LIVE.session; return s && s.profile && s.profile.reply_to ? String(s.profile.reply_to).trim() : ''; }
+function testsLeft() { const s = LIVE.session; return s && typeof s.self_tests_left === 'number' ? s.self_tests_left : 0; }
+function renderTestBtn() {
+  const send = $('#sendNow'); if (!send) return;
+  let b = $('#liveTestSend');
+  if (!LIVE.session || editingSignature) { if (b) b.hidden = true; return; }
+  if (!b) { b = mk('button', 'btn', ''); b.type = 'button'; b.id = 'liveTestSend'; send.after(b); b.onclick = liveTestSend; }
+  const n = testsLeft(); b.hidden = n <= 0;
+  b.textContent = 'Send a test to myself (' + n + ' free left)';
+}
+async function liveTestSend() {
+  const me = myEmail();
+  if (!me || me.indexOf('@') < 1) { toast('Add your email in Settings under Replies go to first.'); show('settings'); return; }
+  const b = $('#liveTestSend'); b.disabled = true; const label = b.textContent; b.textContent = 'Sending your test...';
+  const pay = buildPayload();
+  pay.idem = 'selftest-' + Date.now(); pay.is_test = true;
+  pay.recipient = Object.assign({}, pay.recipient, { name: profile.name || 'Me', email: me });
+  pay.consent = { basis: 'permission', method: 'Test send to myself' };
+  pay.label = 'Test pizza';
+  let r; try { r = await LIVE.call('/send', pay); } catch (e) { r = { code: 'server_error' }; }
+  b.disabled = false; b.textContent = label;
+  if (r && r.ok) {
+    if (LIVE.session) LIVE.session.self_tests_left = Math.max(0, testsLeft() - 1);
+    renderTestBtn(); markSetup('test', 'done');
+    toast('Test sent to ' + me + '. It used no emails. ' + testsLeft() + ' free tests left.');
+    burst('envelopes'); return;
+  }
+  if (r && (r.code === 'test_limit' || r.code === 'test_inbox_only')) { toast(MSG[r.code]); if (LIVE.session && r.code === 'test_limit') { LIVE.session.self_tests_left = 0; renderTestBtn(); } return; }
+  sendProblem(r || {}, liveTestSend);
+}
+const _renderStepT = renderStep;
+renderStep = function () { _renderStepT(); try { renderTestBtn(); } catch (e) {} };
+
+/* --- Gerald's Birthday Special (docs/MEMBER_BIRTHDAY_PLAN.md) --- */
+const BDAY_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+function bdayOf() { const s = LIVE.session; return (s && s.birthday) || {}; }
+function bdayText(md) { if (!md) return ''; const m = +md.slice(0, 2), d = +md.slice(3, 5); return BDAY_MONTHS[m - 1] + ' ' + d; }
+function bdayPicker(id, md) {
+  const w = mk('div', 'btn-row'); w.style.alignItems = 'center';
+  const ms = document.createElement('select'); ms.id = id + 'M'; ms.setAttribute('aria-label', 'Birthday month');
+  ms.innerHTML = '<option value="">Month</option>' + BDAY_MONTHS.map((m, i) => '<option value="' + String(i + 1).padStart(2, '0') + '">' + m + '</option>').join('');
+  const ds = document.createElement('select'); ds.id = id + 'D'; ds.setAttribute('aria-label', 'Birthday day');
+  ds.innerHTML = '<option value="">Day</option>' + Array.from({ length: 31 }, (_, i) => '<option value="' + String(i + 1).padStart(2, '0') + '">' + (i + 1) + '</option>').join('');
+  if (md) { ms.value = md.slice(0, 2); ds.value = md.slice(3, 5); }
+  w.appendChild(ms); w.appendChild(ds);
+  return w;
+}
+function pickedMd(id) { const m = $('#' + id + 'M'), d = $('#' + id + 'D'); return m && d && m.value && d.value ? m.value + '-' + d.value : ''; }
+async function saveBirthday(md, after) {
+  const r = await LIVE.call('/birthday', { md }).catch(() => null);
+  if (!r || !r.ok) {
+    if (r && r.code === 'birthday_locked') toast('Your birthday can be changed once a year. Next change: ' + shortDate(r.until) + '.');
+    else toast(r && r.code === 'bad_date' ? 'Pick a month and a day.' : MSG.server_error);
+    return false;
+  }
+  if (LIVE.session) LIVE.session.birthday = Object.assign({}, bdayOf(), { md: r.birthday });
+  toast(md ? 'Saved. Gerald will remember ' + bdayText(md) + '.' : 'Birthday removed.');
+  if (after) after();
+  renderSetup(); return true;
+}
+/* Settings, You card: the birthday and the switch for Gerald's birthday pizza */
+function renderBdayField() {
+  const row = $('#liveYouSave') && $('#liveYouSave').parentElement; if (!row || !LIVE.session) return;
+  let f = $('#liveBday');
+  if (!f) { f = mk('div', 'field'); f.id = 'liveBday'; row.before(f); }
+  const b = bdayOf(); f.innerHTML = '';
+  const l = mk('label', '', 'Your birthday (optional)'); l.htmlFor = 'liveBdayPickM'; f.appendChild(l);
+  f.appendChild(bdayPicker('liveBdayPick', b.md));
+  const sv = mk('button', 'btn small', 'Save birthday'); sv.type = 'button'; f.querySelector('.btn-row').appendChild(sv);
+  sv.onclick = () => { const md = pickedMd('liveBdayPick'); if (!md) { toast('Pick a month and a day.'); return; } saveBirthday(md, renderBdayField); };
+  f.appendChild(mk('small', 'muted', 'Month and day only. Gerald bakes you a Birthday Special on the day.' + (b.locked_until ? ' It can be changed again on ' + shortDate(b.locked_until) + '.' : ' You can change it once a year.')));
+  const sw = mk('label', 'meet-sw'); sw.style.marginTop = '8px';
+  const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = b.on !== false;
+  cb.onchange = () => { LIVE.call('/profile', { profile: { prefs: { birthday_pizza: cb.checked } } }).catch(() => null); if (LIVE.session) LIVE.session.birthday = Object.assign({}, bdayOf(), { on: cb.checked }); toast(cb.checked ? 'Birthday pizza is on.' : 'Birthday pizza is off.'); };
+  sw.appendChild(cb); sw.appendChild(document.createTextNode('Send me a birthday pizza')); f.appendChild(sw);
+}
+/* Home: ask once for the birthday; on the birthday, the gift and sharing */
+function renderBdayHome() {
+  const home = $('#view-today'); const s = LIVE.session; if (!home || !s) return;
+  const b = bdayOf(), prefs = s.prefs || {}, sp = b.special;
+  let c = $('#bdayCard');
+  const ask = !b.md && !prefs.bday_ask_done && !trialOf();
+  if (!sp && !ask) { if (c) c.remove(); return; }
+  if (!c) { c = mk('div', 'card trial-card'); c.id = 'bdayCard'; const anchor = $('#setupCard') || $('#trialCard'); if (anchor) anchor.after(c); else home.insertBefore(c, home.firstChild); }
+  c.innerHTML = '';
+  if (sp) {
+    c.appendChild(mk('p', 'eyebrow', "Gerald's Birthday Special"));
+    c.appendChild(mk('h2', '', 'Happy birthday from the kitchen!'));
+    const open = sp.gift === 'trial' && !sp.claimed && sp.claim_by && Date.parse(sp.claim_by) > Date.now();
+    c.appendChild(mk('p', 'muted', (open ? 'Your gift: 14 days of The Whole Pie, on the house. Unlock them by ' + shortDate(sp.claim_by) + '. ' : sp.gift === 'trial' ? 'Your 14 days of The Whole Pie are unlocked. ' : 'Your gift: 100 bonus emails for 30 days and the ' + sp.year + ' birthday box topper, yours to keep. ') + 'You can also send the Birthday Special to anyone in People until ' + shortDate(sp.share_until) + '.'));
+    const row = mk('div', 'btn-row');
+    if (open) { const u = mk('button', 'btn primary small', 'Unlock my 14 days'); u.type = 'button'; u.onclick = claimBirthday; row.appendChild(u); }
+    const sh = mk('button', 'btn small', 'Send the Birthday Special'); sh.type = 'button'; sh.onclick = shareBirthday; row.appendChild(sh);
+    c.appendChild(row);
+  } else {
+    c.appendChild(mk('p', 'eyebrow', 'One quick question'));
+    c.appendChild(mk('h2', '', 'When is your birthday?'));
+    c.appendChild(mk('p', 'muted', 'Month and day only. Gerald bakes members a Birthday Special, with a gift under the pizza.'));
+    c.appendChild(bdayPicker('homeBday', ''));
+    const row = mk('div', 'btn-row');
+    const sv = mk('button', 'btn primary small', 'Save'); sv.type = 'button';
+    sv.onclick = () => { const md = pickedMd('homeBday'); if (!md) { toast('Pick a month and a day.'); return; } saveBirthday(md, () => { savePrefs({ bday_ask_done: true }); renderBdayHome(); }); };
+    const no = mk('button', 'btn ghost small', 'No thanks'); no.type = 'button'; no.onclick = () => { savePrefs({ bday_ask_done: true }); c.remove(); };
+    row.appendChild(sv); row.appendChild(no); c.appendChild(row);
+  }
+}
+async function claimBirthday() {
+  const r = await LIVE.call('/birthday/claim', {}).catch(() => null);
+  if (!r || !r.ok) { toast(r && r.code === 'no_gift' ? 'There is no birthday gift to unlock right now.' : MSG.server_error); return; }
+  const s = await LIVE.call('/session').catch(() => null);
+  if (s && s.member_id) applySession(s);
+  toast(r.already ? 'Your 14 days are already unlocked.' : 'Unlocked! The Whole Pie is yours until ' + shortDate(r.ends_at) + '.');
+  burst('party');
+}
+function bdayPizza() {
+  const p = newPizza(); p.sauce = 'red'; p.cheese = 'mozz'; p.toppings = [];
+  [['pepStar', 12], ['pepHeart', 12], ['sprinkle', 22], ['candle', 6]].forEach(([k, n]) => { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, d = Math.sqrt(Math.random()) * 0.8; p.toppings.push({ k, x: Math.cos(a) * d, y: Math.sin(a) * d, rot: Math.random() * 6.283 }); } });
+  p.bake = 1; p.baked = true; p.bakeLevel = 3; p.name = "Gerald's Birthday Special";
+  return p;
+}
+function shareBirthday() {
+  startFresh(null);
+  pizza = bdayPizza();
+  box.style = 'hearts'; box.sticker = 'Happy Birthday'; box.confetti = 'party'; box.birthdaySpecial = true;
+  box.note = 'Happy birthday, [first name]! Gerald made you his Birthday Special.';
+  step = 5; saidStep = 5; show('make'); renderStep();
+  toast('Your Birthday Special is ready. Pick who it is for.');
+}
+const _boxPayloadB = boxPayload;
+boxPayload = function (bx) { const b = _boxPayloadB(bx); if (bx.birthdaySpecial && bdayOf().special) { b.birthday_special = true; b.pro_style = false; b.confetti = 'party'; } return b; };
+(function catchBirthdayUnlock() {
+  const q = new URLSearchParams(location.search);
+  if (q.get('birthday') !== 'unlock') return;
+  store.set('bdayUnlock', Date.now());
+  q.delete('birthday'); try { history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q.toString() : '')); } catch (e) { /* ignore */ }
+})();
+const _applySessionBd = applySession;
+applySession = function (s) {
+  _applySessionBd(s);
+  const b = (s && s.birthday) || {};
+  OWNED_TOPPERS = (b.toppers || []).map(k => [k, k.slice(4) + ' birthday topper (yours to keep)', []]);
+  renderBdayHome(); renderBdayField();
+  const u = store.get('bdayUnlock', 0);
+  if (u && Date.now() - u < 864e5) { store.set('bdayUnlock', 0); setTimeout(claimBirthday, 500); }
+};
+const _showBd = show;
+show = function (v) { _showBd(v); if (LIVE.session) { if (v === 'today') renderBdayHome(); if (v === 'settings') renderBdayField(); } };
+const _setupStepsB = setupSteps;
+setupSteps = function () {
+  const st = _setupStepsB();
+  const t = st.find(x => x.id === 'test'); if (t) { t.manual = false; t.done = () => LIVE.session && typeof LIVE.session.self_tests_left === 'number' && LIVE.session.self_tests_left < 5; t.text = 'See exactly what people get. Your first 5 tests are free.'; t.run = () => { show('make'); toast('Make a pizza, then tap Send a test to myself on the Send step.'); }; }
+  st.push({ id: 'bday', title: 'Your birthday', text: 'Month and day only. Gerald bakes you a Birthday Special on the day.', done: () => !!bdayOf().md, run: () => { show('settings'); setTimeout(() => { const f = $('#liveBday'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120); } });
+  return st;
+};
 
 })();
 

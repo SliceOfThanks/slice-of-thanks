@@ -53,3 +53,30 @@ export function dateBox(kind: DateKind, style: string, signatureBox: any, member
     pro_style: pro, gerald_note: true,
   };
 }
+
+// Gerald's Birthday Special: only for Slice of Thanks members, on their birthday (docs/MEMBER_BIRTHDAY_PLAN.md).
+// Star and heart pepperoni, sprinkles and candles (only on this pizza), their first name in pepperoni, the Birthday Bash box.
+export function birthdaySpecial(name: string | undefined, year: number, gift: "trial" | "emails", site: string, rand: () => number = Math.random) {
+  const toppings: { k: string; x: number; y: number; rot: number }[] = [];
+  for (const [k, n] of [["pepStar", 12], ["pepHeart", 12], ["sprinkle", 22], ["candle", 6]] as [string, number][]) {
+    for (let i = 0; i < n; i++) {
+      const a = rand() * 6.283, d = Math.sqrt(rand()) * 0.8;
+      toppings.push({ k, x: Math.cos(a) * d, y: Math.sin(a) * d, rot: rand() * 6.283 });
+    }
+  }
+  const f = first(name).slice(0, 16);
+  const pizza = {
+    size: 0.92, seed: rand() * 9 + 1, sauce: "red", cheese: "mozz", vegan: false, toppings, bake: 1, baked: true, byGerald: true, bakeLevel: 3,
+    ...(f ? { sign: { text: f } } : {}), name: "Gerald's Birthday Special",
+  };
+  const giftBox = gift === "trial"
+    ? { text: "14 days of The Whole Pie, on the house. Unlock them within 30 days.", code: "HAPPY-BIRTHDAY", url: `${site}/kitchen?birthday=unlock`, cta: "Unlock my 14 days" }
+    : { text: `100 bonus emails for the next 30 days, plus the ${year} birthday box topper, yours to keep.`, code: `PARTY-${year}`, url: `${site}/kitchen`, cta: "Open my Kitchen" };
+  const box = {
+    style: "hearts", sticker: "Happy Birthday", confetti: "party", tone: "playful", topper: `bday${year}`,
+    note: `Happy birthday, ${f || "friend"}! The whole kitchen made this one just for you. Potato ate one slice. Sorry.`,
+    sign: "Gerald, Head Chef, and Potato, Head of Delivery",
+    birthday_special: true, gerald_note: true, gift: giftBox,
+  };
+  return { pizza, box };
+}

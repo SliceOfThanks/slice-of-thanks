@@ -189,10 +189,8 @@ $$;
 -- The Whole Pie and Pizza Party get 100 bonus emails for 30 days and this year's birthday topper.
 create or replace function public.sot_member_birthdays_due(p_limit int) returns jsonb
 language plpgsql security definer set search_path = public as $$
-declare v jsonb; r record; v_wallet uuid;
+declare v jsonb := '[]'::jsonb; r record; v_wallet uuid;
 begin
-  create temp table if not exists _bday(id uuid, member_id uuid, year int, gift text) on commit drop;
-  truncate _bday;
   for r in
     select m.id, m.plan_key, m.team_id, extract(year from now() at time zone coalesce(m.prefs->>'tz', 'America/New_York'))::int yr
     from members m
@@ -220,11 +218,11 @@ begin
         values (v_wallet, 'bonus', 'bonus', 100, now() + interval '30 days', 'birthday gift');
       end if;
     end if;
-    if found then insert into _bday select b.id, b.member_id, b.year, b.gift_kind from member_birthdays b where b.member_id = r.id and b.year = r.yr; end if;
+    v := v || coalesce((select jsonb_agg(jsonb_build_object('id', b.id, 'member_id', b.member_id, 'year', b.year, 'gift', b.gift_kind,
+      'name', m.display_name, 'email', m.reply_to, 'locale', m.locale))
+      from member_birthdays b join members m on m.id = b.member_id
+      where b.member_id = r.id and b.year = r.yr and b.send_id is null and b.created_at > now() - interval '1 minute'), '[]'::jsonb);
   end loop;
-  select coalesce(jsonb_agg(jsonb_build_object('id', x.id, 'member_id', x.member_id, 'year', x.year, 'gift', x.gift,
-    'name', m.display_name, 'email', m.reply_to, 'locale', m.locale)), '[]'::jsonb)
-  into v from _bday x join members m on m.id = x.member_id;
   return v;
 end $$;
 
@@ -289,6 +287,21 @@ begin
   d := replace(d, a, a || $b$ 'self_tests_left', greatest(coalesce((sot_setting('live','self_test_limit') #>> '{}')::int, 5) - sot_self_tests_used(v_m.id), 0), 'birthday', sot_birthday_state(v_m.id),$b$);
   execute d;
 end $mig$;
+
+
+-- Self-check: if any of this fails, the whole migration is cancelled and nothing changes
+do $chk$
+declare s jsonb; b jsonb;
+begin
+  -- Stacey's own account, with the BD plan it already has, so the check changes nothing
+  s := sot_session(jsonb_build_object('bd_user_id', 20, 'bd_sub_id',
+    (select e.key from members m, jsonb_each_text(sot_setting('live', 'bd_plan_map')) e where m.bd_user_id = 20 and e.value = m.plan_key limit 1)));
+  if s->>'member_id' is null or not (s ? 'self_tests_left') or not (s ? 'birthday') or s->>'plan' is null then raise exception 'session check failed: %', s - 'packs'; end if;
+  b := sot_birthday_state((s->>'member_id')::uuid);
+  if b is null then raise exception 'birthday state check failed'; end if;
+  perform sot_people((s->>'member_id')::uuid);
+  if sot_short_list('["name","bad value"]') <> array['name'] then raise exception 'short list check failed'; end if;
+end $chk$;
 
 revoke execute on function public.sot_short_list(jsonb), public.sot_self_tests_used(uuid), public.sot_trial_notices_due(int),
   public.sot_set_member_birthday(uuid, text), public.sot_birthday_state(uuid), public.sot_member_birthdays_due(int),

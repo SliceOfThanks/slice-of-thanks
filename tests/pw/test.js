@@ -281,7 +281,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     await inRoot(page, "const n=R.querySelector('#toName');n.value='Pat';n.dispatchEvent(new Event('input',{bubbles:true}));const c=R.querySelector('#toContact');c.value='pat@example.com';c.dispatchEvent(new Event('input',{bubbles:true}));R.querySelector('#sendNow').click()");
     await wait(300);
     const t = await inRoot(page, "return R.querySelector('#liveSheet h2').textContent");
-    check(t === 'Create your free account to send', 'At send, visitor is asked to make a free account: ' + t);
+    check(t === 'Your pizza is ready to send', 'At send, visitor is asked to make a free account: ' + t);
     await Promise.all([page.waitForNavigation(), inRoot(page, "R.querySelector('#liveSheet .btn.primary').click()")]);
     check(st.visited.includes('/checkout/10'), 'Create free account opens the A Slice sign up form');
     const saved = await page.evaluate(() => !!localStorage.getItem('sot_draft'));

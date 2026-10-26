@@ -1,6 +1,6 @@
 # Build status (read this first in a new session)
 
-Last updated: 2026-10-26. Live code version: v0.19.3 (see releases.json and app_settings.code_version). Edge api-0.20.0.
+Last updated: 2026-10-26. Live code version: v0.19.4 (see releases.json and app_settings.code_version). Edge api-0.20.0.
 
 ## Done and live
 - Supabase project cmnclubiarmthibqibuj. Edge Function `api` (api-0.4.0, verify_jwt false, own auth). Tables have RLS with no policies.
@@ -89,6 +89,7 @@ Git tags cannot be pushed. Use commit IDs.
 - v0.19.1 (2026-10-26, commit 146bedc, app only): #inviteCard has #inviteCopy (Copy link, shows Copied!), .invite-qr with canvas #inviteQr and #inviteQrDl (downloadInviteQr: 1200x1500 PNG; phones get the share sheet to save it, computers download). QR library: loadQrLib, qrcode-generator 1.4.4 from jsDelivr, loaded only on Crew.
 - v0.19.2 (2026-10-26, commit e31f497, app only): #inviteCard is placed before the What's new card (the card holding #feed) on Crew.
 - v0.19.3 (2026-10-26, commit a7250c7, app only): FAQ entries can carry imgs (rendered as .faq-imgs, from FAQ_IMG, pictures in brand/screens/help-*.jpg at commit 4d3853f). The help FAQ's button runs faqGo run 'feedback': window.Userback.open() when the widget is on the page, otherwise a toast pointing at the button. The Userback widget greets visitors as John Doe, so it is not told who the member is yet.
+- v0.19.4 (2026-10-26, commit cc8cdc0, app, unbox engine): both engine copies (shared/pizza-core.js and the prototype) draw emoji toppings with emojiImg (an offscreen canvas per emoji and size, cached in EMOJI_CACHE, placed with drawImage) because WebKit tinted fillText emoji with the previous fillStyle and alpha. eyes uses googly() (vector). drawPizza resizes when either width or height differs (a 300 px pizza used to keep the default 150 px height). tests/pw/toppings-test.js checks every topping in TOPS (no WebKit in this container, so the iPhone tint itself is not reproduced here).
 - v0.16.2 (2026-10-26, commit 2712e7c, app only): .kx-reset row (#kxSig, #kxReset, both btn small) moved under the Back and Next row; #makeFor is empty and hidden for signed-in members making a pizza for anyone.
 - v0.16.1 (2026-10-25, commit 7283a90, app only): ChatGPT launch test fixes. Signature list, premade and picker canvases get explicit CSS sizes (drawPizza doubles the drawing size on 2x screens). fillNote drops a little word before a blank detail (at, from, with, of, for, in, as), and buildPayload fills the note on the device so the server gets finished text. BASIS_OPTIONS labels shortened. lib/merge.ts has the same fillNote change in the repo; it goes live with the next api deploy (until then, automatic meeting pizzas still use the old fill). SOT-Back 1.2.0 lets wide BD tables scroll on phones. Launch test results: steps 0 to 4 pass; step 5 failed only because SOT-Back was not pasted yet; step 6 had no gift on the test pizzas, so there was nothing to reveal.
 - 2026-10-25: widgets/SOT-Login.html 1.7.0 adds a show or hide password eye (addEyes wraps each password box in .sot-pw with a .sot-eye button). Stacey re-pastes it in BD on the /login page.

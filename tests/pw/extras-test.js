@@ -76,6 +76,14 @@ async function run(browser, sess, extra) {
   check((await inRoot(p, "return R.querySelector('#liveTestSend').textContent")) === 'Send a test to myself (4 free left)', 'Count goes down to 4');
   check((await toastText(p)).indexOf('used no emails') >= 0, 'Toast says it used no emails');
   check(await inRoot(p, "const n=R.querySelector('#liveTestNote');return !!n&&!n.hidden&&n.textContent==='Test sent to me@test.com. It used no emails. 4 free tests left.'"), 'Confirmation stays under the button');
+  // What you are thanking them for: a full sentence is not wrapped twice, and the tip shows the finished line
+  await inRoot(p, "const i=R.querySelector('#mtgTitle');i.value='Thanks for the call today.';i.dispatchEvent(new Event('input'))"); await wait(150);
+  const mb = await inRoot(p, "return R.querySelector('#msgBody').textContent");
+  check(mb.indexOf('Thanks for the call today. I made you') >= 0 && mb.indexOf('today. today') < 0, 'A full sentence is used as typed: ' + mb.slice(0, 80));
+  await inRoot(p, "const i=R.querySelector('#mtgTitle');i.value='Strategy call';i.dispatchEvent(new Event('input'))"); await wait(150);
+  check((await inRoot(p, "const e=R.querySelector('#mtgSay');return e&&!e.hidden?e.textContent:''")) === 'Their email will say: Thanks for the strategy call today.', 'Tip shows the finished sentence');
+  check((await inRoot(p, "return R.querySelector('#mtgTitle').closest('.field').querySelector('small').textContent")).indexOf('Thanks for the ___ today.') >= 0, 'Tip shows what comes before and after');
+  await inRoot(p, "const i=R.querySelector('#mtgTitle');i.value='';i.dispatchEvent(new Event('input'))"); await wait(100);
   // birthday ask card on Home (not on a trial)
   await inRoot(p, "R.querySelector('#tab-today').click()"); await wait(300);
   check(await inRoot(p, "const c=R.querySelector('#bdayCard');return !!c&&c.textContent.indexOf('When is your birthday?')>=0"), 'Home asks for the birthday once');

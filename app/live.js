@@ -532,7 +532,7 @@ function buildPayload() {
     recipient: { name: box.to.trim(), email: box.contact.trim(), company: (box.company || '').trim(), role: (box.role || '').trim(), country: $('#liveCountry') ? $('#liveCountry').value.replace('OTHER', '') : '', locale: $('#liveLang') ? $('#liveLang').value : 'en' },
     consent: { basis: $('#liveBasis') ? $('#liveBasis').value : 'one_to_one', method: 'Selected in the Kitchen at send', note: box.meeting || '' },
     send_type: 'one_to_one', special_delivery: specialOn, image_data_url: img.length < 1900000 ? img : '',
-    label: box.meeting ? 'After ' + box.meeting.toLowerCase() : 'Fresh pizza'
+    label: sendLabel()
   };
 }
 const MSG = {
@@ -563,7 +563,7 @@ async function liveSend() {
     toast('Potato could not deliver this one, and it did not use an email. Try again in a few minutes.'); return;
   }
   if (r.ok) {
-    logSend({ who: box.to, org: '', contact: box.contact, vegan: pizza.vegan }, pizza, box, box.meeting ? 'After ' + box.meeting.toLowerCase() : 'Fresh pizza');
+    logSend({ who: box.to, org: '', contact: box.contact, vegan: pizza.vegan }, pizza, box, sendLabel());
     if (LIVE.session && r.bucket && LIVE.session.credits[r.bucket] !== undefined) LIVE.session.credits[r.bucket]--;
     toast(r.due_now === false && box.sendAt ? 'Planned. Potato takes it to ' + first(box.to) + ' when the meeting ends.' : r.delivered === false && r.reason !== 'not_due' ? 'Saved. Delivery is retrying and should arrive shortly.' : 'Potato is on her way to ' + first(box.to) + '.');
     if (box.sendAt) loadCalendar();
@@ -698,6 +698,8 @@ $('#selTag').onclick = () => {
   } }]);
   setTimeout(() => { const i = $('#selTagIn'); if (i) i.focus(); }, 50);
 };
+/* History label for a Kitchen send: "After strategy call", or the sentence they typed */
+function sendLabel() { const t = thanksLine(box.meeting).trim(); return !t ? 'Fresh pizza' : t.indexOf('Thanks for the ') === 0 ? 'After ' + t.slice(15).replace(' today.', '') : t.replace(/[.!?]$/, ''); }
 /* Remove people from People: one from their card, or many from the selection bar. Past pizzas still count in your totals. */
 askRemove = function (ids) {
   const n = ids.length, c1 = n === 1 ? contacts.find(c => c.id === ids[0]) : null;

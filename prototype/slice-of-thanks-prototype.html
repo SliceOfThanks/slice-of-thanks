@@ -753,7 +753,7 @@ body.is-free .pro-tag{display:inline-block}
           <div class="field"><label for="toName">Who it's for</label><input type="text" id="toName"></div>
           <div class="field"><label for="toContact">Their email or phone</label><input type="text" id="toContact"></div>
         </div>
-        <div class="field"><label for="mtgTitle">What you are thanking them for (optional)</label><input type="text" id="mtgTitle" maxlength="60" placeholder="Strategy call"><small>Goes in their email, like "Thanks for the strategy call today." Leave it blank to skip that line.</small></div>
+        <div class="field"><label for="mtgTitle">What you are thanking them for (optional)</label><input type="text" id="mtgTitle" maxlength="60" placeholder="Strategy call"><small>Type just a few words, like <b>strategy call</b>. We put them in this sentence: "Thanks for the <b>___</b> today." Leave it blank to skip that line.</small><small id="mtgSay" hidden></small></div>
         <div class="field"><label>Send by</label><div class="chips" id="methodChips"></div></div>
         <div class="field"><label for="fromName">From (your name)</label><input type="text" id="fromName" maxlength="40" autocomplete="name"></div>
         <div class="msg"><span class="eyebrow" id="msgLabel"></span><span class="subj" id="msgSubj"></span><span id="msgBody"></span></div>
@@ -1706,14 +1706,21 @@ $('#photoRemove').onclick=()=>{box.photo=null;renderBox()};
 /* Thank-you and meeting stickers keep the thank-you wording; every other occasion gets the evergreen one. The email subject (api lib/email.ts) follows the same rule. */
 const THANKS_STICKERS=['Great Meeting','Nice to Meet You','Following Up',"Let's Do This"];
 function isThanksOccasion(st){st=String(st||'');return !st||st.toLowerCase().indexOf('thank')>=0||THANKS_STICKERS.includes(st)}
+/* What you are thanking them for: a few words ("Strategy call") become "Thanks for the strategy call today."; a full sentence ("Thanks for the call today.") is used as typed */
+function thanksLine(m){let t=String(m||'').trim();if(!t)return '';
+ if(t.toLowerCase().indexOf('thank')===0){if('.!?'.indexOf(t.slice(-1))<0)t+='.';return t+' '}
+ t=t.split(/[.!?]/)[0].trim();let l=t.toLowerCase();
+ ['for the ','for ','the '].forEach(w=>{if(l.indexOf(w)===0){t=t.slice(w.length);l=l.slice(w.length)}});
+ if(l.slice(-6)===' today'){t=t.slice(0,-6)}
+ return t?'Thanks for the '+t.toLowerCase()+' today. ':''}
 function msgText(){const f=first(box.to),link='sliceofthanks.app/p/'+slug(f+'-'+(pizza.name||'pizza'));const pers=isPersonal(box);
  const from=profile.name+(profile.business&&!pers?' from '+profile.business:''),thanks=isThanksOccasion(box.sticker);
- const mtg=box.meeting&&!pers?'Thanks for the '+box.meeting.toLowerCase()+' today. ':'';
+ const mtg=box.meeting&&!pers?thanksLine(box.meeting):'';
  const line=thanks?mtg+'I made you a little thank-you pizza.':'I made you a little pizza'+(box.sticker?' for the occasion: '+box.sticker+'!':'.');
  if(box.method==='text')return{subj:'',body:'Hi '+f+'! '+line+' Open the box here: '+link};
  return{subj:thanks?from+' sent you a slice of thanks':'A special pizza delivery for you from '+from,
   body:'Hi '+f+',\n\n'+line+' Open the box here:\n'+link+'\n\n'+profile.name+(profile.business&&!pers?'\n'+profile.business:'')}}
-function renderMsg(){const m=msgText();$('#msgLabel').textContent=box.method==='text'?'Your text':'Your email';$('#msgSubj').textContent=m.subj;$('#msgSubj').hidden=!m.subj;$('#msgBody').textContent=m.body}
+function renderMsg(){try{renderMtgSay()}catch(e){}const m=msgText();$('#msgLabel').textContent=box.method==='text'?'Your text':'Your email';$('#msgSubj').textContent=m.subj;$('#msgSubj').hidden=!m.subj;$('#msgBody').textContent=m.body}
 function renderSend(){
  $('#sendHeading').textContent=editingSignature?'Save your signature pizza':'Send it';
  $('#guestBox').hidden=!!account||editingSignature;$('#gName').value=$('#gName').value||'';$('#sendNow').textContent=account?'Send pizza':'Send pizza and create my free account';$('#sendNow').className=account?'btn':'btn primary';$('#previewR').className=account?'btn primary':'btn';
@@ -1726,6 +1733,7 @@ function renderSend(){
 $('#toName').addEventListener('input',e=>{box.to=e.target.value;renderMsg()});
 $('#toContact').addEventListener('input',e=>{box.contact=e.target.value;if(/^[\d\s()+-]{7,}$/.test(e.target.value)&&box.method!=='text'){box.method='text';renderSend()}});
 $('#mtgTitle').addEventListener('input',e=>{box.meeting=e.target.value;renderMsg()});
+function renderMtgSay(){const el=$('#mtgSay'),t=thanksLine(box.meeting).trim();el.hidden=!t;el.innerHTML=t?'Their email will say: <b>'+esc(t)+'</b>':''}
 $('#copyMsg').onclick=()=>{const m=msgText();const txt=(m.subj?m.subj+'\n\n':'')+m.body;
  const fallback=()=>{const r=document.createRange();r.selectNodeContents($('#msgBody'));const s=getSelection();s.removeAllRanges();s.addRange(r);toast('Message selected. Copy it from your keyboard.')};
  try{navigator.clipboard.writeText(txt).then(()=>toast('Message copied.'),fallback)}catch(e){fallback()}};

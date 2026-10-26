@@ -10,9 +10,10 @@ import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, deleteBdUser, fetchBdEmail, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
 import { sendWithFallback, type EmailMessage } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
+import { sendCustomer, sendSale } from "./lib/partnero.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.19.0";
+const VERSION = "api-0.20.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -59,6 +60,7 @@ async function syncBilling(memberId: string, bdUserId: number, minSeconds: numbe
   try {
     const products = (await rpc<ProductMatch[] | null>("sot_setting", { p_env: "live", p_key: "bd_products" })) ?? [];
     const tx = await fetchTransactions({ site: env("BD_SITE_URL") || BD_API_SITE, key: env("BD_API_KEY"), bdUserId });
+    await reportSales(memberId, tx);
     for (const line of billingLines(tx, products)) {
       if (line.status === "paid") {
         const r = await rpc<Record<string, any>>("sot_grant_purchase", { p_member: memberId, p_ref: line.ref, p_product: line.product, p_amount_cents: line.amountCents, p_paid_at: line.paidAt });
@@ -72,6 +74,30 @@ async function syncBilling(memberId: string, bdUserId: number, minSeconds: numbe
     console.error("billing sync", String(e));
   }
   return { checked: true, changed };
+}
+
+// Paid BD invoices of a referred member go to Partnero as sales (once each). Members nobody referred are skipped in the database.
+async function reportSales(memberId: string, tx: unknown) {
+  for (const inv of invoiceList(tx)) {
+    if (inv.status.toLowerCase() !== "paid" || inv.totalCents <= 0) continue;
+    const added = await rpc<boolean>("sot_partnero_sale", { p_member: memberId, p_invoice: inv.id, p_amount_cents: inv.totalCents, p_paid_at: inv.paidAt ?? inv.date }).catch(() => false);
+    if (added === false) return; // not referred, or nothing new
+  }
+}
+
+// Sends what is waiting for Partnero: each member as a customer (with who invited them), then their sales
+async function partneroOutbox(limit: number): Promise<number> {
+  const key = env("PARTNERO_API_KEY");
+  if (!key) return 0;
+  let sent = 0;
+  for (const o of (await rpc<Record<string, any>[]>("sot_partnero_due", { p_limit: limit })) ?? []) {
+    const r = o.kind === "customer"
+      ? await sendCustomer(key, { key: o.member_id, email: o.email, name: o.name, referrerKey: o.referred_by ?? null, partnerKey: o.partner_key ?? null })
+      : await sendSale(key, { customerKey: o.member_id, key: "bd-" + String(o.payload?.invoice ?? o.id), amountCents: Number(o.payload?.amount_cents ?? 0) });
+    await rpc("sot_partnero_done", { p_id: o.id, p_ok: r.ok, p_error: r.error ?? null });
+    if (r.ok) sent++; else console.error("partnero", o.kind, r.error);
+  }
+  return sent;
 }
 
 async function fillReplyTo(memberId: string, bdUserId: number): Promise<boolean> {
@@ -291,8 +317,12 @@ async function route(req: Request, path: string): Promise<Response> {
   // Recipient routes: private link token only
   if (path === "/p" && req.method === "GET") {
     const t = new URL(req.url).searchParams.get("t") ?? "";
-    const data = await rpc("sot_recipient_get", { p_hash: await tokenHash(t) });
-    return data ? json(req, data) : json(req, { error: "not_found" }, 404);
+    const hash = await tokenHash(t);
+    const data = await rpc<Record<string, any> | null>("sot_recipient_get", { p_hash: hash });
+    if (!data) return json(req, { error: "not_found" }, 404);
+    // The sender's invite code: the receipt's QR code and "Make your own" link credit them when someone joins
+    const ref = await rpc<string | null>("sot_recipient_ref", { p_hash: hash }).catch(() => null);
+    return json(req, ref ? { ...data, ref } : data);
   }
   if (path === "/p/event" && req.method === "POST") {
     const r = await rpc("sot_recipient_event", { p_hash: await tokenHash(String(body.t ?? "")), p_type: String(body.type ?? ""), p_slice: Number.isInteger(body.slice) ? body.slice : null });
@@ -376,8 +406,20 @@ async function route(req: Request, path: string): Promise<Response> {
         try { await birthdayDue(b); birthdays++; } catch (e) { console.error("birthday", String(e)); }
       }
     }
-    if (stuck || delivered || failed || synced || ended || dates || notices || birthdays) console.log("worker", JSON.stringify({ stuck, delivered, failed, synced, ended, dates, notices, birthdays }));
-    return json(req, { ok: true, stuck, delivered, failed, synced, ended, dates, notices, birthdays });
+    // Referrals: inviters earn their emails, renewals of referred members reach Partnero, then the Partnero queue
+    let referrals = 0, partnero = 0;
+    if (Date.now() - started < 55_000) {
+      referrals = (await rpc<number>("sot_referral_rewards_due", { p_limit: 20 }).catch((e) => { console.error("referral rewards", String(e)); return 0; })) ?? 0;
+      if (env("BD_API_KEY") && env("PARTNERO_API_KEY")) {
+        for (const d of (await rpc<Record<string, any>[]>("sot_referral_billing_due", { p_limit: 3 }).catch(() => [])) ?? []) {
+          try { await reportSales(d.member_id, await fetchTransactions({ site: env("BD_SITE_URL") || BD_API_SITE, key: env("BD_API_KEY"), bdUserId: Number(d.bd_user_id) })); }
+          catch (e) { console.error("referral billing", String(e)); }
+        }
+      }
+      partnero = await partneroOutbox(10).catch((e) => { console.error("partnero outbox", String(e)); return 0; });
+    }
+    if (stuck || delivered || failed || synced || ended || dates || notices || birthdays || referrals || partnero) console.log("worker", JSON.stringify({ stuck, delivered, failed, synced, ended, dates, notices, birthdays, referrals, partnero }));
+    return json(req, { ok: true, stuck, delivered, failed, synced, ended, dates, notices, birthdays, referrals, partnero });
   }
 
   // Member routes
@@ -399,7 +441,24 @@ async function route(req: Request, path: string): Promise<Response> {
       r = await rpc<Record<string, any>>("sot_send_back", { p_member: memberId, p_hash: hash });
     }
     if (!r?.ok) return json(req, { ok: false, code: r?.code ?? "not_found" });
+    // A new member who joined to send a pizza back was brought in by its sender
+    await rpc("sot_referral_sendback", { p_member: memberId, p_hash: hash }).catch(() => null);
     return json(req, { ok: true, added: !!r.added, person: { id: r.id ?? null, name: r.name, company: r.company ?? "", email: r.email ?? "" } });
+  }
+  // Invite friends: the member's invite link and what it has earned
+  if (path === "/referral" && req.method === "GET") {
+    const st = await rpc<Record<string, any>>("sot_referral_state", { p_member: memberId });
+    return json(req, st?.enabled ? { ok: true, ...st, link: `${SITE}/kitchen?ref=${encodeURIComponent(st.code)}` } : { ok: false, code: "off" });
+  }
+  // A new member arrived through an invite link (code) or a Partnero partner link (partner cookie)
+  if (path === "/referral/capture" && req.method === "POST") {
+    const code = String(body.code ?? "").replace(/[^A-Za-z0-9]/g, "").slice(0, 16) || null;
+    const partner = String(body.partner ?? "").slice(0, 80) || null;
+    // Partnero's own refer-a-friend cookie holds the inviter's customer key, which is their member id
+    const ref = String(body.referrer ?? "").trim().toLowerCase();
+    const referrer = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(ref) ? ref : null;
+    if (!code && !partner && !referrer) return json(req, { ok: false, code: "no_referrer" });
+    return json(req, await rpc("sot_referral_capture", { p_member: memberId, p_code: code, p_referrer: referrer, p_partner: partner, p_source: code || referrer ? "link" : "partner" }));
   }
   // The member's own birthday, month and day, for Gerald's Birthday Special
   if (path === "/birthday" && req.method === "POST") {

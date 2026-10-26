@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.18.6 =====
+/* ===== Slice of Thanks live layer v0.19.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -2058,3 +2058,77 @@ setupSteps = function () {
   st.push({ id: 'bday', title: 'Your birthday', text: 'Month and day only. Gerald bakes you a Birthday Special on the day.', done: () => !!bdayOf().md, run: () => { show('settings'); setTimeout(() => { const f = $('#liveBday'); if (f) f.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120); } });
   return st;
 };
+
+/* ===== Invite friends (referrals, with Partnero behind the scenes) =====
+   An invite link (/kitchen?ref=CODE), or a Partnero link that left a partnero_partner or partnero_referral cookie on the site,
+   is kept on this device until the visitor has an account, then sent once with /referral/capture. */
+(function catchReferral() {
+  const q = new URLSearchParams(location.search);
+  const code = (q.get('ref') || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 16);
+  if (!code) return;
+  store.set('sotRef', { code, at: Date.now() });
+  q.delete('ref'); try { history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q.toString() : '')); } catch (e) { /* ignore */ }
+})();
+function cookieVal(n) {
+  const c = String(document.cookie || '').split('; ').find(x => x.indexOf(n + '=') === 0);
+  try { return c ? decodeURIComponent(c.slice(n.length + 1)).slice(0, 80) : ''; } catch (e) { return ''; }
+}
+let refTried = false;
+async function sendReferral() {
+  const s = LIVE.session; if (refTried || !LIVE.TOKEN || !s || !s.member_id) return;
+  const r0 = store.get('sotRef', null);
+  const code = r0 && Date.now() - r0.at < 30 * 864e5 ? r0.code : '';
+  const partner = cookieVal('partnero_partner'), referrer = cookieVal('partnero_referral');
+  if (!code && !partner && !referrer) return;
+  if (store.get('sotRefDone', '') === s.member_id) return;
+  refTried = true;
+  const r = await LIVE.call('/referral/capture', { code, partner, referrer }).catch(() => null);
+  if (!r || r.code === 'not_signed_in') { refTried = false; return; }
+  store.set('sotRefDone', s.member_id); store.set('sotRef', null);
+  if (r.ok && r.emails > 0) {
+    toast('Welcome! Your friend\'s invite added ' + r.emails + ' bonus emails to your account.');
+    try { burst('gold'); } catch (e) { /* ignore */ }
+    const fresh = await LIVE.call('/session').catch(() => null);
+    if (fresh && fresh.member_id) { LIVE.session = fresh; renderPlanCard(); }
+  }
+}
+let invite = null;
+async function loadInvite() {
+  if (!LIVE.TOKEN || !LIVE.session) return;
+  const r = await LIVE.call('/referral').catch(() => null);
+  invite = r && r.ok ? r : { off: true };
+  renderInvite();
+}
+function renderInvite() {
+  const crew = $('#view-gerald'); if (!crew) return;
+  let c = $('#inviteCard');
+  if (!invite || invite.off) { if (c) c.hidden = true; return; }
+  if (!c) { c = mk('div', 'card invite-card'); c.id = 'inviteCard'; const faq = $('#faqCard'); if (faq) faq.before(c); else crew.appendChild(c); }
+  c.hidden = false; c.innerHTML = '';
+  c.appendChild(mk('h2', '', 'Invite friends, earn emails'));
+  c.appendChild(mk('p', 'muted', 'Share your link. When a friend signs up, they get ' + invite.friend_emails + ' bonus emails. When they send their first pizza, you get ' + invite.referrer_emails + '.'));
+  const row = mk('div', 'invite-link');
+  const inp = mk('input'); inp.type = 'text'; inp.readOnly = true; inp.value = invite.link; inp.id = 'inviteLink'; inp.setAttribute('aria-label', 'Your invite link');
+  inp.onclick = () => inp.select();
+  row.appendChild(inp); c.appendChild(row);
+  const btns = mk('div', 'btn-row');
+  const copy = mk('button', 'btn primary small', 'Copy my link'); copy.type = 'button';
+  copy.onclick = () => { try { navigator.clipboard.writeText(invite.link).then(() => toast('Link copied. Paste it anywhere.'), () => { inp.select(); toast('Select the link and copy it.'); }); } catch (e) { inp.select(); } };
+  btns.appendChild(copy);
+  if (navigator.share) {
+    const sh = mk('button', 'btn small', 'Share'); sh.type = 'button';
+    sh.onclick = () => navigator.share({ text: 'I send thank-you pizzas with Slice of Thanks. Make your own and get ' + invite.friend_emails + ' bonus emails:', url: invite.link }).catch(() => {});
+    btns.appendChild(sh);
+  }
+  c.appendChild(btns);
+  const st = mk('div', 'invite-stats');
+  [[invite.joined, invite.joined === 1 ? 'friend joined' : 'friends joined'], [invite.rewarded, 'sent their first pizza'], [invite.emails_earned, 'emails earned']].forEach(([n, l]) => {
+    const d = mk('div'); d.appendChild(mk('b', '', String(n || 0))); d.appendChild(mk('small', '', l)); st.appendChild(d);
+  });
+  c.appendChild(st);
+  c.appendChild(mk('p', 'muted invite-note', 'Your link is also on every receipt your pizzas share, so their friends can find you too.'));
+}
+const _applySessionInv = applySession;
+applySession = function (s) { _applySessionInv(s); setTimeout(sendReferral, 1200); };
+const _showInv = show;
+show = function (v) { _showInv(v); if (v === 'gerald' && LIVE.session) { if (!invite) loadInvite(); else renderInvite(); } };

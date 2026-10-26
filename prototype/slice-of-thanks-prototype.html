@@ -129,6 +129,11 @@ button.p-tag{cursor:pointer;font-family:inherit}button.p-tag:hover{background:va
 .pill.wait{background:var(--warn-bg);color:var(--warn-ink)}
 .mode-line{font-size:.9rem;color:var(--muted)}
 .kx-reset{display:flex;justify-content:flex-start;gap:10px;flex-wrap:wrap;margin:0 0 12px}
+.invite-card .invite-link input{width:100%;font:600 .92rem var(--mono);padding:10px 12px;border:2.5px solid var(--edge);border-radius:12px;background:var(--sunk);color:var(--ink)}
+.invite-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.invite-stats div{border:2px solid var(--line);border-radius:12px;padding:8px;text-align:center;display:flex;flex-direction:column}
+.invite-stats b{font:400 1.4rem var(--display)}.invite-stats small{font-size:.72rem;color:var(--muted);line-height:1.2}
+.invite-note{font-size:.8rem;margin-top:10px}
 .step-lede{margin:-4px 0 4px;color:var(--muted);font-size:.92rem}
 .bsec{display:block;gap:0;border:2.5px solid var(--edge);border-radius:18px;background:var(--surface);box-shadow:3px 3px 0 var(--shade);overflow:hidden}
 .bsec-head{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;font-family:var(--body);color:var(--ink)}
@@ -2112,6 +2117,10 @@ const FAQS=[
   why:'Thank-yous go both ways, and a pizza back is a reply you can see.',
   how:['Nothing to set up. Every pizza you send has the button.','When you get a pizza, eat it, and tap the send back button to keep it going.'],
   value:'More conversations, and new people discovering you through your pizzas.',go:{label:'Open People',view:'people'}},
+ {cat:'Get the most out of every feature',q:'How do I invite friends?',what:'Your own invite link, in Crew under Invite friends. It is also on the QR code of every receipt your pizzas share.',
+  why:'Friends who join through you get bonus emails, and so do you. It is the easiest way to grow your Slice of Thanks circle.',
+  how:['Open Crew and find Invite friends.','Tap Copy my link or Share, and send it to a friend.','When they sign up, they get bonus emails. When they send their first pizza, you get yours.'],
+  value:'Bonus emails for both of you, and more pizzas going around.',go:{label:'Get my invite link',view:'gerald',sel:'#inviteCard'}},
  {cat:'Get the most out of every feature',q:'What is Potato\'s Treat Jar?',what:'Potato hid easter eggs all over the app. Find them to earn Treats, then spend Treats on Secret Menu items like Potato confetti and the Gold Bow Tie box.',
   why:'It is fun, and the Secret Menu items make your pizzas stand out.',
   how:['Open Crew and find Potato\'s Treat Jar.','Read the hints for each egg you have not found yet.','Spend your Treats on the Secret Menu.'],

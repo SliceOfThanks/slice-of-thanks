@@ -1,4 +1,4 @@
-/* Slice of Thanks recipient page (unbox) v0.4.2
+/* Slice of Thanks recipient page (unbox) v0.5.0
    Delivery by Potato, open the box, six-slice pizza, sender's button under the pizza,
    the fun receipt (shareable) and Gerald's review on the same screen, gift after the sixth slice, send a pizza back.
    Needs shared/pizza-core.js loaded first. Mounts into #sot-unbox. */
@@ -9,6 +9,7 @@
   var API = ROOT.getAttribute('data-api') || 'https://cmnclubiarmthibqibuj.supabase.co/functions/v1/api';
   var BASE = ROOT.getAttribute('data-base') || '';
   var SITE = 'https://www.sliceofthanks.app';
+  var REF_LINK = SITE + '/kitchen';
   var P = window.SOTPizza;
   var qs = new URLSearchParams(location.search);
   var TOKEN = qs.get('t') || '';
@@ -38,7 +39,7 @@
         stamp: ['PAID', 'WITH GRATITUDE'], approved: 'Approved by Gerald', paw: 'Inspected by Potato',
         cheers: ['Gerald signed it. Potato tried to eat it.', 'Stamped and approved. Gerald is framing a copy.', 'Potato added a paw print. She insists it is official.', 'Receipt printed. Gerald says it is his best work.'],
         share: 'Share my receipt', making: 'Printing your receipt...', saved: 'Receipt saved. Share it anywhere.', privacy: 'Your note, names and codes stay private. Only the receipt and the pizza are shared.',
-        shareText: 'I just ate a thank-you pizza. Make your own at sliceofthanks.app', get: 'Send your own at sliceofthanks.app' }
+        shareText: 'I just ate a thank-you pizza. Make your own at sliceofthanks.app', get: 'Send your own at sliceofthanks.app', scan: 'Scan to send your own' }
     },
     es: {
       sent: function (s) { return s + ' te envió una pizza'; }, named: function (s) { return 'Tu pizza, bautizada por ' + s; }, from: 'de', open: 'Abre la caja', see: 'Mira tu pizza', tap: 'Toca una porción para comerla.',
@@ -62,7 +63,7 @@
         stamp: ['PAGADO', 'CON GRATITUD'], approved: 'Aprobado por Gerald', paw: 'Inspeccionado por Potato',
         cheers: ['Gerald lo firmó. Potato intentó comérselo.', 'Sellado y aprobado. Gerald va a enmarcar una copia.', 'Potato le puso su huella. Dice que es oficial.', 'Recibo impreso. Gerald dice que es su mejor obra.'],
         share: 'Compartir mi recibo', making: 'Imprimiendo tu recibo...', saved: 'Recibo guardado. Compártelo donde quieras.', privacy: 'Tu nota, los nombres y los códigos son privados. Solo se comparten el recibo y la pizza.',
-        shareText: 'Me acabo de comer una pizza de agradecimiento. Crea la tuya en sliceofthanks.app', get: 'Envía la tuya en sliceofthanks.app' }
+        shareText: 'Me acabo de comer una pizza de agradecimiento. Crea la tuya en sliceofthanks.app', get: 'Envía la tuya en sliceofthanks.app', scan: 'Escanea y envía la tuya' }
     }
   };
   var t = T[lang];
@@ -125,6 +126,9 @@
   }
 
   function render(d) {
+    // The sender's invite link: the receipt QR code and "Make your own" credit them when someone joins
+    var refCode = String((d && d.ref) || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 16);
+    REF_LINK = SITE + '/kitchen' + (refCode ? '?ref=' + refCode : '');
     var snap = d.snapshot || {}, pizza = snap.pizza || P.defaultSignature(), box = snap.box || {}, sender = snap.sender || {};
     var who = senderLabel(sender), whoFirst = sender.send_as === 'business' ? who : (first(sender.name) || who);
     P.setProfile({ logo: sender.logo_url, brand1: sender.brand_color_1, brand2: sender.brand_color_2 });
@@ -333,19 +337,31 @@
     return new Promise(function (res) { var i = new Image(); i.crossOrigin = 'anonymous'; i.onload = function () { res(i); }; i.onerror = function () { res(null); }; i.src = src; });
   }
   function shareImage(pizza, facts, eatenN) {
-    return Promise.all([loadImg(BASE + '/brand/logo/slice-of-thanks-logo-240.png'), loadImg(BASE + '/brand/characters/gerald-avatar.svg'), loadImg(BASE + '/brand/characters/potato-avatar.png')])
-      .then(function (imgs) { return drawShare(pizza, facts, eatenN, imgs[0], imgs[1], imgs[2]); });
+    return Promise.all([loadImg(BASE + '/brand/logo/slice-of-thanks-logo-240.png'), loadImg(BASE + '/brand/characters/gerald-avatar.svg'), loadImg(BASE + '/brand/characters/potato-avatar.png'), loadQr()])
+      .then(function (imgs) { return drawShare(pizza, facts, eatenN, imgs[0], imgs[1], imgs[2], imgs[3]); });
   }
-  function drawShare(pizza, facts, eatenN, logo, gAv, pAv) {
+  // The QR code library loads only when someone shares, pinned to one version
+  var qrLib = null;
+  function loadQr() {
+    if (window.qrcode) return Promise.resolve(window.qrcode);
+    if (!qrLib) qrLib = new Promise(function (res) {
+      var sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js'; sc.async = true;
+      sc.onload = function () { res(window.qrcode || null); }; sc.onerror = function () { qrLib = null; res(null); };
+      document.head.appendChild(sc);
+      setTimeout(function () { res(window.qrcode || null); }, 4000);
+    });
+    return qrLib;
+  }
+  function drawShare(pizza, facts, eatenN, logo, gAv, pAv, qrcode) {
     var f = t.fun, W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     var c = cv.getContext('2d'), mono = '"Courier Prime","Courier New",monospace';
     c.fillStyle = '#FFF3E0'; c.fillRect(0, 0, W, H);
     for (var x = 0; x < W; x += 40) for (var y = 0; y < 2; y++) { c.fillStyle = (x / 40 + y) % 2 ? '#FFF3E0' : '#D62828'; c.fillRect(x, y * 40, 40, 40); }
     // The pizza without any spelled letters
     var pc = P.clonePizza(pizza); pc.sign = null; pc.toppings = (pc.toppings || []).filter(function (x) { return x.k !== 'label'; });
-    var pcv = document.createElement('canvas'); P.drawPizza(pcv, pc, 260); c.drawImage(pcv, (W - 260) / 2, 100, 260, 260);
+    var pcv = document.createElement('canvas'); P.drawPizza(pcv, pc, 230); c.drawImage(pcv, (W - 230) / 2, 96, 230, 230);
     // The paper
-    var px = 150, py = 376, pw = W - 300, ph = 664 + 44 * facts.rows.length;
+    var px = 150, py = 334, pw = W - 300, ph = 690 + 44 * facts.rows.length;
     c.fillStyle = 'rgba(62,36,22,.18)'; c.fillRect(px + 10, py + 12, pw, ph);
     c.fillStyle = '#fffdf5'; c.fillRect(px, py, pw, ph);
     c.fillStyle = '#FFF3E0'; for (var z = px; z < px + pw; z += 28) { c.beginPath(); c.arc(z + 14, py + ph + 1, 10, Math.PI, 0); c.fill(); }
@@ -361,19 +377,28 @@
     line(f.slices, (eatenN || 6) + '/6'); dash();
     line(f.total, '$0.00', true); center(f.paid, 26, false); yy += 52;
     center(facts.footer, 26, true); yy += 30;
-    var barY = yy;
-    for (var b = 0; b < 60; b++) { c.fillStyle = '#2c2420'; var bw = (hashOf(String(facts.order + b)) % 3) + 2; c.fillRect(W / 2 - 270 + b * 9, yy, bw, 50); }
-    yy += 120;
-    // Gerald signs, Potato inspects
-    function badge(img, label, x) { if (img) { c.save(); c.beginPath(); c.arc(x + 30, yy - 10, 30, 0, 6.283); c.clip(); c.drawImage(img, x, yy - 40, 60, 60); c.restore(); }
-      c.font = '700 22px ' + mono; c.fillStyle = '#2c2420'; c.textAlign = 'left'; c.fillText(label, x + 72, yy - 2); }
-    badge(gAv, f.approved, L); badge(pAv, f.paw, L + 340);
-    // The PAID stamp, a little crooked
-    c.save(); c.translate(Rt - 96, barY + 30); c.rotate(-0.22); c.scale(0.8, 0.8); c.globalAlpha = 0.85; c.strokeStyle = '#D62828'; c.lineWidth = 7; c.fillStyle = '#D62828';
+    // A QR code to the sender's invite link, so anyone who sees the post can make their own (and the sender gets the credit)
+    var rowY = yy, qr = null;
+    try { if (qrcode) { qr = qrcode(0, 'M'); qr.addData(REF_LINK); qr.make(); } } catch (e) { qr = null; }
+    if (qr) {
+      var n = qr.getModuleCount(), cell = Math.floor(170 / n), qs = cell * n;
+      c.fillStyle = '#fff'; c.fillRect(L - 8, rowY - 8, qs + 16, qs + 16); c.fillStyle = '#2c2420';
+      for (var qy = 0; qy < n; qy++) for (var qx = 0; qx < n; qx++) if (qr.isDark(qy, qx)) c.fillRect(L + qx * cell, rowY + qy * cell, cell, cell);
+    } else {
+      for (var b = 0; b < 18; b++) { c.fillStyle = '#2c2420'; var bw = (hashOf(String(facts.order + b)) % 3) + 2; c.fillRect(L + b * 9, rowY, bw, 150); }
+    }
+    // Gerald signs, Potato inspects, beside the code
+    var bx = L + 206;
+    function badge(img, label, y) { if (img) { c.save(); c.beginPath(); c.arc(bx + 30, y - 10, 30, 0, 6.283); c.clip(); c.drawImage(img, bx, y - 40, 60, 60); c.restore(); }
+      c.font = '700 22px ' + mono; c.fillStyle = '#2c2420'; c.textAlign = 'left'; c.fillText(label, bx + 72, y - 2); }
+    badge(gAv, f.approved, rowY + 40); badge(pAv, f.paw, rowY + 118);
+    c.font = '700 24px ' + mono; c.fillStyle = '#D62828'; c.textAlign = 'left'; c.fillText(f.scan, bx, rowY + 168);
+    // The PAID stamp, a little crooked, by the logo
+    c.save(); c.translate(Rt - 86, py + 116); c.rotate(-0.22); c.scale(0.68, 0.68); c.globalAlpha = 0.85; c.strokeStyle = '#D62828'; c.lineWidth = 7; c.fillStyle = '#D62828';
     c.strokeRect(-130, -62, 260, 124); c.lineWidth = 2; c.strokeRect(-120, -52, 240, 104);
     c.textAlign = 'center'; c.font = '700 58px ' + mono; c.fillText(f.stamp[0], 0, 6); c.font = '700 20px ' + mono; c.fillText(f.stamp[1], 0, 38); c.restore();
     // Potato's paw print in the corner
-    c.save(); c.translate(px + pw - 54, py + 62); c.rotate(0.3); c.fillStyle = 'rgba(62,36,22,.55)';
+    c.save(); c.translate(px + pw - 50, py + ph - 52); c.rotate(0.3); c.fillStyle = 'rgba(62,36,22,.55)';
     c.beginPath(); c.ellipse(0, 10, 20, 16, 0, 0, 6.283); c.fill(); [[-22, -14], [-8, -26], [8, -26], [22, -14]].forEach(function (q) { c.beginPath(); c.ellipse(q[0], q[1], 7, 9, 0, 0, 6.283); c.fill(); }); c.restore();
     c.font = '700 30px ' + mono; c.fillStyle = '#3E2416'; c.textAlign = 'center'; c.fillText(f.get, W / 2, Math.min(H - 18, py + ph + 56));
     return new Promise(function (res) { try { cv.toBlob(function (bl) { res(bl); }, 'image/jpeg', 0.92); } catch (e) { res(null); } });
@@ -388,7 +413,7 @@
       el('a', { href: unsubHref, text: t.unsub }), ' · ', el('a', { href: SITE + '/privacy', text: t.privacy }), ' · ',
       el('a', { href: SITE + '/terms', text: t.terms }), ' · ', el('a', { href: SITE + '/report', text: t.report }), whyP
     ]);
-    if (sender.show_made_with) f.appendChild(el('div', {}, [el('a', { href: SITE, text: t.made })]));
+    if (sender.show_made_with) f.appendChild(el('div', {}, [el('a', { href: REF_LINK, text: t.made })]));
     return f;
   }
 

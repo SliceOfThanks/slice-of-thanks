@@ -413,6 +413,12 @@
       "commit": "c091b9839ce6643f032e8d1c1c19851dad615404",
       "date": "2026-10-26",
       "notes": "About us screen: Meet the founder (Stacey, what she built, Hire Stacey at legalstacey.com), Meet the real Potato (her photo), and how to say hi. A footer under every tab links About us, Help, Privacy and Terms."
+    },
+    {
+      "version": "v0.20.1",
+      "commit": "3a2bdfe9e229fe10a1e7a235cbfbf7f4b0c44fe0",
+      "date": "2026-10-26",
+      "notes": "Free test confirmation stays on screen under the test button. Home page last button no longer crowds the text."
     }
   ]
 }

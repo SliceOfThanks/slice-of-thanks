@@ -358,6 +358,7 @@ textarea{min-height:92px;resize:vertical}
 .faq>summary::after{content:'+';flex:none;width:26px;height:26px;border:2.5px solid var(--edge);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;background:var(--surface)}
 .faq[open]>summary::after{content:'-';background:var(--mustard);color:#3E2416}
 .faq-body{padding:0 0 12px}.faq-body p,.faq-body ol{margin:0 0 8px;color:var(--muted);font-size:.92rem;line-height:1.5}.faq-body ol{padding-left:1.3em}.faq-body b{color:var(--ink)}.faq-body .btn-row{margin-top:10px}
+.faq-imgs{display:flex;gap:8px;overflow-x:auto;margin:4px 0 10px;padding-bottom:4px}.faq-imgs img{flex:none;height:150px;width:auto;border:2px solid var(--edge);border-radius:12px;background:#fff}
 .faq-cat{margin:14px 0 2px;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tomato-text)}.faq-cat:first-child{margin-top:0}
 .faq>summary .tag{font-size:.7rem;vertical-align:middle}.faq-egg>summary{font-weight:500;font-style:italic;color:var(--muted)}
 .faq-help{margin:12px 0 0;font-size:.9rem}.faq-help a{color:var(--tomato-text);font-weight:700}
@@ -2132,10 +2133,17 @@ const FAQS=[
  {cat:'Plans, billing and help',q:'What if I run out of emails?',a:['On The Whole Pie, buy an email pack: 100 for $5, 500 for $15 or 1,000 for $25. Pack emails last 12 months and are used after your monthly ones.','On A Slice, Special Delivery is $2.99 and unlocks Pro features for one pizza, including its send.'],go:{label:'See my emails',view:'settings',sel:'#planCard'}},
  {cat:'Plans, billing and help',q:'Do I need permission to send a pizza?',a:['Yes. Only send to people who know you, like clients, customers, colleagues or friends. On the Send step, pick how you know them.','Every email has an unsubscribe link, and people who opt out never get another pizza from you.']},
  {cat:'Plans, billing and help',q:'How do I change my plan or cancel?',a:['Go to Settings, then Billing. Tap Change plan to upgrade or downgrade, or Update card or billing address. You can cancel anytime.','Payments go through our secure checkout, and we never see your card number. To close your account, use Delete my account and data in Settings.'],go:{label:'Open Billing',view:'settings',sel:['#liveBilling','#planCard']}},
- {cat:'Plans, billing and help',q:'How do I get help?',a:['Email pizza@sliceofthanks.app with your question, and a real person writes back.','You can also tap the feedback button on any screen to report a bug or suggest an idea.']},
+ {cat:'Plans, billing and help',q:'How do I get help, report a bug or share an idea?',what:'The help button: the round black button with sparkles at the bottom right of every screen. It opens our help and feedback panel, with three tabs: Feedback, Roadmap and Announcements.',
+  why:'It is the fastest way to reach us. Your message comes straight to the Slice of Thanks team, and a real person reads every one.',
+  how:['Tap the round black button with sparkles at the bottom right.','On Feedback, pick what it is: Something\'s broken, I need a hand, I have an idea, or A little feedback.','Write what is on your mind. Tap the camera to add a screenshot of the screen you are on, or the paperclip to attach a file.','Tap Send feedback.','Tap Roadmap to see what we are building next and vote for the ideas you want most. Tap Announcements to see what is new.'],
+  value:'Bugs fixed faster, a say in what we build next, and news about new features. You can also email pizza@sliceofthanks.app any time.',
+  imgs:[['help-button.jpg','The round black help button with sparkles at the bottom right of the screen'],['help-types.jpg','Pick what it is: Something\'s broken, I need a hand, I have an idea, or A little feedback'],['help-widget.jpg','The feedback form with the camera and paperclip, and the Feedback, Roadmap and Announcements tabs']],
+  go:{label:'Open help and feedback',run:'feedback'}},
  {cat:'Plans, billing and help',egg:true,q:'Psst. Did you read all the way down here?',a:['You did. Potato respects a thorough reader. She left you 10 Treats for it. Spend them in Potato\'s Treat Jar on the Crew tab.','Do not tell Gerald. He thinks nobody reads the FAQs.']}];
 const FAQ_SHOWN=6;let faqAll=false;
+const FAQ_IMG='https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@4d3853f2860215f60b2e01baddb7bdbb452fc87c/brand/screens/';
 function faqGo(g){if(g.run==='hire'){const b=$('#homeHire');show('today');if(b)b.click();return}
+ if(g.run==='feedback'){try{if(window.Userback&&typeof window.Userback.open==='function'){window.Userback.open();return}}catch(_){}toast('Tap the round black button with sparkles at the bottom right of the screen.');return}
  show(g.view);setTimeout(()=>{let el=null;[].concat(g.sel||[]).some(s=>(el=$(s)));
   const vw=$('#view-'+g.view);if(!el&&g.title&&vw)vw.querySelectorAll('.card h2').forEach(h=>{if(!el&&h.textContent.trim()===g.title)el=h.closest('.card')});
   if(el){try{openFold(el)}catch(_){}el.scrollIntoView({behavior:'smooth',block:'start'})}},120)}
@@ -2151,6 +2159,7 @@ function renderFaq(){const el=$('#faqList');if(!el)return;el.innerHTML='';let ca
   if(f.what)para(f.what,'What it is:');if(f.why)para(f.why,'Why use it:');
   if(f.how){const p=document.createElement('p');const b=document.createElement('b');b.textContent='How to set it up:';p.appendChild(b);body.appendChild(p);
    const ol=document.createElement('ol');f.how.forEach(x=>{const li=document.createElement('li');li.textContent=x;ol.appendChild(li)});body.appendChild(ol)}
+  if(f.imgs){const g=document.createElement('div');g.className='faq-imgs';f.imgs.forEach(([src,alt])=>{const im=document.createElement('img');im.src=FAQ_IMG+src;im.alt=alt;im.loading='lazy';g.appendChild(im)});body.appendChild(g)}
   if(f.value)para(f.value,'What you get:');
   if(f.go){const b=document.createElement('button');b.type='button';b.className='btn small primary';b.textContent=f.go.label;b.onclick=()=>faqGo(f.go);const r=document.createElement('div');r.className='btn-row';r.appendChild(b);body.appendChild(r)}
   d.appendChild(body);

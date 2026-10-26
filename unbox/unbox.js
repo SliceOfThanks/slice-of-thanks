@@ -1,6 +1,6 @@
-/* Slice of Thanks recipient page (unbox) v0.3.0
+/* Slice of Thanks recipient page (unbox) v0.4.0
    Delivery by Potato, open the box, six-slice pizza, sender's button under the pizza,
-   Gerald's receipt on the same screen, gift after the sixth slice, send a pizza back.
+   the fun receipt (shareable) and Gerald's review on the same screen, gift after the sixth slice, send a pizza back.
    Needs shared/pizza-core.js loaded first. Mounts into #sot-unbox. */
 (function () {
   'use strict';
@@ -29,7 +29,14 @@
       unsub: 'Unsubscribe', privacy: 'Privacy', terms: 'Terms', report: 'Report', made: 'Made with Slice of Thanks. Make your own, free.',
       missing: 'We could not find this pizza. The link may be incomplete. Try opening it again from your email.',
       woof: 'Woof!', unsubTitle: 'Stop pizzas', unsubSender: 'Stop pizzas from this sender', unsubAll: 'Stop all Slice of Thanks pizzas',
-      unsubDone: 'Done. You will not get these pizzas anymore.', test: 'TEST PIZZA'
+      unsubDone: 'Done. You will not get these pizzas anymore.', test: 'TEST PIZZA',
+      fun: { order: 'Order #', kitchen: 'Kitchen: Gerald, Head Chef', driver: 'Driver: Potato, Head of Delivery', item: 'Thank-you pizza', house: 'ON THE HOUSE',
+        sauce: 'Sauce', toppings: 'Toppings', counted: function (n) { return n + ' (Gerald counted)'; }, star: 'Star topping', bake: 'Bake', bakes: ['Quick', 'Golden', 'Stone-fired', "Gerald's perfect"],
+        slices: 'Slices devoured', total: 'TOTAL', paid: 'Paid in gratitude',
+        extras: [['Calories', 'Emotionally significant'], ['Good vibes', 'EXTRA LARGE'], ['Crust', 'Structurally sound'], ['Cheese pull', 'Legendary'], ['Napkins used', 'Not enough'], ['Delivery', 'Fast. Potato had the zoomies.'], ['Tip', 'One belly rub for Potato'], ['Leftovers', 'None. Impressive.']],
+        footers: ['THANK YOU FOR EATING YOUR FEELINGS', 'NO REFUNDS ON GOOD VIBES', 'CRUST IS NOT A VEGETABLE. WE CHECKED.', 'COME BACK HUNGRY', 'GERALD SAYS: NICE BITE TECHNIQUE'],
+        share: 'Share my receipt', making: 'Printing your receipt...', saved: 'Receipt saved. Share it anywhere.', privacy: 'Your note, names and codes stay private. Only the receipt and the pizza are shared.',
+        shareText: 'I just ate a thank-you pizza. Make your own at sliceofthanks.app', get: 'Send your own at sliceofthanks.app' }
     },
     es: {
       sent: function (s) { return s + ' te envió una pizza'; }, named: function (s) { return 'Tu pizza, bautizada por ' + s; }, from: 'de', open: 'Abre la caja', see: 'Mira tu pizza', tap: 'Toca una porción para comerla.',
@@ -44,7 +51,14 @@
       unsub: 'Cancelar suscripción', privacy: 'Privacidad', terms: 'Términos', report: 'Reportar', made: 'Hecho con Slice of Thanks. Crea la tuya gratis.',
       missing: 'No encontramos esta pizza. Es posible que el enlace esté incompleto. Ábrelo de nuevo desde tu correo.',
       woof: '¡Guau!', unsubTitle: 'Dejar de recibir pizzas', unsubSender: 'No recibir más pizzas de este remitente', unsubAll: 'No recibir ninguna pizza de Slice of Thanks',
-      unsubDone: 'Listo. Ya no recibirás estas pizzas.', test: 'PIZZA DE PRUEBA'
+      unsubDone: 'Listo. Ya no recibirás estas pizzas.', test: 'PIZZA DE PRUEBA',
+      fun: { order: 'Pedido #', kitchen: 'Cocina: Gerald, chef principal', driver: 'Repartidora: Potato, jefa de entregas', item: 'Pizza de agradecimiento', house: 'INVITA LA CASA',
+        sauce: 'Salsa', toppings: 'Ingredientes', counted: function (n) { return n + ' (los contó Gerald)'; }, star: 'Ingrediente estrella', bake: 'Horneado', bakes: ['Rápido', 'Dorado', 'A la piedra', 'Perfecto de Gerald'],
+        slices: 'Porciones devoradas', total: 'TOTAL', paid: 'Pagado con gratitud',
+        extras: [['Calorías', 'Emocionalmente importantes'], ['Buena onda', 'EXTRA GRANDE'], ['Corteza', 'Muy sólida'], ['Queso', 'Legendario'], ['Servilletas', 'No alcanzaron'], ['Entrega', 'Rápida. Potato iba corriendo.'], ['Propina', 'Una rascadita de panza para Potato'], ['Sobras', 'Ninguna. Impresionante.']],
+        footers: ['GRACIAS POR COMERTE TUS SENTIMIENTOS', 'NO HAY REEMBOLSOS DE BUENA ONDA', 'LA CORTEZA NO ES UNA VERDURA. LO REVISAMOS.', 'VUELVE CON HAMBRE', 'GERALD DICE: BUENA TÉCNICA DE MORDIDA'],
+        share: 'Compartir mi recibo', making: 'Imprimiendo tu recibo...', saved: 'Recibo guardado. Compártelo donde quieras.', privacy: 'Tu nota, los nombres y los códigos son privados. Solo se comparten el recibo y la pizza.',
+        shareText: 'Me acabo de comer una pizza de agradecimiento. Crea la tuya en sliceofthanks.app', get: 'Envía la tuya en sliceofthanks.app' }
     }
   };
   var t = T[lang];
@@ -158,6 +172,7 @@
     var gift = box.gift && box.gift.code ? box.gift : null;
     var tease = gift ? el('p', { class: 'u-tease', text: t.tease(whoFirst) }) : null;
     var slicesLine = el('span', { text: t.eaten(0) });
+    var fun = funReceipt(pizza);
     var r = P.review(pizza, box);
     var receipt = el('div', { class: 'receipt' }, [
       el('span', { class: 'rh', text: t.review }),
@@ -167,7 +182,7 @@
       el('span', { class: 'u-critic' }, [el('img', { class: 'u-av', src: BASE + '/brand/characters/potato-avatar.png', alt: 'Potato the dog' }), el('span', { text: t.potato })])
     ]);
     var done = el('div', { class: 'u-stage', hidden: true });
-    s2.appendChild(eatBtn); s2.appendChild(hint); if (cta) s2.appendChild(cta); if (tease) s2.appendChild(tease); s2.appendChild(done); s2.appendChild(receipt);
+    s2.appendChild(eatBtn); s2.appendChild(hint); if (cta) s2.appendChild(cta); if (tease) s2.appendChild(tease); s2.appendChild(done); s2.appendChild(fun.card); s2.appendChild(receipt);
     var backBtn = el('a', { class: 'u-btn', href: SITE + '/kitchen?from=pizza' + (TOKEN && !DEMO ? '&back=' + encodeURIComponent(TOKEN) : ''), text: t.back(whoFirst), onclick: function () { track('send_back_started'); } });
     s2.appendChild(backBtn);
     ROOT.appendChild(s2);
@@ -191,7 +206,7 @@
     function eatSlice(k) { c.save(); c.globalCompositeOperation = 'destination-out'; c.beginPath(); c.moveTo(170, 170); c.arc(170, 170, R * 1.12, S0 + k * W - 0.01, S0 + (k + 1) * W + 0.01); c.closePath(); c.fill(); c.restore(); left[k] = false; paint(); }
     function count() { return left.filter(function (v) { return !v; }).length; }
     for (var j = 0; j < Math.min(eaten, 5); j++) eatSlice(j);
-    paint(); slicesLine.textContent = t.eaten(count());
+    paint(); slicesLine.textContent = t.eaten(count()); fun.setSlices(count());
     eatBtn.addEventListener('click', function (e) {
       var rc = img.getBoundingClientRect(), k = 0;
       if (e.detail && rc.width) {
@@ -200,7 +215,7 @@
       }
       if (!left[k]) { var best = -1, bd = 9; for (var q = 0; q < SL; q++) if (left[q]) { var dd = Math.min((q - k + SL) % SL, (k - q + SL) % SL); if (dd < bd) { bd = dd; best = q; } } k = best; }
       if (k < 0) return;
-      eatSlice(k); var n = count(); slicesLine.textContent = t.eaten(n); track('slice_eaten', n);
+      eatSlice(k); var n = count(); slicesLine.textContent = t.eaten(n); fun.setSlices(n); track('slice_eaten', n);
       try { if (navigator.vibrate) navigator.vibrate(12); } catch (er) { /* ignore */ }
       eatBtn.classList.remove('chomp'); void eatBtn.offsetWidth; eatBtn.classList.add('chomp');
       if (n >= SL) finish(); else hint.textContent = t.lines[Math.min(n - 1, t.lines.length - 1)] + ' ' + t.togo(SL - n);
@@ -241,6 +256,85 @@
         P.burst(gift ? 'gold' : 'crumbs');
       }, 260);
     }
+  }
+
+  /* The fun receipt: a shareable order slip above Gerald's review. The shared image never has the note, any names,
+     the pizza's name, letters spelled on the pizza, the gift code or the button link. */
+  function hashOf(str) { var h = 2166136261; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function funFacts(pizza) {
+    var f = t.fun, seed = hashOf(TOKEN || (pizza.name || '') + (pizza.seed || 0)), tops = (pizza.toppings || []).filter(function (x) { return x.k !== 'label'; });
+    var counts = {}; tops.forEach(function (x) { counts[x.k] = (counts[x.k] || 0) + 1; });
+    var starK = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; })[0];
+    var sauce = (P.SAUCES[pizza.sauce] || {}).n, bl = pizza.bakeLevel || 0;
+    var e1 = seed % f.extras.length, e2 = (e1 + 1 + (seed >>> 4) % (f.extras.length - 1)) % f.extras.length;
+    var rows = [];
+    if (sauce) rows.push([f.sauce, sauce]);
+    rows.push([f.toppings, f.counted(tops.length)]);
+    if (starK && P.TOPS[starK]) rows.push([f.star, P.TOPS[starK].n + ' x' + counts[starK]]);
+    rows.push([f.bake, f.bakes[Math.max(0, Math.min(3, bl))]]);
+    rows.push(f.extras[e1]); rows.push(f.extras[e2]);
+    return { order: 1000 + seed % 9000, rows: rows, footer: f.footers[(seed >>> 8) % f.footers.length] };
+  }
+  function funReceipt(pizza) {
+    var f = t.fun, facts = funFacts(pizza), eatenN = 0;
+    var row = function (a, b) { return el('div', { class: 'fr-row' }, [el('span', { text: a }), el('span', { text: b })]); };
+    var slicesVal = el('span', { text: '0/6' });
+    var status = el('p', { class: 'fr-status', 'aria-live': 'polite' });
+    var shareBtn = el('button', { class: 'u-btn small primary', type: 'button', text: f.share });
+    var card = el('div', { class: 'fun-receipt' }, [
+      el('div', { class: 'fr-head' }, [el('strong', { text: 'SLICE OF THANKS' }), el('span', { text: f.order + facts.order + ' · ' + new Date().toLocaleDateString(lang === 'es' ? 'es' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }),
+        el('span', { text: f.kitchen }), el('span', { text: f.driver })]),
+      el('hr'), row('1x ' + (pizza.name || f.item), f.house)
+    ].concat(facts.rows.map(function (x) { return row(x[0], x[1]); })).concat([
+      el('div', { class: 'fr-row' }, [el('span', { text: f.slices }), slicesVal]),
+      el('hr'), el('div', { class: 'fr-row fr-total' }, [el('span', { text: f.total }), el('span', { text: '$0.00' })]), el('span', { class: 'fr-paid', text: f.paid }),
+      el('hr'), el('p', { class: 'fr-foot', text: facts.footer + ' ♥' }), el('div', { class: 'fr-bar', 'aria-hidden': 'true' }),
+      shareBtn, el('p', { class: 'fr-note', text: f.privacy }), status
+    ]));
+    shareBtn.addEventListener('click', function () {
+      status.textContent = f.making;
+      shareImage(pizza, facts, eatenN).then(function (blob) {
+        if (!blob) { status.textContent = ''; return; }
+        track('receipt_shared');
+        var file = null; try { file = new File([blob], 'slice-of-thanks-receipt.png', { type: 'image/png' }); } catch (e) { /* older browsers */ }
+        if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], text: f.shareText }).then(function () { status.textContent = ''; }, function () { status.textContent = ''; });
+        } else {
+          var a = el('a', { href: URL.createObjectURL(blob), download: 'slice-of-thanks-receipt.png' }); document.body.appendChild(a); a.click(); a.remove();
+          status.textContent = f.saved;
+        }
+      });
+    });
+    return { card: card, setSlices: function (n) { eatenN = n; slicesVal.textContent = n + '/6'; } };
+  }
+  function shareImage(pizza, facts, eatenN) {
+    var f = t.fun, W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    var c = cv.getContext('2d'), mono = '"Courier Prime","Courier New",monospace';
+    c.fillStyle = '#FFF3E0'; c.fillRect(0, 0, W, H);
+    for (var x = 0; x < W; x += 40) for (var y = 0; y < 2; y++) { c.fillStyle = (x / 40 + y) % 2 ? '#FFF3E0' : '#D62828'; c.fillRect(x, y * 40, 40, 40); }
+    // The pizza without any spelled letters
+    var pc = P.clonePizza(pizza); pc.sign = null; pc.toppings = (pc.toppings || []).filter(function (x) { return x.k !== 'label'; });
+    var pcv = document.createElement('canvas'); P.drawPizza(pcv, pc, 350); c.drawImage(pcv, (W - 350) / 2, 96, 350, 350);
+    // The paper
+    var px = 150, py = 466, pw = W - 300, ph = 530 + 44 * facts.rows.length;
+    c.fillStyle = 'rgba(62,36,22,.18)'; c.fillRect(px + 10, py + 12, pw, ph);
+    c.fillStyle = '#fffdf5'; c.fillRect(px, py, pw, ph);
+    c.fillStyle = '#FFF3E0'; for (var z = px; z < px + pw; z += 28) { c.beginPath(); c.arc(z + 14, py + ph + 1, 10, Math.PI, 0); c.fill(); }
+    c.fillStyle = '#2c2420'; c.textBaseline = 'alphabetic';
+    var yy = py + 60, L = px + 44, Rt = px + pw - 44;
+    function center(txt, size, bold, color) { c.font = (bold ? '700 ' : '400 ') + size + 'px ' + mono; c.fillStyle = color || '#2c2420'; c.textAlign = 'center'; c.fillText(txt, W / 2, yy); }
+    function line(a, b, bold) { c.font = (bold ? '700 ' : '400 ') + '28px ' + mono; c.fillStyle = '#2c2420'; c.textAlign = 'left'; c.fillText(a, L, yy); c.textAlign = 'right'; c.fillText(b, Rt, yy); yy += 44; }
+    function dash() { c.strokeStyle = '#b9aea3'; c.setLineDash([8, 8]); c.lineWidth = 2; c.beginPath(); c.moveTo(L, yy - 14); c.lineTo(Rt, yy - 14); c.stroke(); c.setLineDash([]); yy += 26; }
+    center('SLICE OF THANKS', 44, true, '#D62828'); yy += 44;
+    center(f.order + facts.order, 26, false); yy += 44; dash();
+    line('1x ' + f.item, f.house, true);
+    facts.rows.forEach(function (r) { line(r[0], r[1].length > 30 ? r[1].slice(0, 29) + '.' : r[1]); });
+    line(f.slices, (eatenN || 6) + '/6'); dash();
+    line(f.total, '$0.00', true); center(f.paid, 26, false); yy += 52;
+    center(facts.footer, 26, true); yy += 30;
+    for (var b = 0; b < 60; b++) { c.fillStyle = '#2c2420'; var bw = (hashOf(String(facts.order + b)) % 3) + 2; c.fillRect(W / 2 - 270 + b * 9, yy, bw, 50); }
+    c.font = '700 30px ' + mono; c.fillStyle = '#3E2416'; c.textAlign = 'center'; c.fillText(f.get, W / 2, Math.min(H - 30, py + ph + 70));
+    return new Promise(function (res) { try { cv.toBlob(function (bl) { res(bl); }, 'image/png'); } catch (e) { res(null); } });
   }
 
   function footer(who, sender) {

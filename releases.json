@@ -323,6 +323,12 @@
       "commit": "efcd9866a02e71b5bae988983c8273652b90044d",
       "date": "2026-10-26",
       "notes": "14 day Pro trial with welcome, Home card and Get set up checklist; Send one back adds the sender to People and fills in the Send step; reply email starts as the login email; open box finish on the pizza page; api-0.17.0."
+    },
+    {
+      "version": "v0.17.1",
+      "commit": "ee5cc8c165c1821b8a0a48861cdb9dd705b53860",
+      "date": "2026-10-26",
+      "notes": "One trial: the 14 days come with the free account. Upgrade wording fixed. Home page (bd/home-page.html) with pricing, who it is for and screen grabs; SOT-Join 1.2.0 points at the free plan."
     }
   ]
 }

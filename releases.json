@@ -353,6 +353,12 @@
       "commit": "e4efff1c347350d5c7f691fd9b041df33c85ad6c",
       "date": "2026-10-26",
       "notes": "Fun receipt on the pizza page (order number, sauce, toppings Gerald counted, star topping, bake, two fun lines, slices devoured, total $0.00 paid in gratitude, footer joke, barcode) above and separate from Gerald's review. Share my receipt makes an image without the note, names, pizza name, spelled letters, gift code or button link. Event receipt_shared."
+    },
+    {
+      "version": "v0.18.4",
+      "commit": "8a0f65be820556f7b066e6830c302cb09903abf5",
+      "date": "2026-10-26",
+      "notes": "Receipt: Slice of Thanks logo, PAID WITH GRATITUDE stamp lands when shared, pizza confetti and a crew line, share image is a JPG with Approved by Gerald, Inspected by Potato and a paw print. Hidden gift note moved above the pizza. Send a pizza back also shows right under the sender's button, in mustard so it reads in dark mode. Headings readable in dark mode."
     }
   ]
 }

@@ -1,11 +1,11 @@
 <?php
-/* SOT-Checkout: Slice of Thanks look for BD's sign up pages (/checkout/...). Version 1.3.3
+/* SOT-Checkout: Slice of Thanks look for BD's sign up pages (/checkout/...). Version 1.4.0
    BD's checkout pages skip the site footer widgets, so this widget is loaded from the default widget
    Bootstrap Theme - Signup Page - H1 Title, which only appears on the sign up pages.
    Add ?sotdebug=1 to the page address to see a small box proving the widget loaded there. */
 $sot_co_uri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
 if (strpos($sot_co_uri, 'sotdebug=1') !== false) {
-  echo '<div style="position:fixed;bottom:8px;left:8px;z-index:99999;background:#fff;color:#000;border:2px solid #000;border-radius:8px;padding:6px 10px;font:13px monospace">SOT-Checkout 1.3.3 loaded. Server address: ' . htmlspecialchars($sot_co_uri) . '</div>';
+  echo '<div style="position:fixed;bottom:8px;left:8px;z-index:99999;background:#fff;color:#000;border:2px solid #000;border-radius:8px;padding:6px 10px;font:13px monospace">SOT-Checkout 1.4.0 loaded. Server address: ' . htmlspecialchars($sot_co_uri) . '</div>';
 }
 ?>
 <!-- The script hides all of this on any page whose address does not start with /checkout.
@@ -24,9 +24,10 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 .sot-login{max-width:620px;margin:0 auto;padding:28px 0 56px;display:flex;flex-direction:column;gap:18px}
 .sot-login-head{background:var(--sot-tomato);color:var(--sot-tomato-ink);border:3px solid var(--sot-edge);border-radius:24px;
   box-shadow:6px 6px 0 var(--sot-edge);padding:18px 22px 16px;text-decoration:none;display:block}
-.sot-login-head .sot-slice{font:400 26px "Yellowtail",cursive;color:var(--sot-mustard);display:block;line-height:1}
-.sot-login-head .sot-thanks{font:400 38px "Shrikhand",Georgia,serif;display:block;line-height:1.05;text-shadow:3px 3px 0 var(--sot-edge)}
-.sot-login-head .sot-tag{font-weight:600;font-size:15px;display:block;margin-top:6px}
+.sot-login-head{display:flex;align-items:center;gap:14px}
+.sot-login-head .sot-env{width:44px;height:auto;flex:none;transform:rotate(-8deg);filter:drop-shadow(3px 3px 0 rgba(58,29,18,.55))}
+.sot-login-head .sot-logo{display:block;width:180px;max-width:100%;height:auto;filter:drop-shadow(3px 3px 0 rgba(58,29,18,.55))}
+.sot-login-head .sot-tag{font-weight:600;font-size:15px;display:block;margin-top:8px;color:#FFF3E0!important}
 .sot-login-card{background:var(--sot-surface);border:3px solid var(--sot-edge);border-radius:22px;box-shadow:6px 6px 0 var(--sot-edge);padding:22px}
 .sot-login-card h1,.sot-login-card h2,.sot-login-card h3{font:400 27px "Shrikhand",Georgia,serif;margin:0 0 14px;color:var(--sot-ink)}
 .sot-login-card hr{display:none}
@@ -88,7 +89,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
   background:var(--sot-tomato)!important;border:3px solid var(--sot-edge)!important;box-shadow:4px 4px 0 var(--sot-edge)!important}
 </style>
 <div class="sot-login" id="sot-login">
-  <a class="sot-login-head" href="/kitchen"><span class="sot-slice">Slice of</span><span class="sot-thanks">Thanks</span><span class="sot-tag">Thank-you pizzas, made fresh after every meeting</span></a>
+  <a class="sot-login-head" href="/kitchen"><img class="sot-env" src="https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand/logo/pizza-envelope-96.png" alt=""><span><img class="sot-logo" src="https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand/logo/slice-of-thanks-logo-white-360.png" alt="Slice of Thanks"><span class="sot-tag">Pizzas for every thank-you and celebration</span></span></a>
   <div class="sot-plan-line" id="sot-plan-line"><span>Create your account</span><b id="sot-plan-name"></b></div>
   <div class="sot-login-card" id="sot-login-slot"></div>
   <div class="sot-login-foot">

@@ -1,4 +1,4 @@
-<!-- SOT-Join: the Slice of Thanks sign up page for /join. Version 1.0.1
+<!-- SOT-Join: the Slice of Thanks sign up page for /join. Version 1.1.0
      Put it alone in the /join page content. Each plan button goes to BD's own sign up form for that plan
      (BD creates the account, shows the legal checkbox and takes any payment). Plan IDs: A Slice 10, The Whole Pie 12, Pizza Party 11. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,9 +15,10 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 .sot-join{max-width:960px;margin:0 auto;padding:28px 0 56px;display:flex;flex-direction:column;gap:22px}
 .sot-join-head{max-width:460px;width:100%;margin:0 auto;box-sizing:border-box;background:var(--sot-tomato);color:var(--sot-tomato-ink);border:3px solid var(--sot-edge);border-radius:24px;
   box-shadow:6px 6px 0 var(--sot-edge);padding:18px 22px 16px;text-decoration:none;display:block}
-.sot-join-head .sot-slice{font:400 26px "Yellowtail",cursive;color:var(--sot-mustard);display:block;line-height:1}
-.sot-join-head .sot-thanks{font:400 38px "Shrikhand",Georgia,serif;display:block;line-height:1.05;text-shadow:3px 3px 0 var(--sot-edge)}
-.sot-join-head .sot-tag{font-weight:600;font-size:15px;display:block;margin-top:6px}
+.sot-join-head{display:flex;align-items:center;gap:14px}
+.sot-join-head .sot-env{width:44px;height:auto;flex:none;transform:rotate(-8deg);filter:drop-shadow(3px 3px 0 rgba(58,29,18,.55))}
+.sot-join-head .sot-logo{display:block;width:180px;max-width:100%;height:auto;filter:drop-shadow(3px 3px 0 rgba(58,29,18,.55))}
+.sot-join-head .sot-tag{font-weight:600;font-size:15px;display:block;margin-top:8px;color:#FFF3E0!important}
 .sot-join-title{text-align:center}
 .sot-join-title h2{font:400 32px "Shrikhand",Georgia,serif;margin:0 0 6px;color:var(--sot-ink)}
 .sot-join-title p{margin:0;color:var(--sot-muted)}
@@ -41,7 +42,7 @@ body{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-
 .sot-join-in a{display:inline-block;margin-top:12px;text-decoration:none;font-weight:700;color:var(--sot-tomato-ink);background:var(--sot-tomato);border:3px solid var(--sot-edge);border-radius:999px;padding:12px 22px}
 </style>
 <div class="sot-join" id="sot-join">
-  <a class="sot-join-head" href="/kitchen"><span class="sot-slice">Slice of</span><span class="sot-thanks">Thanks</span><span class="sot-tag">Thank-you pizzas, made fresh after every meeting</span></a>
+  <a class="sot-join-head" href="/kitchen"><img class="sot-env" src="https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand/logo/pizza-envelope-96.png" alt=""><span><img class="sot-logo" src="https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand/logo/slice-of-thanks-logo-white-360.png" alt="Slice of Thanks"><span class="sot-tag">Pizzas for every thank-you and celebration</span></span></a>
   <div class="sot-join-title">
     <h2>Pick your plan</h2>
     <p>Start free. Upgrade anytime from your Kitchen.</p>

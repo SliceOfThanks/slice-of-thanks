@@ -389,6 +389,12 @@
       "commit": "e31f49702447c057743cd011fe5503d9e0657715",
       "date": "2026-10-26",
       "notes": "Invite friends card moves above What's new on the Crew tab."
+    },
+    {
+      "version": "v0.19.3",
+      "commit": "a7250c761238634ec7801dd64d518e40e26ecefd",
+      "date": "2026-10-26",
+      "notes": "FAQ: How do I get help, report a bug or share an idea? The help button, the four feedback types, screenshot and file attach, Roadmap (see and vote) and Announcements, 3 pictures of the widget, and an Open help and feedback button."
     }
   ]
 }

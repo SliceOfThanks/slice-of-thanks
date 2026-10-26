@@ -383,6 +383,12 @@
       "commit": "146bedc1e0bdf647a394a0f29df4ae8cfd3420f1",
       "date": "2026-10-26",
       "notes": "Invite friends card: your QR code shown on the card, Download QR code saves a print-ready picture (Slice of Thanks title, the code, Join free and get 20 bonus emails, Invited by you), and Copy link is its own one-tap button that says Copied!"
+    },
+    {
+      "version": "v0.19.2",
+      "commit": "e31f49702447c057743cd011fe5503d9e0657715",
+      "date": "2026-10-26",
+      "notes": "Invite friends card moves above What's new on the Crew tab."
     }
   ]
 }

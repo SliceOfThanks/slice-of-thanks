@@ -321,12 +321,14 @@ textarea{min-height:92px;resize:vertical}
 .tip{display:flex;gap:10px;align-items:flex-start}
 .tip .g-av{width:44px;height:44px}
 .faq-list{display:flex;flex-direction:column;margin:10px 0 4px}
-.faq{border-top:2px dashed var(--line)}.faq:first-child{border-top:0}
+.faq{border-top:2px dashed var(--line)}.faq:first-child,.faq-cat+.faq{border-top:0}
 .faq>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;font-weight:700;line-height:1.3}
 .faq>summary::-webkit-details-marker{display:none}
 .faq>summary::after{content:'+';flex:none;width:26px;height:26px;border:2.5px solid var(--edge);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;background:var(--surface)}
 .faq[open]>summary::after{content:'-';background:var(--mustard);color:#3E2416}
-.faq p{margin:0 0 12px;color:var(--muted);font-size:.92rem;line-height:1.5}
+.faq-body{padding:0 0 12px}.faq-body p,.faq-body ol{margin:0 0 8px;color:var(--muted);font-size:.92rem;line-height:1.5}.faq-body ol{padding-left:1.3em}.faq-body b{color:var(--ink)}.faq-body .btn-row{margin-top:10px}
+.faq-cat{margin:14px 0 2px;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--tomato-text)}.faq-cat:first-child{margin-top:0}
+.faq>summary .tag{font-size:.7rem;vertical-align:middle}.faq-egg>summary{font-weight:500;font-style:italic;color:var(--muted)}
 .faq-help{margin:12px 0 0;font-size:.9rem}.faq-help a{color:var(--tomato-text);font-weight:700}
 .feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
 .feed li{display:flex;flex-direction:column;gap:2px;padding-bottom:12px;border-bottom:2px dashed var(--line)}
@@ -1990,32 +1992,109 @@ $('#csvFile').addEventListener('change',e=>{const f=e.target.files[0];if(!f)retu
 $('#sampleCsv').onclick=()=>loadList(SAMPLE_CSV);
 $('#copyHeader').onclick=()=>{try{navigator.clipboard.writeText('Name,Email,Phone,Company,Vegan').then(()=>toast('Column headers copied. Paste them into row 1 of your spreadsheet.'),()=>toast('Headers: Name, Email, Phone, Company, Vegan'))}catch(e){toast('Headers: Name, Email, Phone, Company, Vegan')}};
 $('#bulkBack').onclick=()=>show('people');
-/* FAQs on the Crew tab: the first 6 show, See more opens the rest */
+/* FAQs on the Crew tab: the first 6 show, See more opens the rest.
+   Feature answers use what (what it is), why (why use it), how (setup steps), value (what you get) and go (Take me there). */
 const FAQS=[
- ['What is Slice of Thanks?','A thank-you that people actually open. You make a digital pizza with a personal note and send it by email. They open the box, read your note and eat it one slice at a time. Anything you hid under the pizza, like a gift code, shows up after the last slice.'],
- ['How do I make and send a pizza?','Tap Kitchen and go through the steps: Dough, Sauce, Toppings, Bake, Box and Send. On the Send step, pick someone from People or type a new name and email, then tap Send pizza. Short on time? Tap Hire Gerald on Home and he makes the whole pizza for you.'],
- ['What does the person I send it to get?','An email from Potato with a link to their pizza. They open the box, read your note, eat six slices, and see Gerald\'s review on the receipt. Your button, like Book a follow-up, sits under the pizza. They do not need an account, and they can send one back.'],
- ['What are the plans?','A Slice is free forever: 10 emails a month, Kraft and Classic boxes, classic toppings, People, Hire Gerald and date reminders. The Whole Pie is $9 a month or $90 a year: 250 emails a month, your logo and brand colors, every box style and topping, gift codes, your own button, pizzas after meetings and on birthdays that send on their own, and sending to a whole list. Pizza Party for teams is coming soon. Plans count emails sent, not pizzas made.'],
- ['How does the free trial work?','Every new account gets 14 days of The Whole Pie, with no card needed and 50 emails to use. We email you 3 days before it ends and again on the last day. After the trial you move to A Slice, free forever, unless you upgrade. Nothing you made is lost.'],
- ['How do I get set up?','Follow the Get set up checklist on Home: your name and business, where replies go, your logo and colors, your signature pizza, a test pizza to yourself, your people, your calendar, Gerald never forgets a date, and your birthday. Each step has a Do it button, and you can skip any of them.'],
- ['Can I see a pizza before I send it?','Yes. On the Send step, tap Preview what they\'ll see. Or tap Send a test to myself: it goes to your own email, is marked TEST SEND, and does not use any of your emails. You get 5 free tests.'],
- ['What is Hire Gerald?','Gerald, our Head Chef, makes a pizza for you. Tell him who it is for, the message and the vibe. He builds, bakes, names and boxes it, writes the note, and you sign it and send. Hire Gerald is free on every plan.'],
- ['Can pizzas go out after my meetings?','Yes. Connect Calendly or TidyCal in Settings. Your meetings show on Home, and when one ends your signature pizza goes to the guest. You choose which meetings get one: all of them, the ones you pick, or people with certain tags. On A Slice the pizza waits on Home for you to send.'],
- ['What is Gerald never forgets a date?','Add birthdays and work anniversaries to people in People and turn it on in Settings. On the day, Gerald makes a pizza for that person at 8 AM. On The Whole Pie it can send on its own. On A Slice it waits on Home for you to send.'],
- ['How do gift codes and buttons work?','On The Whole Pie, add a gift or coupon code on the Box step. It stays hidden until the last slice is eaten. You can also add your own button, like Book a follow-up or Leave a review, which sits right under the pizza.'],
- ['What are signature pizzas and box presets?','A signature pizza is your go-to pizza, ready to send in one tap and the one that goes out after meetings. A box preset saves a whole box setup: style, sticker, confetti, note, button and gift. Find both in Settings and in the Kitchen.'],
- ['What if I run out of emails?','On The Whole Pie, buy an email pack: 100 for $5, 500 for $15 or 1,000 for $25. Pack emails last 12 months and are used after your monthly ones. On A Slice, Special Delivery is $2.99 and unlocks Pro features for one pizza, including its send.'],
- ['Can I send to a group or a list?','Yes, on The Whole Pie. In People, tap Send to a group and pick people by tag, or upload a CSV list. Each person gets their own pizza with their name filled in the note.'],
- ['Who are Gerald and Potato?','Gerald is a raccoon and our Head Chef. He makes pizzas on request and reviews every pizza on the receipt. Potato is a bulldog and our Head of Delivery. She drives the scooter and brings every pizza to the door. Meet them in Crew.'],
- ['What is Potato\'s Treat Jar?','Potato hid easter eggs all over the app. Find them to earn Treats, then spend Treats on Secret Menu items like Potato confetti and the Gold Bow Tie box. Treats cannot be bought.'],
- ['What is Gerald\'s Birthday Special?','Add your birthday (month and day only) in Settings, and on the day Gerald and Potato send you a Birthday Special with a gift under the pizza. For 30 days after, you can send the Birthday Special to anyone in People.'],
- ['Do I need permission to send a pizza?','Yes. Only send to people who know you, like clients, customers, colleagues or friends. On the Send step, pick how you know them. Every email has an unsubscribe link, and people who opt out never get another pizza from you.'],
- ['How do I change my plan or cancel?','Go to Settings, then Billing. Tap Change plan to upgrade or downgrade, or Update card or billing address. You can cancel anytime. Payments go through our secure checkout, and we never see your card number. To close your account, use Delete my account and data in Settings.'],
- ['How do I get help?','Email pizza@sliceofthanks.app with your question, and a real person writes back. You can also tap the feedback button on any screen to report a bug or suggest an idea.']];
+ {cat:'Start here',q:'What is Slice of Thanks?',what:'A thank-you people actually open. You make a digital pizza with a personal note and send it by email. They open the box, read your note and eat it one slice at a time. Anything you hid under the pizza, like a gift code, shows up after the last slice.',
+  why:'A plain thank-you email gets skimmed and forgotten. A pizza gets opened, played with and remembered, and your button sits right under it, ready for the next step.',
+  how:['Tap Kitchen and make a pizza (or tap Hire Gerald on Home and he makes it).','Write a short note and dress the box.','Send it to someone from People, or type a new name and email.'],
+  value:'More replies, more booked follow-ups, more referrals and more reviews. Every pizza is a reason for someone to get back in touch with you.',go:{label:'Make a pizza',view:'make'}},
+ {cat:'Start here',q:'Who are Gerald and Potato?',a:['Gerald is a raccoon and our Head Chef. He runs the kitchen, wears a very important bow tie and has opinions about everything you bake. He makes pizzas for you when you Hire Gerald, gives you tips while you cook, and writes a review on the receipt of every pizza you send.','Potato is a bulldog and our Head of Delivery. She drives the red scooter, brings every pizza to the door with your name on her delivery box, and hid easter eggs all over the app. She is a very good girl. Gerald says she ate his last bow tie.','Say hi to them in Crew. Some say they like being tapped. Some say they do not.'],go:{label:'Meet the crew',view:'gerald',sel:'#meetCrew'}},
+ {cat:'Start here',q:'How do I get set up?',what:'The Get set up checklist on Home. It walks you through every step that makes your pizzas look like you and land with the right people.',
+  why:'A set up account sends better pizzas in less time. Your name, logo, signature pizza and people are ready, so sending takes one tap.',
+  how:['Open Home and find Get set up.','Tap Do it on each step: your name and business, where replies go, your logo and colors, your signature pizza, a test pizza to yourself, your people, your calendar, Gerald never forgets a date, and your birthday.','Skip anything you do not need. You can come back to it later.'],
+  value:'Finish every step and Potato gives you 20 Treats. More importantly, pizzas start going out on their own after meetings and on birthdays.',go:{label:'Open my checklist',view:'today',sel:['#setupCard','#trialCard']}},
+ {cat:'Start here',q:'How do I make and send my first pizza?',what:'The Kitchen, where you make a pizza in six steps: Dough, Sauce, Toppings, Bake, Box and Send.',
+  why:'The pizza is the fun part for them and for you. Spelling a word or their name in pepperoni shows you made it for them.',
+  how:['Tap Kitchen. Toss the dough, pick a sauce and add toppings. Type a word to spell it in pepperoni.','Bake it. Pick a bake time and name your pizza.','On Box, pick a box style, sticker and confetti, and write your note.','On Send, pick someone from People or type a name and email, choose how you know them, and tap Send pizza.'],
+  value:'A thank-you that takes about two minutes to make and that people talk about.',go:{label:'Go to the Kitchen',view:'make'}},
+ {cat:'Start here',q:'What are the plans?',a:['A Slice is free forever: 10 emails a month, Kraft and Classic boxes, classic toppings, People, Hire Gerald and date reminders.','The Whole Pie is $9 a month or $90 a year: 250 emails a month, your logo and brand colors, every box style and topping, gift codes, your own button, pizzas that send on their own after meetings and on birthdays, and sending to a whole group or list.','Pizza Party for teams is coming soon.','Plans count emails sent, never pizzas made. Make as many pizzas as you like.'],go:{label:'See my plan',view:'settings',sel:'#planCard'}},
+ {cat:'Start here',q:'How does the free trial work?',a:['Every new account gets 14 days of The Whole Pie, with no card needed and 50 emails to use. Try every feature in this list while you have it.','We email you 3 days before the trial ends and again on the last day. After the trial you move to A Slice, free forever, unless you upgrade. Nothing you made is lost.'],go:{label:'See my trial',view:'today',sel:['#trialCard','#setupCard']}},
+
+ {cat:'Get the most out of every feature',q:'What is Hire Gerald?',what:'Gerald makes the whole pizza for you. You tell him who it is for, what you want to say and the vibe. He builds it, bakes it, names it, boxes it and writes the note.',
+  why:'For the days you want to say thank you and have no time. It is the fastest way to send something that still feels personal.',
+  how:['On Home, tap Hire Gerald (or tap it on the Dough step in the Kitchen).','Tell him who it is for, the occasion and the vibe.','Read his note, change anything you like, sign it and send.'],
+  value:'A finished, personal pizza in under a minute. Free on every plan.',go:{label:'Hire Gerald',run:'hire'}},
+ {cat:'Get the most out of every feature',q:'How do I see what they will get before I send?',what:'Two ways: Preview what they\'ll see, and Send a test to myself.',
+  why:'You see exactly how your note, box and button look in a real inbox before a client does.',
+  how:['Make a pizza and go to the Send step.','Tap Preview what they\'ll see to open it on screen.','Or tap Send a test to myself. It goes to your own email and is marked TEST SEND.'],
+  value:'Confidence before you send. You get 5 free tests, and they never use your emails.',go:{label:'Go to the Kitchen',view:'make'}},
+ {cat:'Get the most out of every feature',q:'What is a signature pizza?',what:'Your go-to pizza, saved and ready to send in one tap. It is also the pizza that goes out after meetings.',
+  why:'You stop starting from scratch. Your best pizza, note and box go out the same way every time.',
+  how:['Go to Settings, then Your signature pizza.','Tap Add a premade to start from one of Gerald\'s, or save one you made in the Kitchen.','Tap Make main on the one you want sent after meetings. Rename any of them.'],
+  value:'One tap sending, and a recognizable thank-you people start to know as yours.',go:{label:'Set my signature pizza',view:'settings',sel:'#sigCard'}},
+ {cat:'Get the most out of every feature',q:'How do I add my logo, brand colors and box styles?',pro:true,what:'Your logo and two brand colors on every box, plus every box style, sticker and confetti. Box presets save a whole box setup.',
+  why:'Your pizza looks like it came from your business, so they remember who sent it.',
+  how:['Go to Settings, then Your box.','Upload your logo and pick Color 1 and Color 2.','In the Kitchen on the Box step, pick a style, sticker and confetti. Save it as a box preset to reuse in one tap.'],
+  value:'Brand recognition in every inbox you land in.',go:{label:'Set up my box',view:'settings',sel:'#boxCard'}},
+ {cat:'Get the most out of every feature',q:'What is the button under the pizza?',pro:true,what:'Your own button, like Book a follow-up, Leave a review or Claim your offer. It sits right under the pizza while they eat.',
+  why:'This is where the conversation starts. They are smiling and paying attention, and the next step is one tap away.',
+  how:['In the Kitchen, go to the Box step.','Add a button label and the link it opens, like your booking page or review page.','Use one clear ask per pizza.'],
+  value:'Booked calls, reviews and replies right from the pizza.',go:{label:'Add my button',view:'make'}},
+ {cat:'Get the most out of every feature',q:'How do gift codes work?',pro:true,what:'A gift or coupon code hidden under the pizza. It shows up after the last slice is eaten, with Copy code and Use it now buttons.',
+  why:'A reward at the end gets people to eat every slice and gives them a reason to come back to you.',
+  how:['In the Kitchen, go to the Box step and open the gift.','Type what it is, like 20% off your next order, and the code.','Add a link if the code is used on your website.'],
+  value:'A thank-you that turns into a repeat order or booking.',go:{label:'Add a gift',view:'make'}},
+ {cat:'Get the most out of every feature',q:'How do I use People and tags?',what:'Your list of everyone you send pizzas to, with their email, birthday, work anniversary, tags and how you know them.',
+  why:'Tags let you send the right pizza to the right group, and dates let Gerald remember for you.',
+  how:['Tap People, then Add a person. Add their name, email and how you know them.','Add a birthday or work anniversary if you know it.','Add tags like Client, Referral partner or VIP.','On The Whole Pie, upload a CSV to add everyone at once.'],
+  value:'You never forget who to thank, and every pizza is filled in with their name.',go:{label:'Open People',view:'people'}},
+ {cat:'Get the most out of every feature',q:'Can I send to a group or a list?',pro:true,what:'Send to a group sends a pizza to many people at once. Each person gets their own pizza with their name in the note.',
+  why:'Thanking every client, every referral partner or every event guest takes one send.',
+  how:['Tap People, then Send to a group.','Pick people by tag, select them one by one, or upload a CSV.','Pick a box preset and send.'],
+  value:'Holiday thank-yous, event follow-ups and client appreciation in minutes. Each email counts as one send.',go:{label:'Send to a group',view:'people'}},
+ {cat:'Get the most out of every feature',q:'Can pizzas go out after my meetings?',what:'Connect Calendly or TidyCal and your meetings show on Home. When a meeting ends, your signature pizza goes to the guest.',
+  why:'A thank-you that lands within the hour, while the conversation is still fresh, gets the most replies.',
+  how:['Go to Settings, then Calendar, and connect Calendly or TidyCal.','In After a meeting ends, choose all meetings, the ones you pick, or people with certain tags.','Set your signature pizza so it knows what to send.','On Home, tap Plan a pizza now on any upcoming meeting to make a special one.'],
+  value:'Follow-up on autopilot. On A Slice the pizza waits on Home for you to send. On The Whole Pie it sends on its own.',go:{label:'Connect my calendar',view:'settings',sel:'#calCard',title:'Calendar'}},
+ {cat:'Get the most out of every feature',q:'What is Gerald never forgets a date?',what:'Birthday and work anniversary pizzas. On the day, Gerald makes a pizza for that person at 8 AM.',
+  why:'Remembering someone\'s day is the easiest way to stay in touch without asking for anything.',
+  how:['Add birthdays and work anniversaries to people in People.','Go to Settings, then Gerald never forgets a date, and turn it on.','Choose to have pizzas wait for you or send on their own.'],
+  value:'Relationships that stay warm all year. On A Slice the pizza waits on Home. On The Whole Pie it can send on its own.',go:{label:'Turn it on',view:'settings',sel:'#datesCard'}},
+ {cat:'Get the most out of every feature',q:'What is Gerald\'s Birthday Special?',what:'A pizza from Gerald and Potato to you on your birthday, with a gift under it.',
+  why:'Everyone deserves pizza on their birthday. You also get to send the Birthday Special to anyone for 30 days after.',
+  how:['Go to Settings and add your birthday in the You card (month and day only).','Keep Send me a birthday pizza turned on.','On your birthday, check your email at 8 AM.'],
+  value:'A birthday gift from us, plus a special pizza to share with your people.',go:{label:'Add my birthday',view:'settings',sel:['#liveBday','#youCard']}},
+ {cat:'Get the most out of every feature',q:'What is the Pizza of the Month?',what:'A themed pizza Gerald designs each month for the season, ready to send in one tap.',
+  why:'Holidays and seasons are natural reasons to reach out. The work is already done.',
+  how:['Find Pizza of the Month on Home.','Tap Pizza of the Month to open it, then tap Send this pizza.'],
+  value:'A timely reason to say hello every month.',go:{label:'See this month',view:'today',sel:'#specialCard'}},
+ {cat:'Get the most out of every feature',q:'What happens when someone sends a pizza back?',what:'Every pizza has a button to send a pizza back to you. When they tap it, your name and email are filled in for them, and you are added to their People.',
+  why:'Thank-yous go both ways, and a pizza back is a reply you can see.',
+  how:['Nothing to set up. Every pizza you send has the button.','When you get a pizza, eat it, and tap the send back button to keep it going.'],
+  value:'More conversations, and new people discovering you through your pizzas.',go:{label:'Open People',view:'people'}},
+ {cat:'Get the most out of every feature',q:'What is Potato\'s Treat Jar?',what:'Potato hid easter eggs all over the app. Find them to earn Treats, then spend Treats on Secret Menu items like Potato confetti and the Gold Bow Tie box.',
+  why:'It is fun, and the Secret Menu items make your pizzas stand out.',
+  how:['Open Crew and find Potato\'s Treat Jar.','Read the hints for each egg you have not found yet.','Spend your Treats on the Secret Menu.'],
+  value:'Rare boxes, sauces and confetti nobody else has. Treats cannot be bought.',go:{label:'Open the Treat Jar',view:'gerald',sel:'#treatJar'}},
+
+ {cat:'Plans, billing and help',q:'What if I run out of emails?',a:['On The Whole Pie, buy an email pack: 100 for $5, 500 for $15 or 1,000 for $25. Pack emails last 12 months and are used after your monthly ones.','On A Slice, Special Delivery is $2.99 and unlocks Pro features for one pizza, including its send.'],go:{label:'See my emails',view:'settings',sel:'#planCard'}},
+ {cat:'Plans, billing and help',q:'Do I need permission to send a pizza?',a:['Yes. Only send to people who know you, like clients, customers, colleagues or friends. On the Send step, pick how you know them.','Every email has an unsubscribe link, and people who opt out never get another pizza from you.']},
+ {cat:'Plans, billing and help',q:'How do I change my plan or cancel?',a:['Go to Settings, then Billing. Tap Change plan to upgrade or downgrade, or Update card or billing address. You can cancel anytime.','Payments go through our secure checkout, and we never see your card number. To close your account, use Delete my account and data in Settings.'],go:{label:'Open Billing',view:'settings',sel:['#liveBilling','#planCard']}},
+ {cat:'Plans, billing and help',q:'How do I get help?',a:['Email pizza@sliceofthanks.app with your question, and a real person writes back.','You can also tap the feedback button on any screen to report a bug or suggest an idea.']},
+ {cat:'Plans, billing and help',egg:true,q:'Psst. Did you read all the way down here?',a:['You did. Potato respects a thorough reader. She left you 10 Treats for it. Spend them in Potato\'s Treat Jar on the Crew tab.','Do not tell Gerald. He thinks nobody reads the FAQs.']}];
 const FAQ_SHOWN=6;let faqAll=false;
-function renderFaq(){const el=$('#faqList');if(!el)return;el.innerHTML='';
- FAQS.forEach(([q,a],i)=>{if(!faqAll&&i>=FAQ_SHOWN)return;const d=document.createElement('details');d.className='faq';
-  const s=document.createElement('summary');s.textContent=q;const p=document.createElement('p');p.textContent=a;d.appendChild(s);d.appendChild(p);el.appendChild(d)});
+function faqGo(g){if(g.run==='hire'){const b=$('#homeHire');show('today');if(b)b.click();return}
+ show(g.view);setTimeout(()=>{let el=null;[].concat(g.sel||[]).some(s=>(el=$(s)));
+  const vw=$('#view-'+g.view);if(!el&&g.title&&vw)vw.querySelectorAll('.card h2').forEach(h=>{if(!el&&h.textContent.trim()===g.title)el=h.closest('.card')});
+  if(el){try{openFold(el)}catch(_){}el.scrollIntoView({behavior:'smooth',block:'start'})}},120)}
+function renderFaq(){const el=$('#faqList');if(!el)return;el.innerHTML='';let cat='';
+ FAQS.forEach((f,i)=>{if(!faqAll&&i>=FAQ_SHOWN)return;
+  if(f.cat!==cat){cat=f.cat;const h=document.createElement('h3');h.className='faq-cat';h.textContent=cat;el.appendChild(h)}
+  const d=document.createElement('details');d.className='faq'+(f.egg?' faq-egg':'');
+  const s=document.createElement('summary');const t=document.createElement('span');t.textContent=f.q;s.appendChild(t);
+  if(f.pro){const tg=document.createElement('span');tg.className='tag';tg.textContent='The Whole Pie';t.appendChild(document.createTextNode(' '));t.appendChild(tg)}
+  d.appendChild(s);const body=document.createElement('div');body.className='faq-body';
+  const para=(txt,lab)=>{const p=document.createElement('p');if(lab){const b=document.createElement('b');b.textContent=lab+' ';p.appendChild(b)}p.appendChild(document.createTextNode(txt));body.appendChild(p)};
+  (f.a||[]).forEach(x=>para(x));
+  if(f.what)para(f.what,'What it is:');if(f.why)para(f.why,'Why use it:');
+  if(f.how){const p=document.createElement('p');const b=document.createElement('b');b.textContent='How to set it up:';p.appendChild(b);body.appendChild(p);
+   const ol=document.createElement('ol');f.how.forEach(x=>{const li=document.createElement('li');li.textContent=x;ol.appendChild(li)});body.appendChild(ol)}
+  if(f.value)para(f.value,'What you get:');
+  if(f.go){const b=document.createElement('button');b.type='button';b.className='btn small primary';b.textContent=f.go.label;b.onclick=()=>faqGo(f.go);const r=document.createElement('div');r.className='btn-row';r.appendChild(b);body.appendChild(r)}
+  d.appendChild(body);
+  if(f.egg)d.addEventListener('toggle',()=>{if(d.open)try{awardEgg('faqread')}catch(_){}});
+  el.appendChild(d)});
  const b=$('#faqMore');b.hidden=FAQS.length<=FAQ_SHOWN;b.textContent=faqAll?'Show fewer questions':'See more questions ('+(FAQS.length-FAQ_SHOWN)+')'}
 $('#faqMore').onclick=()=>{faqAll=!faqAll;renderFaq();if(!faqAll)$('#faqCard').scrollIntoView({block:'start'})};
 renderFaq();
@@ -2377,6 +2456,7 @@ const EGGS=[
  {id:'ducks',title:'The duck pizza',hint:'Potato has strong feelings about ducks.',rw:10},
  {id:'perfectBake',title:"Gerald's perfect bake",hint:'Some pizzas are worth the full wait.',rw:10},
  {id:'bowtie',title:'Bother Gerald',hint:'Gerald is very proud of his bow tie.',rw:5},
+ {id:'faqread',title:'Read the whole menu',hint:'Read every question in the FAQs. Even the last one.',rw:10},
  {id:'holiday',title:'Holiday Potato',hint:'Check back on a holiday.',rw:20,locked:true},
  {id:'back',title:'A pizza back',hint:'Happens when someone you sent a pizza to makes one back.',rw:10,locked:true}];
 const SECRETS=[

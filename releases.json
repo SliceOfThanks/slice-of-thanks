@@ -335,6 +335,12 @@
       "commit": "17c26a63d540818e12d6dc4c60e6ce3785294518",
       "date": "2026-10-26",
       "notes": "Free test sends to yourself (5, no emails), trial reminder emails (3 days left, last day), Gerald's Birthday Special (birthday field, 8 AM send from Gerald and Potato, gift, unlock, sharing, 2026 topper, party hat, candles and sprinkles), Kitchen-first home page with our real pizza, crumbs in the empty box, trial and checklist settings now saved. api-0.18.0, migration launch_extras.sql."
+    },
+    {
+      "version": "v0.18.1",
+      "commit": "8a9ce7a7b46820f73d6e7e89f91096c4ccca56d7",
+      "date": "2026-10-26",
+      "notes": "FAQs on the Crew tab: 20 questions, 6 shown, See more for the rest, help email pizza@sliceofthanks.app."
     }
   ]
 }

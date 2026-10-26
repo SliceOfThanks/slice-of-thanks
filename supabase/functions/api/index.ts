@@ -13,7 +13,7 @@ import { fillNote } from "./lib/merge.ts";
 import { sendCustomer, sendSale } from "./lib/partnero.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.21.0";
+const VERSION = "api-0.21.1";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -453,10 +453,11 @@ async function route(req: Request, path: string): Promise<Response> {
   // A new member arrived through an invite link (code) or a Partnero partner link (partner cookie)
   if (path === "/referral/capture" && req.method === "POST") {
     const code = String(body.code ?? "").replace(/[^A-Za-z0-9]/g, "").slice(0, 16) || null;
-    const partner = String(body.partner ?? "").slice(0, 80) || null;
-    // Partnero's own refer-a-friend cookie holds the inviter's customer key, which is their member id
-    const ref = String(body.referrer ?? "").trim().toLowerCase();
-    const referrer = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(ref) ? ref : null;
+    // Partnero's own refer-a-friend cookie holds the inviter's customer key, which is their member id.
+    // Anything else in it is a partner's key (a partner link can leave either cookie), so it counts as the partner.
+    const ref = String(body.referrer ?? "").trim();
+    const referrer = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ref) ? ref.toLowerCase() : null;
+    const partner = String(body.partner ?? "").slice(0, 80) || (!referrer && ref ? ref.slice(0, 80) : "") || null;
     if (!code && !partner && !referrer) return json(req, { ok: false, code: "no_referrer" });
     return json(req, await rpc("sot_referral_capture", { p_member: memberId, p_code: code, p_referrer: referrer, p_partner: partner, p_source: code || referrer ? "link" : "partner" }));
   }

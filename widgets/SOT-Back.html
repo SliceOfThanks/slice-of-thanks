@@ -1,7 +1,9 @@
-<!-- SOT-Back: a Back to the Kitchen bar on BD's account pages (billing, manage account, password). Version 1.2.0
-     On Change Membership Plan (/account/upgrade) it also shows the member's current plan and what each plan includes,
+<!-- SOT-Back: a Back to the Kitchen bar on two BD pages only: Billing (/account/billing) and Change Membership Plan (/account/upgrade).
+     Version 1.3.0. Nothing changes on any other page.
+     On Change Membership Plan it also shows the member's current plan and what each plan includes,
      and marks Pizza Party as coming soon so nobody can switch to it yet.
-     Paste at the very end of BD's Footer - Scripts widget. It only shows on addresses that start with /account.
+     Paste at the very end of BD's Footer - Scripts widget. BD loads that widget on every page, but this code checks the
+     address first and does nothing unless it is one of the two pages above.
      The app opens these pages in a new tab, so the button closes that tab and the member lands back in the Kitchen.
      If the browser will not close the tab, it opens the Kitchen instead. -->
 <style>
@@ -16,12 +18,17 @@
 .sot-feat-lead { margin: 10px 4px 0; font-weight: 700; font-size: 15px; }
 .sot-soon { opacity: .6; }
 /* Wide BD tables (invoices) scroll sideways inside the page instead of cutting off on a phone */
-@media (max-width: 700px) { body .table-responsive, body table { display: block; max-width: 100%; overflow-x: auto; } body .container, body .row { max-width: 100%; } }
+@media (max-width: 700px) { html.sot-acct .table-responsive, html.sot-acct table { display: block; max-width: 100%; overflow-x: auto; } html.sot-acct .container, html.sot-acct .row { max-width: 100%; } }
 #sot-back span { font-family: 'Shrikhand', Georgia, serif; color: #3E2416; font-size: 18px; }
 </style>
 <script>
 (function () {
-  if (location.pathname.indexOf('/account') !== 0 || document.getElementById('sot-back')) return;
+  /* Only these pages get the bar. Add another address here to show it there too. */
+  var PAGES = ['/account/billing', '/account/upgrade'];
+  var here = false;
+  for (var p = 0; p < PAGES.length; p++) { if (location.pathname.indexOf(PAGES[p]) === 0) { here = true; } }
+  if (!here || document.getElementById('sot-back')) return;
+  document.documentElement.className += ' sot-acct';
   var bar = document.createElement('div');
   bar.id = 'sot-back';
   bar.innerHTML = '<a href="/kitchen">&larr; Back to the Kitchen</a><span>Slice of Thanks</span>';

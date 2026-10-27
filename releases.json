@@ -449,6 +449,12 @@
       "commit": "9cf02400eb49d945176c7c15ca02afa31d03ce10",
       "date": "2026-10-27",
       "notes": "Footer: Stacey links to legalstacey.com and the Product Hunt badge sits at the bottom. The Redeem AppSumo code button hides once an account has all 3 codes."
+    },
+    {
+      "version": "v0.23.3",
+      "commit": "f6d237cf17a0165d79a72b9a43b5985b68157ced",
+      "date": "2026-10-27",
+      "notes": "Settings > Account shows Logged in as with the BD login email. Owner dashboard admin-0.2.0 (SOT-Admin) counts the sign-up question How did you hear about us. api-0.25.1."
     }
   ]
 }

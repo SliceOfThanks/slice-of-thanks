@@ -4,7 +4,7 @@ Last updated: 2026-10-27. Read this file, then STATUS.md (full release history),
 CLAUDE.md has the standing rules. The blueprint (docs/Slice_of_Thanks_Build_Blueprint_v7.docx) is the original source of truth; where later work changed it, STATUS.md wins.
 
 ## Where things stand
-- App v0.23.2 live. Edge function `api` is api-0.25.0 (owner dashboard routes). Owner dashboard admin-0.1.0 (SOT-Admin widget). Partnero: refer-a-friend program, PartneroJS universal integration in BD HEAD records sign-ups; our server reports with email as customer key. Unbox v0.5.0.
+- App v0.23.3 live. Edge function `api` is api-0.25.1. Owner dashboard admin-0.2.0 (SOT-Admin widget). Sign-up question: BD form field sot_heard_from (Stacey adds it in BD), read with the login email into members.heard_from. Partnero: refer-a-friend program, PartneroJS universal integration in BD HEAD records sign-ups; our server reports with email as customer key. Unbox v0.5.0.
 - Live version is whatever `app_settings.code_version` says (live and staging rows). Every release is a row in `releases` and an entry in releases.json.
 - Launch work is done except the open items below. Everything not launch-critical goes to docs/ROADMAP.md (and Userback) only with Stacey's approval.
 

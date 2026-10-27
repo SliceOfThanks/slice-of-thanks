@@ -130,3 +130,4 @@ Then Phase 2 per the blueprint (webhooks, Calendly, TidyCal, birthdays).
 
 ## Working with Stacey
 Follow CLAUDE.md: full code per changed tab, numbered BD steps, no tests for her, no em dashes, decide instead of offering options.
+- admin-0.1.0 with api-0.25.0 (2026-10-27, commit 69c243f, migrations analytics.sql, analytics_page.sql, analytics_admin.sql, admin_code_0_1_0.sql): owner analytics dashboard. Totals every 2 hours (cron sot-metrics) and Refresh now (once every 5 minutes) into metrics_daily; goals in metric_targets scored Met, On track, Behind, Missed; run log metrics_runs. SOT-Admin widget (widgets/SOT-Admin.php) loads admin/admin.js for BD accounts in app_settings analytics admin_bd_user_ids ([20]). Routes /admin/bootstrap, /admin/metrics, /admin/metrics/refresh, /admin/goals. sot_create_send keeps the send source on send_accepted. Test: tests/pw/admin-test.js (38 checks).

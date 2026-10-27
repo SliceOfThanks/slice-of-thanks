@@ -13,7 +13,7 @@ import { fillNote } from "./lib/merge.ts";
 import { sendCustomer, sendSale } from "./lib/partnero.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.24.0";
+const VERSION = "api-0.25.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -477,6 +477,37 @@ async function route(req: Request, path: string): Promise<Response> {
   const m = await member(req);
   if (!m) return json(req, { error: "not_signed_in" }, 401);
   const memberId = m.session.member_id as string;
+
+  // Owner dashboard (SOT-Admin widget): only BD accounts listed in app_settings analytics admin_bd_user_ids
+  if (path.startsWith("/admin/")) {
+    const isAdmin = await rpc<boolean>("sot_metrics_is_admin", { p_bd_user_id: m.claims.uid }).catch(() => false);
+    if (!isAdmin) return json(req, { ok: false, code: "not_allowed" }, 403);
+    if (path === "/admin/bootstrap" && req.method === "GET") {
+      const code = await rpc<Record<string, string> | null>("sot_setting", { p_env: "live", p_key: "admin_code" });
+      return json(req, { ok: true, ...(code ?? {}) });
+    }
+    if (path === "/admin/metrics" && req.method === "GET") {
+      const q = new URL(req.url).searchParams;
+      const day = (v: string | null) => v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
+      const report = await rpc<Record<string, unknown>>("sot_metrics_report", { p_from: day(q.get("from")), p_to: day(q.get("to")), p_real: q.get("all") !== "1" });
+      return json(req, { ok: true, ...report });
+    }
+    if (path === "/admin/metrics/refresh" && req.method === "POST") {
+      return json(req, await rpc("sot_metrics_refresh", { p_trigger: "manual" }));
+    }
+    if (path === "/admin/goals" && req.method === "POST") {
+      const action = String(body.action ?? "");
+      if (!["add", "change", "end"].includes(action)) return json(req, { ok: false, code: "bad_action" });
+      const id = typeof body.id === "string" && /^[0-9a-f-]{36}$/.test(body.id) ? body.id : null;
+      const target = body.target === null || body.target === undefined || body.target === "" ? null : Number(body.target);
+      return json(req, await rpc("sot_metric_target_apply", {
+        p_action: action, p_id: id, p_metric: String(body.metric ?? "").slice(0, 40) || null, p_period: String(body.period ?? "") || null,
+        p_target: Number.isFinite(target) ? target : null, p_better: body.better === "lower" ? "lower" : "higher",
+        p_nonce: String(body.nonce ?? crypto.randomUUID()).slice(0, 40),
+      }));
+    }
+    return json(req, { error: "not_found" }, 404);
+  }
 
   if (path === "/session") {
     const b = await syncBilling(memberId, m.claims.uid, 600);

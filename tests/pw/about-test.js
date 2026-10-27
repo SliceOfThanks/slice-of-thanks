@@ -17,6 +17,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     check(await R("const f=R.querySelector('#appFoot');return !!f&&f.offsetParent!==null&&f.textContent.indexOf('About us')>=0"), 'Footer with About us shows on ' + tab);
   }
   check(await R("const a=R.querySelector('#appFoot a.ph-badge'),i=a&&a.querySelector('img');return !!a&&a.target==='_blank'&&a.href.indexOf('producthunt.com/products/slice-of-thanks')>0&&!!i&&i.src.indexOf('post_id=1293952')>0&&i.alt.indexOf('Product Hunt')>0"), 'Product Hunt badge in the footer, opening in a new tab');
+  check(await R("const f=R.querySelector('#appFoot'),s=f.querySelector('a.made-by'),p=f.querySelector('a.ph-badge');return !!s&&s.textContent==='Stacey'&&s.href.indexOf('legalstacey.com')>0&&s.target==='_blank'&&f.lastElementChild===p&&f.querySelector('small').textContent==='Slice of Thanks. Made by Stacey and Potato.'"), 'Stacey links to legalstacey.com and Product Hunt sits at the very bottom');
   await R("[...R.querySelectorAll('#appFoot .linkish')].find(x=>x.textContent==='About us').click()"); await wait(800);
   check(await R("return !R.querySelector('#view-about').hidden && R.querySelector('#view-today').hidden"), 'About us opens its own screen');
   const t = await R("return R.querySelector('#view-about').textContent");

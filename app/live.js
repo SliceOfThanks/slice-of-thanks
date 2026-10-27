@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.23.1 =====
+/* ===== Slice of Thanks live layer v0.23.2 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -2354,8 +2354,12 @@ const ABOUT_IMG = 'https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@5f2
   ph.href = 'https://www.producthunt.com/products/slice-of-thanks?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-slice-of-thanks';
   const phImg = document.createElement('img'); phImg.alt = 'Slice of Thanks - Send a Digital Thank-You Pizza | Product Hunt'; phImg.width = 250; phImg.height = 54; phImg.loading = 'lazy';
   phImg.src = 'https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1293952&theme=neutral&t=1793063164791';
-  ph.appendChild(phImg); foot.appendChild(ph);
-  foot.appendChild(mk('small', '', 'Slice of Thanks. Made by Stacey and Potato.'));
+  ph.appendChild(phImg);
+  /* "Stacey" links to her site, legalstacey.com */
+  const made = mk('small', '', 'Slice of Thanks. Made by '), st = document.createElement('a');
+  st.href = 'https://legalstacey.com'; st.target = '_blank'; st.rel = 'noopener'; st.textContent = 'Stacey'; st.className = 'made-by';
+  made.append(st, document.createTextNode(' and Potato.'));
+  foot.append(made, ph);
   sec.parentNode.appendChild(foot);
 })();
 

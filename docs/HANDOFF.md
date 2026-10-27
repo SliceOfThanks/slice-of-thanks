@@ -29,6 +29,9 @@ CLAUDE.md has the standing rules. The blueprint (docs/Slice_of_Thanks_Build_Blue
 - BD widgets: no backslashes, no regex functions, no full web addresses in examples, no literal widget shortcodes, PHP helpers start with <?php and end with ?>.
 - This session's network blocks some sites (partnero.com, sendfox.com, vbout.com, sliceofthanks.app itself). Use web search, and say when something could not be verified.
 
+## Building is paused (2026-10-27)
+Stacey asked to hold all new building until SendFox is approved. Do not start roadmap items (SOT-1 to SOT-7) until she says so. Launch-critical fixes only.
+
 ## Waiting on Stacey (open items)
 1. Done: widgets and home page re-pasted (2026-10-26).
 2. Re-paste bd/home-page.html again (v0.20.1 spacing fix on the last Bake them a pizza button).

@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.22.0 =====
+/* ===== Slice of Thanks live layer v0.23.0 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -193,7 +193,17 @@ renderPlanCard = function () {
   if (p) p.textContent = 'Emails left this month: ' + (c.monthly || 0) + (c.pack ? ' plus ' + c.pack + ' from email packs' : '') + (c.special_delivery ? '. Special Deliveries: ' + c.special_delivery : '') + '.';
   const bar = el.querySelector('.usage'); if (bar) bar.hidden = true;
   if (p && c.pack && s.pack_next_expiry) p.textContent += ' Pack emails are used after your monthly ones and last 12 months from purchase.';
+  /* AppSumo lifetime: codes stack up to 3 (Settings > Plan > Redeem AppSumo code) */
+  const as = s.appsumo || {};
+  if (as.codes > 0) {
+    if (h) h.textContent = 'Your plan: Lifetime (AppSumo)';
+    if (p) p.textContent = as.codes + ' of ' + (as.max || 3) + ' codes: ' + Number(as.emails || 0).toLocaleString('en-US') + ' emails a month for life, with every Whole Pie feature. ' + p.textContent;
+  }
   const row = el.querySelector('.btn-row');
+  if (row && !$('#planRedeem')) {
+    const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'btn small'; rb.id = 'planRedeem'; rb.textContent = 'Redeem AppSumo code'; rb.onclick = () => show('redeem');
+    row.appendChild(rb);
+  }
   if (row && s.plan !== 'free' && !$('#planPacks')) {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.id = 'planPacks'; b.textContent = 'Buy more emails'; b.onclick = openPacks;
     row.insertBefore(b, row.firstChild);
@@ -1112,9 +1122,9 @@ renderSettings = function () { _renderSettingsP(); renderPresetCard(); foldSetti
 
 /* --- Start: sign in with the BD pass, restore a guest draft --- */
 (async function liveStart() {
-  if (!LIVE.TOKEN) { account = null; refreshPlan(true); return; }
+  if (!LIVE.TOKEN) { account = null; refreshPlan(true); if (wantsRedeem()) setTimeout(() => show('redeem'), 0); return; }
   const s = await LIVE.call('/session');
-  if (!s || !s.member_id) { account = null; refreshPlan(true); return; }
+  if (!s || !s.member_id) { account = null; refreshPlan(true); if (wantsRedeem()) setTimeout(() => show('redeem'), 0); return; }
   /* This browser was last used by a different member: start clean so nobody sees someone else's name, box or draft.
      A pizza made as a guest just before signing up is kept, without the old box. */
   const owner = store.get('owner', null);
@@ -1127,6 +1137,8 @@ renderSettings = function () { _renderSettingsP(); renderPresetCard(); foldSetti
   applySession(s);
   loadPeople(); loadPresets(); calStart(s); loadDates(); loadSigs();
   if (s.needs_terms) setTimeout(() => askTerms(() => {}), 600);
+  /* AppSumo buyers land on /redeem, or come back to it after creating their account */
+  if (wantsRedeem()) { show('redeem'); checkPurchases(); return; }
   const d = store.get('draft', null);
   if (d && d.pizza && Date.now() - (d.at || 0) < 7 * 864e5) {
     pizza = d.pizza; box = Object.assign(boxFromProfile(null), d.box); store.set('draft', null);
@@ -2340,3 +2352,88 @@ const ABOUT_IMG = 'https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@5f2
   foot.appendChild(mk('small', '', 'Slice of Thanks. Made by Stacey and Potato.'));
   sec.parentNode.appendChild(foot);
 })();
+
+/* ===== AppSumo code redemption: sliceofthanks.app/redeem (the SOT-App widget on that page) and Settings > Plan > Redeem AppSumo code.
+   Codes stack up to 3 per account: 1 code = 100 emails a month, 2 = 300, 3 = 750, for life, with every Whole Pie feature. ===== */
+const REDEEM_MSG = {
+  unknown: 'We could not find that code. Check it against your AppSumo purchase and try again. Codes look like SOT-ABCD-EFGH-JKMN.',
+  bad_format: 'That does not look like an AppSumo code. Codes look like SOT-ABCD-EFGH-JKMN.',
+  used: 'That code has already been redeemed. Each code works once. If you think this is a mistake, email pizza@sliceofthanks.app.',
+  already_yours: 'You already redeemed that code on this account, so it is counted. You are all set.',
+  max_codes: 'Your account already has 3 codes, the most one account can hold. You are on 750 emails a month for life.',
+  too_many: 'Too many tries for now. Wait an hour and try again, or email pizza@sliceofthanks.app.',
+  off: 'Code redemption is paused for a moment. Email pizza@sliceofthanks.app and we will sort it out.',
+};
+const REDEEM_TIERS = { 1: 100, 2: 300, 3: 750 };
+function wantsRedeem() {
+  if (String(location.pathname || '').indexOf('/redeem') === 0) return true;
+  const r = store.get('goRedeem', null); return !!(r && Date.now() - r < 3 * 864e5);
+}
+function redeemState() {
+  const a = (LIVE.session && LIVE.session.appsumo) || {};
+  const tiers = a.tiers && Object.keys(a.tiers).length ? a.tiers : REDEEM_TIERS;
+  return { codes: a.codes || 0, max: a.max || 3, emails: a.emails || 0, tiers };
+}
+(function buildRedeem() {
+  const anchor = $('#view-settings'); if (!anchor || $('#view-redeem')) return;
+  const sec = document.createElement('section'); sec.id = 'view-redeem'; sec.hidden = true;
+  sec.innerHTML =
+    '<div class="card rd-card"><p class="eyebrow">AppSumo</p><h2>Redeem your AppSumo code</h2>' +
+    '<p class="muted">Welcome, Sumo-ling. Each code adds more emails, up to 3 codes per account, for life. Every code unlocks every Whole Pie feature: your logo and colors, all box styles, gifts, follow-up buttons and automations.</p>' +
+    '<ol class="rd-tiers" id="rdTiers"></ol>' +
+    '<div id="rdGuest" hidden><p><b>First, create your free Slice of Thanks account or log in.</b> Then you come right back here to paste your code.</p>' +
+    '<div class="btn-row"><button class="btn primary" type="button" id="rdSignup">Create my account</button><button class="btn" type="button" id="rdLogin">I already have an account</button></div></div>' +
+    '<div id="rdForm" hidden><div class="field"><label for="rdCode">Your AppSumo code</label><input type="text" id="rdCode" maxlength="80" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="SOT-XXXX-XXXX-XXXX"><small class="muted" id="rdHelp"></small></div>' +
+    '<div class="btn-row"><button class="btn primary" type="button" id="rdGo">Redeem</button></div></div>' +
+    '<p id="rdMsg" class="rd-msg" role="status" hidden></p>' +
+    '<div class="btn-row" id="rdDone" hidden><button class="btn small" type="button" id="rdKitchen">Go to the Kitchen</button></div></div>';
+  anchor.after(sec);
+  views.redeem = sec;
+  sec.querySelector('#rdSignup').onclick = () => { store.set('goRedeem', Date.now()); location.href = bdLink('checkout_free', '/checkout/10'); };
+  sec.querySelector('#rdLogin').onclick = () => { store.set('goRedeem', Date.now()); location.href = (host.getAttribute('data-login-url') || '/login') + '?loc=' + encodeURIComponent('/redeem'); };
+  sec.querySelector('#rdGo').onclick = redeemCode;
+  sec.querySelector('#rdCode').addEventListener('keydown', e => { if (e.key === 'Enter') redeemCode(); });
+  sec.querySelector('#rdKitchen').onclick = () => { try { if (String(location.pathname).indexOf('/redeem') === 0) history.replaceState(null, '', '/kitchen'); } catch (e) { /* ignore */ } show('today'); };
+})();
+function redeemMsg(text, ok) { const m = $('#rdMsg'); if (!m) return; m.hidden = !text; m.textContent = text || ''; m.className = 'rd-msg' + (ok ? ' ok' : ' err'); }
+function renderRedeem() {
+  const st = redeemState(), signedIn = !!(LIVE.TOKEN && LIVE.session);
+  const ol = $('#rdTiers'); ol.innerHTML = '';
+  [1, 2, 3].forEach(n => {
+    const li = mk('li', 'rd-tier' + (signedIn && n <= st.codes ? ' on' : '') + (signedIn && n === st.codes + 1 ? ' next' : ''));
+    li.append(mk('b', '', n + (n === 1 ? ' code' : ' codes')), mk('span', '', Number(st.tiers[n] || REDEEM_TIERS[n]).toLocaleString('en-US') + ' emails a month'));
+    if (signedIn && n <= st.codes) li.appendChild(mk('i', '', 'Yours'));
+    ol.appendChild(li);
+  });
+  $('#rdGuest').hidden = signedIn;
+  const full = st.codes >= st.max;
+  $('#rdForm').hidden = !signedIn || full;
+  $('#rdDone').hidden = !signedIn || !st.codes;
+  if (signedIn) {
+    const next = Number(st.tiers[st.codes + 1] || 0).toLocaleString('en-US');
+    $('#rdHelp').textContent = !st.codes ? 'Paste the code from your AppSumo purchase, then tap Redeem.'
+      : 'You have ' + st.codes + (st.codes === 1 ? ' code' : ' codes') + ': ' + Number(st.emails).toLocaleString('en-US') + ' emails a month. Add another code to move up to ' + next + ' right away.';
+    if (full && $('#rdMsg').hidden) redeemMsg('You have all ' + st.max + ' codes: ' + Number(st.emails).toLocaleString('en-US') + ' emails a month for life, with every Whole Pie feature.', true);
+  }
+}
+const _showRedeem = show;
+show = function (v) { _showRedeem(v); if (v === 'redeem') { redeemMsg(''); renderRedeem(); } };
+async function redeemCode() {
+  const inp = $('#rdCode'), b = $('#rdGo'), v = inp.value.trim();
+  if (!v) { redeemMsg('Paste your AppSumo code first.', false); inp.focus(); return; }
+  b.disabled = true; b.textContent = 'Redeeming...';
+  const r = await LIVE.call('/appsumo/redeem', { code: v }).catch(() => null);
+  b.disabled = false; b.textContent = 'Redeem';
+  if (r && r.ok) {
+    inp.value = ''; store.set('goRedeem', null);
+    const fresh = await LIVE.call('/session').catch(() => null);
+    if (fresh && fresh.member_id) applySession(fresh); else if (LIVE.session) LIVE.session.appsumo = r.state;
+    renderRedeem();
+    const st = redeemState();
+    redeemMsg('Code redeemed. You now have ' + st.codes + (st.codes === 1 ? ' code' : ' codes') + ': ' + Number(st.emails).toLocaleString('en-US') + ' emails a month for life, with every Whole Pie feature.', true);
+    try { burst('gold'); } catch (e) { /* ignore */ }
+    return;
+  }
+  if (r && r.state && LIVE.session) { LIVE.session.appsumo = r.state; renderRedeem(); }
+  redeemMsg((r && REDEEM_MSG[r.code]) || (r && r.code === 'not_signed_in' ? MSG.not_signed_in : MSG.server_error), r && r.code === 'already_yours');
+}

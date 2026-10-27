@@ -3,7 +3,7 @@
 // Recipients use their private link token. Everything else is refused.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifyBdToken } from "./lib/auth.ts";
-import { hmacHex, recipientToken, safeEqual, tokenHash } from "./lib/crypto.ts";
+import { hmacHex, recipientToken, safeEqual, sha256Hex, tokenHash } from "./lib/crypto.ts";
 import { buildDateEmail, buildEmail, buildReplyConfirmEmail, buildTrialEmail, buildWaitingEmail, senderLabel, SITE } from "./lib/email.ts";
 import { birthdaySpecial, dateBox, datePizza, type DateKind } from "./lib/gerald.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
@@ -13,7 +13,7 @@ import { fillNote } from "./lib/merge.ts";
 import { sendCustomer, sendSale } from "./lib/partnero.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.22.0";
+const VERSION = "api-0.23.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -470,7 +470,8 @@ async function route(req: Request, path: string): Promise<Response> {
     const filled = !m.session?.profile?.reply_to && await fillReplyTo(memberId, m.claims.uid);
     const s = b.changed || filled ? (await member(req))!.session : m.session;
     const rs = await rpc<Record<string, any>>("sot_reply_state", { p_member: memberId }).catch(() => null);
-    return json(req, { ...s, reply: { verified: !!rs?.verified, replies: rs?.replies ?? "me" } });
+    const as = await rpc<Record<string, any>>("sot_appsumo_state", { p_member: memberId }).catch(() => null);
+    return json(req, { ...s, reply: { verified: !!rs?.verified, replies: rs?.replies ?? "me" }, appsumo: as ?? { codes: 0 } });
   }
   // Send one back: the person who got a pizza adds its sender to their People, without knowing the email
   if (path === "/sendback" && req.method === "POST") {
@@ -544,6 +545,14 @@ async function route(req: Request, path: string): Promise<Response> {
     await rpc("sot_update_profile", { p_member: memberId, p: body.profile ?? {} });
     if (body.profile && typeof body.profile.reply_to === "string") return json(req, { ok: true, reply: await checkReplyTo(memberId, m.claims.uid) });
     return json(req, { ok: true });
+  }
+  // AppSumo code: checked against the SHA-256 hashes in appsumo_codes. "sot 7kq2 m9xd 4htp" or no dashes is fine too.
+  if (path === "/appsumo/redeem" && req.method === "POST") {
+    const raw = String(body.code ?? "").toUpperCase().replace(/\s+/g, "").slice(0, 80);
+    const k = raw.replace(/[^A-Z0-9]/g, "");
+    const code = k.length === 15 && k.startsWith("SOT") ? `SOT-${k.slice(3, 7)}-${k.slice(7, 11)}-${k.slice(11)}` : raw;
+    if (code.length < 6 || !/^[A-Z0-9_-]+$/.test(code)) return json(req, { ok: false, code: "bad_format" });
+    return json(req, await rpc("sot_appsumo_redeem", { p_member: memberId, p_hash: await sha256Hex(code) }));
   }
   if (path === "/reply/resend" && req.method === "POST") {
     return json(req, { ok: true, reply: await checkReplyTo(memberId, m.claims.uid) });

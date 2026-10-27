@@ -44,6 +44,8 @@ const toastText = page => inRoot(page, "const t=R.querySelector('#toast');return
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
 const iso = (min) => new Date(Date.now() + min * 60000).toISOString();
+// Earlier today, never yesterday: a meeting from earlier today, at least 1 minute after midnight
+const isoToday = m => { const t = new Date(Date.now() + m * 60000), d = new Date(); d.setHours(0, 1, 0, 0); return (t < d ? d : t).toISOString(); };
 function calData(connected) {
   if (!connected) return { ok: true, integrations: [], meetings: [] };
   return { ok: true, integrations: [{ provider: 'tidycal', status: 'connected', label: 'me@x.test' }, { provider: 'calendly', status: 'needs_reconnect' }],
@@ -51,8 +53,8 @@ function calData(connected) {
       { id: 'mt-old', provider: 'tidycal', title: 'Yesterday call', starts_at: iso(-60 * 30), ends_at: iso(-60 * 30 + 30), name: 'Old Guest', email: 'old@x.test', state: 'ended' }, // a past day: never listed
       { id: 'mt-wait', provider: 'tidycal', title: 'Coffee', starts_at: iso(-60 * 48), ends_at: iso(-60 * 48 + 30), name: 'Wen Wait', email: 'wen@x.test', want_pizza: true, state: 'ready' }, // pizza waiting from 2 days ago: still listed
       { id: 'mt-stale', provider: 'tidycal', title: 'Old coffee', starts_at: iso(-60 * 24 * 5), ends_at: iso(-60 * 24 * 5 + 30), name: 'Stale Guest', email: 'stale@x.test', want_pizza: true, state: 'ready' }, // waiting 5 days: gone
-      { id: 'mt-ready', provider: 'tidycal', title: 'Intro call', starts_at: iso(-90), ends_at: iso(-60), name: 'Priya Shah', email: 'priya@x.test', want_pizza: true, state: 'ready' },
-      { id: 'mt-sent', provider: 'tidycal', title: 'Partnership call', starts_at: iso(-200), ends_at: iso(-170), name: 'Jordan Reyes', email: 'jordan@x.test', state: 'sent', opened: true },
+      { id: 'mt-ready', provider: 'tidycal', title: 'Intro call', starts_at: isoToday(-90), ends_at: isoToday(-60), name: 'Priya Shah', email: 'priya@x.test', want_pizza: true, state: 'ready' },
+      { id: 'mt-sent', provider: 'tidycal', title: 'Partnership call', starts_at: isoToday(-200), ends_at: isoToday(-170), name: 'Jordan Reyes', email: 'jordan@x.test', state: 'sent', opened: true },
       { id: 'mt-up', provider: 'tidycal', title: 'Demo call', starts_at: iso(120), ends_at: iso(150), name: 'Marcus Lee', email: 'marcus@x.test', want_pizza: null, state: 'upcoming' },
       { id: 'mt-noemail', provider: 'tidycal', title: 'Walk-in', starts_at: iso(300), ends_at: iso(330), name: 'Sam', email: null, state: 'upcoming' },
       { id: 'mt-cancel', provider: 'tidycal', title: 'Coffee', starts_at: iso(400), ends_at: iso(430), name: 'Ana', email: 'ana@x.test', state: 'skipped', note: 'canceled' }] };

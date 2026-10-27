@@ -135,6 +135,14 @@ button.p-tag{cursor:pointer;font-family:inherit}button.p-tag:hover{background:va
 .invite-stats b{font:400 1.4rem var(--display)}.invite-stats small{font-size:.72rem;color:var(--muted);line-height:1.2}
 .about-hero h2{margin:4px 0 6px}
 .about-card{display:flex;flex-direction:column;gap:14px}
+.rd-tiers{list-style:none;margin:14px 0;padding:0;display:grid;gap:8px}
+.rd-tier{display:flex;align-items:center;gap:10px;border:2px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--surface)}
+.rd-tier span{flex:1;color:var(--muted)}
+.rd-tier i{font-style:normal;font-weight:800;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;background:var(--mustard);color:#3E2416;border-radius:999px;padding:2px 9px}
+.rd-tier.on{border-color:var(--edge);background:var(--sunk)}.rd-tier.on span{color:var(--ink)}
+.rd-tier.next{border-style:dashed;border-color:var(--tomato)}
+.rd-msg{margin:12px 0 0;padding:10px 12px;border-radius:12px;font-weight:600}
+.rd-msg.ok{background:#E6F0DA;color:#2f4a12}.rd-msg.err{background:var(--pink);color:var(--tomato-text)}
 .about-card h3{margin:2px 0 8px;font-family:var(--display);font-weight:400;font-size:1.35rem}
 .about-card p{margin:0 0 10px;line-height:1.55}
 .about-photo{width:100%;max-width:360px;aspect-ratio:1/1;object-fit:cover;border:3px solid var(--edge);border-radius:18px;box-shadow:4px 4px 0 var(--shade);align-self:center;background:var(--sunk)}

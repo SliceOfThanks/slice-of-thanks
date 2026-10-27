@@ -4,7 +4,7 @@ Last updated: 2026-10-26. Read this file, then STATUS.md (full release history),
 CLAUDE.md has the standing rules. The blueprint (docs/Slice_of_Thanks_Build_Blueprint_v7.docx) is the original source of truth; where later work changed it, STATUS.md wins.
 
 ## Where things stand
-- App v0.22.0 live (commit 36df286). Edge function `api` is api-0.22.0 (version 40). Partnero: refer-a-friend program, PartneroJS universal integration in BD HEAD records sign-ups; our server reports with email as customer key. Unbox v0.5.0.
+- App v0.23.0 live. Edge function `api` is api-0.23.0. Partnero: refer-a-friend program, PartneroJS universal integration in BD HEAD records sign-ups; our server reports with email as customer key. Unbox v0.5.0.
 - Live version is whatever `app_settings.code_version` says (live and staging rows). Every release is a row in `releases` and an entry in releases.json.
 - Launch work is done except the open items below. Everything not launch-critical goes to docs/ROADMAP.md (and Userback) only with Stacey's approval.
 
@@ -33,13 +33,13 @@ CLAUDE.md has the standing rules. The blueprint (docs/Slice_of_Thanks_Build_Blue
 1. Done: widgets and home page re-pasted (2026-10-26).
 2. Re-paste bd/home-page.html again (v0.20.1 spacing fix on the last Bake them a pizza button).
 3. Partnero: create a Partner program, paste PartneroJS into BD HEAD code only (skip Partnero's conversion widget and Stripe steps), add secret PARTNERO_API_KEY, add a first partner, then say "Partnero done" so we test a real partner sign-up. Steps are in docs/STACEY_CHECKLIST.md item 8.
-4. AppSumo (Radar lifetime deal): evaluated, not built. Needs her tier answers (automations now for Tiers 1 and 2, Tier 3 option A/B/C, one hidden BD "Lifetime (AppSumo)" plan, email budget plan) and "Approved".
+4. AppSumo (Radar lifetime deal, codes, submission 233398, redemption link https://www.sliceofthanks.app/redeem): code redemption built in v0.23.0 / api-0.23.0. Codes stack up to 3 per account on the hidden Lifetime (AppSumo) plan: 1 code = 100 emails a month, 2 codes = 300, 3 codes = 750 (not 1,000), for life, every Whole Pie feature (app_settings appsumo tiers). 3,000 codes, batch appsumo-1: only SHA-256 hashes are in appsumo_codes; the plain CSV was given to Stacey and uploaded to AppSumo, never committed. Redeem = sot_appsumo_redeem (lifetime plan_grants reason appsumo, trial replaced as trial_appsumo, sot_ensure_monthly gives the tier's emails or the paid plan's if higher, 10 wrong tries an hour). Still open: BD page /redeem with the SOT-App widget (Stacey), moving redeemed accounts to the BD Lifetime (AppSumo) plan (needs its plan ID), AppSumo welcome email.
 5. Userback cleanup done (SOT-1, 2, 4, 7 rewritten; SOT-3 and SOT-5 blanked, Stacey to hide them from the public board; SOT-6 Resolved).
 6. Done: the app calls Userback.identify with member id, name, email and plan (v0.21.0).
 7. About us text approved as is.
 8. Checks she was asked to do: googly eyes and other emoji toppings on iPhone, Home meetings list (past days hidden), Box step redesign, gift card, invite card with QR code.
 9. Launch checks: guest Kitchen, privacy birthday line and the ChatGPT test are done (test passed; the missed free-test confirmation was fixed in v0.20.1). Still to do: delete the test people.
-10. Decided 2026-10-26: A Slice birthday gift 25 emails, waiting meeting pizzas stay 3 days, referral rewards kept at 20 and 20, cap 25. AppSumo approved: Tiers 1 and 2 get automations now, Tier 3 option A (Whole Pie, 1,000 emails, no team promise), one hidden BD plan Lifetime (AppSumo) with tiers and limits in Supabase, built so a tier can map to Pizza Party later; wait for SendFox for email budget.
+10. Decided 2026-10-26: A Slice birthday gift 25 emails, waiting meeting pizzas stay 3 days, referral rewards kept at 20 and 20, cap 25. AppSumo approved: Tiers 1 and 2 get automations now, Tier 3 option A (Whole Pie, 750 emails, no team promise; changed from 1,000 to 750 on 2026-10-27), one hidden BD plan Lifetime (AppSumo) with tiers and limits in Supabase, built so a tier can map to Pizza Party later; wait for SendFox for email budget.
 11. SendFox backup: built and switched off (api-0.19.0). On hold until SendFox approves transactional email. Do not raise it again until she asks.
 
 12. Privacy policy line about replies (given 2026-10-26), hide SOT-3 and SOT-5 in Userback, delete test people, AppSumo: hidden BD plan Lifetime (AppSumo) id and Partner Portal screenshot.

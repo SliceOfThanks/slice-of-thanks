@@ -112,3 +112,28 @@ export async function deleteBdUser(opts: { site: string; key: string; bdUserId: 
   if (!res.ok || !j || (j.status && j.status !== "success")) throw new Error(`bd_api ${res.status} ${String(j?.message ?? "").slice(0, 120)}`);
   return j;
 }
+
+// AppSumo: move a member to the free, hidden Lifetime (AppSumo) plan. BD API: {site}/api/v2/user/update, form body user_id and subscription_id.
+// BD's docs name the endpoint but not the verb, so PUT is tried first and POST if BD answers 404 or 405.
+export async function setBdPlan(opts: { site: string; key: string; bdUserId: number; planId: number; fetchFn?: typeof fetch }): Promise<{ ok: boolean; status: number; error?: string }> {
+  const url = opts.site.replace(/\/+$/, "") + "/api/v2/user/update";
+  let last = { ok: false, status: 0, error: "not_tried" };
+  for (const method of ["PUT", "POST"]) {
+    try {
+      const res = await (opts.fetchFn ?? fetch)(url, {
+        method,
+        headers: { "X-Api-Key": opts.key, "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
+        body: new URLSearchParams({ user_id: String(opts.bdUserId), subscription_id: String(opts.planId) }),
+        signal: AbortSignal.timeout(8000),
+        redirect: "manual",
+      });
+      const j = await res.json().catch(() => null);
+      if (res.ok && j && (!j.status || j.status === "success")) return { ok: true, status: res.status };
+      last = { ok: false, status: res.status, error: `bd_api ${method} ${res.status} ${String(j?.message ?? "").slice(0, 120)}` };
+      if (res.status !== 404 && res.status !== 405) return last;
+    } catch (e) {
+      return { ok: false, status: 0, error: "bd_api network " + String(e).slice(0, 120) };
+    }
+  }
+  return last;
+}

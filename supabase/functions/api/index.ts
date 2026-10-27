@@ -7,13 +7,13 @@ import { hmacHex, recipientToken, safeEqual, sha256Hex, tokenHash } from "./lib/
 import { buildDateEmail, buildEmail, buildReplyConfirmEmail, buildTrialEmail, buildWaitingEmail, senderLabel, SITE } from "./lib/email.ts";
 import { birthdaySpecial, dateBox, datePizza, type DateKind } from "./lib/gerald.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
-import { billingLines, deleteBdUser, fetchBdEmail, fetchTransactions, invoiceList, type ProductMatch } from "./lib/billing.ts";
+import { billingLines, deleteBdUser, fetchBdEmail, fetchTransactions, invoiceList, setBdPlan, type ProductMatch } from "./lib/billing.ts";
 import { sendWithFallback, type EmailMessage } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
 import { sendCustomer, sendSale } from "./lib/partnero.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.23.0";
+const VERSION = "api-0.23.1";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -552,7 +552,17 @@ async function route(req: Request, path: string): Promise<Response> {
     const k = raw.replace(/[^A-Z0-9]/g, "");
     const code = k.length === 15 && k.startsWith("SOT") ? `SOT-${k.slice(3, 7)}-${k.slice(7, 11)}-${k.slice(11)}` : raw;
     if (code.length < 6 || !/^[A-Z0-9_-]+$/.test(code)) return json(req, { ok: false, code: "bad_format" });
-    return json(req, await rpc("sot_appsumo_redeem", { p_member: memberId, p_hash: await sha256Hex(code) }));
+    const r = await rpc<Record<string, any>>("sot_appsumo_redeem", { p_member: memberId, p_hash: await sha256Hex(code) });
+    // First code on a free account: BD shows the free, hidden Lifetime (AppSumo) plan from now on. A paid BD plan is left alone.
+    if (r?.ok && r.codes === 1 && m.session.paid_plan === "free" && env("BD_API_KEY") && m.claims.uid) {
+      const planId = Number((await rpc<Record<string, any>>("sot_setting", { p_env: "live", p_key: "appsumo" }).catch(() => null))?.bd_plan_id ?? 0);
+      if (planId > 0) {
+        const mv = await setBdPlan({ site: env("BD_SITE_URL") || BD_API_SITE, key: env("BD_API_KEY"), bdUserId: Number(m.claims.uid), planId });
+        console.log("appsumo bd plan", JSON.stringify({ member: memberId, plan: planId, ok: mv.ok, status: mv.status, error: mv.error ?? null }));
+        await db().from("events").insert({ type: mv.ok ? "appsumo_bd_plan" : "appsumo_bd_plan_failed", member_id: memberId, props: { plan: planId, status: mv.status, error: mv.error ?? null } }).then(() => null, () => null);
+      }
+    }
+    return json(req, r);
   }
   if (path === "/reply/resend" && req.method === "POST") {
     return json(req, { ok: true, reply: await checkReplyTo(memberId, m.claims.uid) });

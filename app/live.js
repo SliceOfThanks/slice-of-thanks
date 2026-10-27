@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.23.0 =====
+/* ===== Slice of Thanks live layer v0.23.1 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -2349,6 +2349,12 @@ const ABOUT_IMG = 'https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@5f2
     link('About us', () => show('about')),
     link('Help', () => { try { if (window.Userback && typeof window.Userback.open === 'function') { window.Userback.open(); return; } } catch (e) { /* not loaded */ } toast('Tap the round black button with sparkles at the bottom right, or email pizza@sliceofthanks.app.'); }),
     link('Privacy', null, '/privacy'), link('Terms', null, '/terms'));
+  /* Product Hunt "Featured" badge (Stacey, 2026-10-27) */
+  const ph = document.createElement('a'); ph.className = 'ph-badge'; ph.target = '_blank'; ph.rel = 'noopener noreferrer';
+  ph.href = 'https://www.producthunt.com/products/slice-of-thanks?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-slice-of-thanks';
+  const phImg = document.createElement('img'); phImg.alt = 'Slice of Thanks - Send a Digital Thank-You Pizza | Product Hunt'; phImg.width = 250; phImg.height = 54; phImg.loading = 'lazy';
+  phImg.src = 'https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1293952&theme=neutral&t=1793063164791';
+  ph.appendChild(phImg); foot.appendChild(ph);
   foot.appendChild(mk('small', '', 'Slice of Thanks. Made by Stacey and Potato.'));
   sec.parentNode.appendChild(foot);
 })();

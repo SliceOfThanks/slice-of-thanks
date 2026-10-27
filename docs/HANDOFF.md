@@ -1,6 +1,6 @@
 # Handoff: start here in a new session
 
-Last updated: 2026-10-26. Read this file, then STATUS.md (full release history), then docs/STACEY_CHECKLIST.md and docs/ROADMAP.md.
+Last updated: 2026-10-27. Read this file, then STATUS.md (full release history), then docs/STACEY_CHECKLIST.md and docs/ROADMAP.md.
 CLAUDE.md has the standing rules. The blueprint (docs/Slice_of_Thanks_Build_Blueprint_v7.docx) is the original source of truth; where later work changed it, STATUS.md wins.
 
 ## Where things stand
@@ -30,7 +30,14 @@ CLAUDE.md has the standing rules. The blueprint (docs/Slice_of_Thanks_Build_Blue
 - This session's network blocks some sites (partnero.com, sendfox.com, vbout.com, sliceofthanks.app itself). Use web search, and say when something could not be verified.
 
 ## Building is paused (2026-10-27)
-Stacey asked to hold all new building until SendFox is approved. Do not start roadmap items (SOT-1 to SOT-7) until she says so. Launch-critical fixes only.
+Stacey asked to hold all new building until SendFox is approved. Do not start roadmap items (SOT-1 to SOT-7) until she says so. Launch-critical fixes only. Exception she asked for: the analytics dashboard (below).
+
+## Analytics dashboard (built 2026-10-27)
+- Page: Claude Dashboard artifact "Slice of Thanks Analytics", https://claude.ai/artifact/U212iAhYWW3erQMSt67iNo. Each source is a live `execute_sql` call on Stacey's own Supabase connector (project cmnclubiarmthibqibuj); only people with that Supabase access see numbers. Plan doc: https://claude.ai/artifact/L2foyHZoYd67YuJBvYYJFD.
+- Database (migrations analytics.sql, analytics_page.sql): metrics_daily (day, scope real/all, metric, value; counts only, no recipient data), metric_targets (goals: metric, week/month/quarter, target, higher/lower, starts_on, ended_on, nonce), metrics_runs (run log). sot_metrics_catalog lists every metric with its definition; sot_metrics_compute fills a day range; sot_metrics_refresh('auto'|'manual'|'backfill') recomputes the last 45 days (manual limited to once every 5 minutes); cron job sot-metrics runs it every 2 hours at :07 past even UTC hours.
+- Real vs all: real leaves out testers, app_settings analytics exclude_bd_user_ids and emails on lawfecta.com / legalstacey.com. The page's "Include my own and test accounts" box shows all. Closed accounts BD 21 and 22 have no email, so they still count as real until added to exclude_bd_user_ids.
+- Page actions run inside SELECTs: sot_metrics_status_refresh(nonce) runs a manual refresh when the page sends a new nonce; sot_metrics_goals_apply(...) saves, changes (ends old, adds new) or ends a goal. Goals are scored by sot_metrics_score: Met, On track (counts by pace through the period, rates against the target), Behind, Missed (period ended short), No data.
+- sot_create_send now stores the send source on its send_accepted event (props.source), so From People and From a list count from 2026-10-27. Not tracked yet: Product Hunt as a signup source, Brevo opens and bounces, Userback counts, plan upgrades paid in BD.
 
 ## Waiting on Stacey (open items)
 1. Done: widgets and home page re-pasted (2026-10-26).

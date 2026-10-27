@@ -136,9 +136,9 @@ Deno.test("brevo adapter: request shape and message id", async () => {
   assertEquals(b.tags, ["live", "one_to_one"]);
 });
 Deno.test("brevo adapter: retries only temporary failures", async () => {
-  assertEquals(await brevo.send(MSG, "K", fakeFetch(429, { code: "too_many_requests" })), { ok: false, retry: true, error: "brevo 429 too_many_requests" });
-  assertEquals(await brevo.send(MSG, "K", fakeFetch(503, {})), { ok: false, retry: true, error: "brevo 503" });
-  assertEquals(await brevo.send(MSG, "K", fakeFetch(400, { code: "invalid_parameter" })), { ok: false, retry: false, error: "brevo 400 invalid_parameter" });
+  assertEquals(await brevo.send(MSG, "K", fakeFetch(429, { code: "too_many_requests" })), { ok: false, retry: true, reached: true, error: "brevo 429 too_many_requests" });
+  assertEquals(await brevo.send(MSG, "K", fakeFetch(503, {})), { ok: false, retry: true, reached: true, error: "brevo 503" });
+  assertEquals(await brevo.send(MSG, "K", fakeFetch(400, { code: "invalid_parameter" })), { ok: false, retry: false, reached: true, error: "brevo 400 invalid_parameter" });
   const net = await brevo.send(MSG, "K", (async () => { throw new Error("down"); }) as unknown as typeof fetch);
   assert(!net.ok && net.retry);
 });
@@ -160,4 +160,16 @@ Deno.test("subject follows the occasion sticker", () => {
   assertEquals(buildEmail({ ...base, occasion: "Thank You" }).subject, "Kevin & Stacey sent you a slice of thanks");
   assertEquals(buildEmail({ ...base, occasion: "Happy Retirement" }).subject, "A special pizza delivery for you from Kevin & Stacey");
   assertEquals(buildEmail({ ...base }).subject, "Kevin & Stacey sent you a slice of thanks");
+});
+
+import { brevoCredits } from "./mail/brevo.ts";
+Deno.test("brevo credits: remaining sends and renewal day from the account plan", async () => {
+  const seen: { url?: string; init?: RequestInit } = {};
+  const acct = { email: "Hello@lawfecta.com", companyName: "Lawfecta", plan: [{ type: "subscription", credits: 4275, creditsType: "sendLimit", startDate: "2026-09-29", endDate: "2026-10-30" }] };
+  const r = await brevoCredits("KEY", fakeFetch(200, acct, seen));
+  assertEquals(seen.url, "https://api.brevo.com/v3/account");
+  assertEquals((seen.init!.headers as Record<string, string>)["api-key"], "KEY");
+  assertEquals(r, { ok: true, remaining: 4275, resets: "2026-10-30", company: "Lawfecta", email: "Hello@lawfecta.com", error: undefined });
+  assertEquals((await brevoCredits("K", fakeFetch(401, { code: "unauthorized" }))).ok, false);
+  assertEquals((await brevoCredits("K", fakeFetch(200, { plan: [] }))).ok, false);
 });

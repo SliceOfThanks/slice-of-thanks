@@ -9,11 +9,12 @@ import { birthdaySpecial, dateBox, datePizza, type DateKind } from "./lib/gerald
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, deleteBdUser, fetchBdEmail, fetchBdPlan, fetchBdProfile, fetchTransactions, invoiceList, setBdPlan, type ProductMatch } from "./lib/billing.ts";
 import { sendWithFallback, type EmailMessage } from "./lib/mail/index.ts";
+import { brevoCredits } from "./lib/mail/brevo.ts";
 import { fillNote } from "./lib/merge.ts";
 import { sendCustomer, sendSale } from "./lib/partnero.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.25.1";
+const VERSION = "api-0.26.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -34,6 +35,21 @@ function cors(req: Request) {
 }
 const json = (req: Request, body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors(req), "content-type": "application/json" } });
+
+// Owner dashboard: what each email service has left. Brevo reports remaining sends; SendFox shows as connected once its key is saved.
+async function emailServices() {
+  const out: Array<Record<string, unknown>> = [];
+  const bk = env("BREVO_API_KEY");
+  if (!bk) out.push({ key: "brevo", name: "Brevo", connected: false });
+  else {
+    const c = await brevoCredits(bk);
+    const shared = c.email && !/@sliceofthanks\.app$/i.test(c.email) ? (c.company || c.email) : null;
+    out.push({ key: "brevo", name: "Brevo", connected: true, ok: c.ok, remaining: c.remaining ?? null, resets: c.resets ?? null, shared_with: shared });
+    if (!c.ok) console.error("brevo credits", c.error);
+  }
+  out.push({ key: "sendfox", name: "SendFox", connected: !!env("SENDFOX_API_KEY"), remaining: null });
+  return out;
+}
 
 async function rpc<T = unknown>(fn: string, args: Record<string, unknown>): Promise<T> {
   const { data, error } = await db().rpc(fn, args);
@@ -500,8 +516,11 @@ async function route(req: Request, path: string): Promise<Response> {
     if (path === "/admin/metrics" && req.method === "GET") {
       const q = new URL(req.url).searchParams;
       const day = (v: string | null) => v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
-      const report = await rpc<Record<string, unknown>>("sot_metrics_report", { p_from: day(q.get("from")), p_to: day(q.get("to")), p_real: q.get("all") !== "1" });
-      return json(req, { ok: true, ...report });
+      const [report, email_services] = await Promise.all([
+        rpc<Record<string, unknown>>("sot_metrics_report", { p_from: day(q.get("from")), p_to: day(q.get("to")), p_real: q.get("all") !== "1" }),
+        emailServices(),
+      ]);
+      return json(req, { ok: true, ...report, email_services });
     }
     if (path === "/admin/metrics/refresh" && req.method === "POST") {
       return json(req, await rpc("sot_metrics_refresh", { p_trigger: "manual" }));

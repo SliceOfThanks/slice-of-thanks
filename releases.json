@@ -431,6 +431,12 @@
       "commit": "36df286b9c76b3e1320e29ed157762440fc50946",
       "date": "2026-10-26",
       "notes": "Members choose where replies go: to them (a confirmed email, and the pizza email invites a reply) or to Slice of Thanks to keep their email private. The Send step shows where replies go."
+    },
+    {
+      "version": "v0.23.0",
+      "commit": "b8e46c63fb1174e1632593f506b1ae17ba047684",
+      "date": "2026-10-27",
+      "notes": "AppSumo code redemption at /redeem and in Settings, Plan. Codes stack up to 3 per account: 100, 300 or 750 emails a month for life, with every Whole Pie feature."
     }
   ]
 }

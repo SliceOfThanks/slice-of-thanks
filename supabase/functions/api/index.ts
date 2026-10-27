@@ -7,13 +7,13 @@ import { hmacHex, recipientToken, safeEqual, sha256Hex, tokenHash } from "./lib/
 import { buildDateEmail, buildEmail, buildReplyConfirmEmail, buildTrialEmail, buildWaitingEmail, senderLabel, SITE } from "./lib/email.ts";
 import { birthdaySpecial, dateBox, datePizza, type DateKind } from "./lib/gerald.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
-import { billingLines, deleteBdUser, fetchBdEmail, fetchTransactions, invoiceList, setBdPlan, type ProductMatch } from "./lib/billing.ts";
+import { billingLines, deleteBdUser, fetchBdEmail, fetchBdPlan, fetchTransactions, invoiceList, setBdPlan, type ProductMatch } from "./lib/billing.ts";
 import { sendWithFallback, type EmailMessage } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
 import { sendCustomer, sendSale } from "./lib/partnero.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.23.1";
+const VERSION = "api-0.23.2";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -368,6 +368,20 @@ async function route(req: Request, path: string): Promise<Response> {
     const good = !!m && !!e && Number(x) > Date.now() && safeEqual(sig, await hmacHex(env("LINK_SECRET"), `reply|${m}|${e}|${x}`));
     const ok = good && !!(await rpc<boolean>("sot_reply_verify", { p_member: m, p_email: e }).catch(() => false));
     return Response.redirect(`${SITE}/kitchen?reply=${ok ? "confirmed" : "expired"}`, 302);
+  }
+
+  // Admin check of the BD plan switch (worker key only): reads a member's BD plan, switches it, reads it back, and switches it back.
+  if (path === "/admin/bd-plan-probe" && req.method === "POST") {
+    const ok = await rpc<boolean>("sot_worker_ok", { p_secret: req.headers.get("x-sot-worker") ?? "" });
+    if (!ok) return json(req, { error: "not_allowed" }, 403);
+    const site = env("BD_SITE_URL") || BD_API_SITE, key = env("BD_API_KEY"), bdUserId = Number(body.bd_user_id ?? 0), to = Number(body.plan_id ?? 0);
+    if (!key || !bdUserId || !to) return json(req, { ok: false, code: "missing" });
+    const before = await fetchBdPlan({ site, key, bdUserId });
+    const move = await setBdPlan({ site, key, bdUserId, planId: to });
+    const after = await fetchBdPlan({ site, key, bdUserId });
+    let back = null, restored = null;
+    if (body.restore !== false && before && before !== to) { back = await setBdPlan({ site, key, bdUserId, planId: before }); restored = await fetchBdPlan({ site, key, bdUserId }); }
+    return json(req, { ok: true, before, move, after, back, restored });
   }
 
   // Calendly or TidyCal sends the member back here after they approve. The state ties it to the member.

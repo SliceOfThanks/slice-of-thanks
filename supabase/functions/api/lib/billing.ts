@@ -115,7 +115,7 @@ export async function deleteBdUser(opts: { site: string; key: string; bdUserId: 
 
 // AppSumo: move a member to the free, hidden Lifetime (AppSumo) plan. BD API: {site}/api/v2/user/update, form body user_id and subscription_id.
 // BD's docs name the endpoint but not the verb, so PUT is tried first and POST if BD answers 404 or 405.
-export async function setBdPlan(opts: { site: string; key: string; bdUserId: number; planId: number; fetchFn?: typeof fetch }): Promise<{ ok: boolean; status: number; error?: string }> {
+export async function setBdPlan(opts: { site: string; key: string; bdUserId: number; planId: number; fetchFn?: typeof fetch }): Promise<{ ok: boolean; status: number; method?: string; error?: string }> {
   const url = opts.site.replace(/\/+$/, "") + "/api/v2/user/update";
   let last = { ok: false, status: 0, error: "not_tried" };
   for (const method of ["PUT", "POST"]) {
@@ -128,7 +128,7 @@ export async function setBdPlan(opts: { site: string; key: string; bdUserId: num
         redirect: "manual",
       });
       const j = await res.json().catch(() => null);
-      if (res.ok && j && (!j.status || j.status === "success")) return { ok: true, status: res.status };
+      if (res.ok && j && (!j.status || j.status === "success")) return { ok: true, status: res.status, method };
       last = { ok: false, status: res.status, error: `bd_api ${method} ${res.status} ${String(j?.message ?? "").slice(0, 120)}` };
       if (res.status !== 404 && res.status !== 405) return last;
     } catch (e) {
@@ -136,4 +136,16 @@ export async function setBdPlan(opts: { site: string; key: string; bdUserId: num
     }
   }
   return last;
+}
+
+// A member's BD plan (subscription_id), read back to confirm a plan change. BD API: GET {site}/api/v2/user/get/{user_id}.
+export async function fetchBdPlan(opts: { site: string; key: string; bdUserId: number; fetchFn?: typeof fetch }): Promise<number | null> {
+  const res = await (opts.fetchFn ?? fetch)(opts.site.replace(/\/+$/, "") + "/api/v2/user/get/" + encodeURIComponent(String(opts.bdUserId)), {
+    headers: { "X-Api-Key": opts.key, accept: "application/json" }, signal: AbortSignal.timeout(6000), redirect: "manual",
+  });
+  const j = await res.json().catch(() => null);
+  if (!res.ok || !j || (j.status && j.status !== "success")) return null;
+  const m = Array.isArray(j.message) ? j.message[0] : j.message;
+  const n = Number(m?.subscription_id ?? NaN);
+  return Number.isFinite(n) ? n : null;
 }

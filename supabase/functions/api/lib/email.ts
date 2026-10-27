@@ -223,3 +223,50 @@ export function buildReplyConfirmEmail(i: { link: string; email: string }): { su
 </td></tr></table></td></tr></table></body></html>`;
   return { subject: "Confirm where replies to your pizzas go", html, text: [lead, "", `Confirm: ${i.link}`, "", after].join("\n") };
 }
+
+// To an AppSumo buyer after a code is redeemed: a welcome on the first code, a "you moved up" note on the next ones. It uses no email credit.
+export function buildAppsumoEmail(i: { name?: string; codes: number; emails: number; max?: number; nextEmails?: number; kitchenLink: string; settingsLink: string; logoUrl?: string; potatoUrl?: string }): { subject: string; html: string; text: string } {
+  const f = String(i.name ?? "").trim().split(" ")[0];
+  const n = (x: number) => Number(x || 0).toLocaleString("en-US");
+  const first = i.codes <= 1, max = i.max || 3;
+  const subject = first ? "Welcome to Slice of Thanks, lifetime member" : `You moved up: ${n(i.emails)} emails a month for life`;
+  const hi = f ? `Hi ${f},` : "Hi,";
+  const lead = first
+    ? "Your AppSumo code is in. Gerald has the oven hot and Potato has her helmet on."
+    : `Your new code is in. You now have ${i.codes} codes, and your emails moved up today.`;
+  const plan = `Your plan: Lifetime (AppSumo). ${i.codes} of ${max} codes. ${n(i.emails)} emails a month, for life, with every Whole Pie feature.`;
+  const steps = [
+    "In Settings, add your logo and brand colors. They go on every box.",
+    "In the Kitchen, build a pizza. Spell a name or THANK YOU in pepperoni and box it with your note.",
+    "Send it. Not sure yet? Send it to yourself first as a free test.",
+  ];
+  const auto = "Want it to run on its own? Connect Calendly or TidyCal in Settings so a pizza goes out after each meeting, and turn on Gerald never forgets a date for birthdays and work anniversaries.";
+  const stack = i.codes < max && i.nextEmails ? `Got another code? Go to Settings, then Plan, then Redeem AppSumo code. Your next code takes you to ${n(i.nextEmails)} emails a month.` : "";
+  const help = "Questions? Reply to this email or write to pizza@sliceofthanks.app. A real person reads every message.";
+  const why = "You get this because you redeemed an AppSumo code on sliceofthanks.app. Gerald and Potato, Slice of Thanks.";
+  const p = (t: string, extra = "") => `<p style="margin:0 0 14px;font-size:15px;line-height:1.5${extra}">${esc(t)}</p>`;
+  const html = `<!doctype html><html><body style="margin:0;background:#FFF3E0;font-family:Arial,Helvetica,sans-serif;color:#3E2416">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FFF3E0"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fffaef;border:3px solid #3E2416;border-radius:18px">
+<tr><td style="height:14px;background:#D62828;border-radius:14px 14px 0 0"></td></tr>
+<tr><td style="padding:24px 24px 4px;text-align:center">
+${i.logoUrl ? `<img src="${esc(i.logoUrl)}" width="150" alt="Slice of Thanks" style="display:block;margin:0 auto 12px;height:auto">` : ""}
+${i.potatoUrl ? `<img src="${esc(i.potatoUrl)}" width="220" alt="Potato the bulldog on her delivery scooter" style="display:block;margin:0 auto 6px;max-width:100%;height:auto">` : ""}
+</td></tr>
+<tr><td style="padding:8px 24px 24px;text-align:left">
+${p(hi)}
+<p style="margin:0 0 14px;font-size:20px;font-weight:bold;line-height:1.3">${esc(lead)}</p>
+<p style="margin:0 0 16px;padding:12px 14px;background:#F7E4C6;border:2px solid #3E2416;border-radius:12px;font-size:15px;line-height:1.5;font-weight:bold">${esc(plan)}</p>
+${first ? `<p style="margin:0 0 8px;font-size:15px;font-weight:bold">Send your first pizza in 3 steps:</p>
+<ol style="margin:0 0 14px 20px;padding:0;font-size:15px;line-height:1.6">${steps.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>
+${p(auto)}` : ""}
+${stack ? p(stack) : ""}
+<p style="margin:6px 0 16px;text-align:center"><a href="${esc(i.kitchenLink)}" style="display:inline-block;background:#D62828;color:#FFF3E0;text-decoration:none;font-weight:bold;font-size:17px;padding:14px 28px;border-radius:999px;border:2px solid #3E2416">Open my Kitchen</a></p>
+<p style="margin:0 0 14px;text-align:center;font-size:14px"><a href="${esc(i.settingsLink)}" style="color:#C21F1F">Set up my logo and colors</a></p>
+${p(help, ";color:#6b4a3a;font-size:14px")}
+<p style="margin:0;font-size:12px;color:#6b4a3a;text-align:center">${esc(why)}</p>
+</td></tr></table></td></tr></table></body></html>`;
+  const text = [hi, "", lead, "", plan, "", ...(first ? ["Send your first pizza in 3 steps:", ...steps.map((s, k) => `${k + 1}. ${s}`), "", auto, ""] : []), ...(stack ? [stack, ""] : []),
+    `Open my Kitchen: ${i.kitchenLink}`, `Set up my logo and colors: ${i.settingsLink}`, "", help, "", why].join("\n");
+  return { subject, html, text };
+}

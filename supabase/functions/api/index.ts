@@ -4,7 +4,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { verifyBdToken } from "./lib/auth.ts";
 import { hmacHex, recipientToken, safeEqual, sha256Hex, tokenHash } from "./lib/crypto.ts";
-import { buildDateEmail, buildEmail, buildReplyConfirmEmail, buildTrialEmail, buildWaitingEmail, senderLabel, SITE } from "./lib/email.ts";
+import { buildAppsumoEmail, buildDateEmail, buildEmail, buildReplyConfirmEmail, buildTrialEmail, buildWaitingEmail, senderLabel, SITE } from "./lib/email.ts";
 import { birthdaySpecial, dateBox, datePizza, type DateKind } from "./lib/gerald.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
 import { billingLines, deleteBdUser, fetchBdEmail, fetchBdPlan, fetchTransactions, invoiceList, setBdPlan, type ProductMatch } from "./lib/billing.ts";
@@ -13,7 +13,7 @@ import { fillNote } from "./lib/merge.ts";
 import { sendCustomer, sendSale } from "./lib/partnero.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.23.2";
+const VERSION = "api-0.24.0";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -575,6 +575,20 @@ async function route(req: Request, path: string): Promise<Response> {
         console.log("appsumo bd plan", JSON.stringify({ member: memberId, plan: planId, ok: mv.ok, status: mv.status, error: mv.error ?? null }));
         await db().from("events").insert({ type: mv.ok ? "appsumo_bd_plan" : "appsumo_bd_plan_failed", member_id: memberId, props: { plan: planId, status: mv.status, error: mv.error ?? null } }).then(() => null, () => null);
       }
+    }
+    // Welcome email from Gerald and Potato (first code), or "you moved up" (next codes). Free, to the member's own email.
+    if (r?.ok) {
+      try {
+        const st = r.state ?? {}, codes = Number(r.codes ?? st.codes ?? 1), tiers = st.tiers ?? {};
+        const rs = await rpc<Record<string, any>>("sot_reply_state", { p_member: memberId }).catch(() => null);
+        const to = String(rs?.email || (env("BD_API_KEY") && m.claims.uid ? await fetchBdEmail({ site: env("BD_SITE_URL") || BD_API_SITE, key: env("BD_API_KEY"), bdUserId: Number(m.claims.uid) }).catch(() => null) : "") || "").trim();
+        if (to.includes("@")) {
+          const mail = buildAppsumoEmail({ name: m.session.profile?.display_name ?? "", codes, emails: Number(st.emails ?? 0), max: Number(st.max ?? 3), nextEmails: Number(tiers[String(codes + 1)] ?? 0),
+            kitchenLink: `${SITE}/kitchen`, settingsLink: `${SITE}/kitchen`, logoUrl: `${ASSETS}/logo/slice-of-thanks-logo.png`, potatoUrl: `${ASSETS}/characters/potato-delivery-side-email-logo.png` });
+          const sent = await sendMail({ from: { name: "Gerald and Potato", email: SENDER_EMAIL }, to: { email: to, name: m.session.profile?.display_name || undefined }, subject: mail.subject, html: mail.html, text: mail.text, tags: ["member_notice", codes <= 1 ? "appsumo_welcome" : "appsumo_upgrade"] });
+          await db().from("events").insert({ type: sent.ok ? "appsumo_email_sent" : "appsumo_email_failed", member_id: memberId, props: { codes, error: sent.ok ? null : String(sent.error ?? "").slice(0, 200) } }).then(() => null, () => null);
+        }
+      } catch (e) { console.error("appsumo email", String(e)); }
     }
     return json(req, r);
   }

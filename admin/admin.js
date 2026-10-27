@@ -2,7 +2,7 @@
    Reads /admin/metrics (one report from Supabase), runs Refresh now and saves goals. Only the owner's BD account gets data. */
 (function () {
   'use strict';
-  var VERSION = 'admin-0.1.0';
+  var VERSION = 'admin-0.2.0';
   var root = document.getElementById('sot-admin');
   if (!root) return;
   var API = root.getAttribute('data-api') || '';
@@ -421,6 +421,14 @@
     var c2 = el('div', 'card'); c2.appendChild(el('h3', null, 'Where new members came from')); c2.appendChild(el('p', 'muted', 'Product Hunt visitors show under Direct and other for now.'));
     c2.appendChild(barRows(src.map(function (r) { return { label: r.label, size: num(r.value) || 0, text: fmtInt(num(r.value) || 0) }; }), top, function () { return 'var(--mustard)'; }));
     g.appendChild(c2);
+    var heard = (state.report && state.report.heard) || [];
+    var hTop = 0; heard.forEach(function (r) { hTop = Math.max(hTop, num(r.n) || 0); });
+    var c3 = el('div', 'card'); c3.id = 'sa-heard'; c3.appendChild(el('h3', null, 'How they heard about us'));
+    c3.appendChild(el('p', 'muted', 'Answers to the sign-up question, for members who joined in these dates.'));
+    if (heard.length) c3.appendChild(barRows(heard.map(function (r) { return { label: r.answer, size: num(r.n) || 0, text: fmtInt(num(r.n) || 0) }; }), hTop,
+      function (r) { return r.label === 'Not answered yet' ? 'var(--muted)' : 'var(--basil)'; }));
+    else c3.appendChild(el('p', 'muted', 'No sign-ups in these dates.'));
+    g.appendChild(c3);
     s.appendChild(g);
     return s;
   }

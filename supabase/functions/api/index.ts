@@ -7,13 +7,13 @@ import { hmacHex, recipientToken, safeEqual, sha256Hex, tokenHash } from "./lib/
 import { buildAppsumoEmail, buildDateEmail, buildEmail, buildReplyConfirmEmail, buildTrialEmail, buildWaitingEmail, senderLabel, SITE } from "./lib/email.ts";
 import { birthdaySpecial, dateBox, datePizza, type DateKind } from "./lib/gerald.ts";
 import { dataUrlToBlob, publitioUpload } from "./lib/publitio.ts";
-import { billingLines, deleteBdUser, fetchBdEmail, fetchBdPlan, fetchTransactions, invoiceList, setBdPlan, type ProductMatch } from "./lib/billing.ts";
+import { billingLines, deleteBdUser, fetchBdEmail, fetchBdPlan, fetchBdProfile, fetchTransactions, invoiceList, setBdPlan, type ProductMatch } from "./lib/billing.ts";
 import { sendWithFallback, type EmailMessage } from "./lib/mail/index.ts";
 import { fillNote } from "./lib/merge.ts";
 import { sendCustomer, sendSale } from "./lib/partnero.ts";
 import { authorizeUrl, CAL, CalendarAuthError, exchangeCode, isProvider, listContacts, listMeetings, needsRefresh, refreshTokens, type Provider, type Tokens, whoAmI } from "./lib/calendar.ts";
 
-const VERSION = "api-0.25.0";
+const VERSION = "api-0.25.1";
 const ASSETS = "https://cdn.jsdelivr.net/gh/SliceOfThanks/slice-of-thanks@b2daf45f83bb13e416264136401456c95f2cde3f/brand";
 const ORIGINS = ["https://www.sliceofthanks.app", "https://sliceofthanks.app"];
 const SENDER_EMAIL = "pizza@sliceofthanks.app";
@@ -114,6 +114,17 @@ async function fillReplyTo(memberId: string, bdUserId: number): Promise<boolean>
     console.error("reply_to fill", String(e));
     return false;
   }
+}
+
+// Settings > Account shows the BD login email. It is read from BD at most every 10 minutes, together with the
+// sign-up form's "Where did you hear about us?" answer, which the analytics dashboard counts.
+async function loginEmail(memberId: string, bdUserId: number): Promise<string | null> {
+  const cur = await rpc<Record<string, any> | null>("sot_login_email", { p_member: memberId }).catch(() => null);
+  if (cur?.fresh || !env("BD_API_KEY") || !bdUserId) return cur?.email ?? null;
+  const p = await fetchBdProfile({ site: env("BD_SITE_URL") || BD_API_SITE, key: env("BD_API_KEY"), bdUserId }).catch(() => null);
+  if (!p) return cur?.email ?? null;
+  await rpc("sot_bd_profile_set", { p_member: memberId, p_email: p.email, p_heard: p.heardFrom }).catch((e) => console.error("bd profile", String(e)));
+  return p.email ?? cur?.email ?? null;
 }
 
 // "Replies go to": a typed address gets a confirm link before replies go there. The login email is confirmed as it is.
@@ -516,7 +527,8 @@ async function route(req: Request, path: string): Promise<Response> {
     const s = b.changed || filled ? (await member(req))!.session : m.session;
     const rs = await rpc<Record<string, any>>("sot_reply_state", { p_member: memberId }).catch(() => null);
     const as = await rpc<Record<string, any>>("sot_appsumo_state", { p_member: memberId }).catch(() => null);
-    return json(req, { ...s, reply: { verified: !!rs?.verified, replies: rs?.replies ?? "me" }, appsumo: as ?? { codes: 0 } });
+    const le = await loginEmail(memberId, m.claims.uid);
+    return json(req, { ...s, login_email: le, reply: { verified: !!rs?.verified, replies: rs?.replies ?? "me" }, appsumo: as ?? { codes: 0 } });
   }
   // Send one back: the person who got a pizza adds its sender to their People, without knowing the email
   if (path === "/sendback" && req.method === "POST") {

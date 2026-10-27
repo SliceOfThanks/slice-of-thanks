@@ -1,4 +1,4 @@
-/* ===== Slice of Thanks live layer v0.23.2 =====
+/* ===== Slice of Thanks live layer v0.23.3 =====
    Inserted at the end of the prototype's main scope by tools/build_app.py.
    Connects the approved prototype screens to Supabase: session, plan, credits, profile, logo, terms, address, consent, real sends and BD checkout. */
 const LIVE = (function () {
@@ -476,7 +476,7 @@ handleLogo = function (file) {
   /* Account card at the bottom of Settings: Log out (BD's /logout ends the session) and Delete my account */
   if (LIVE.TOKEN) {
     const ac = document.createElement('div'); ac.className = 'card'; ac.id = 'liveAccount';
-    ac.innerHTML = '<h2>Account</h2><p class="muted" style="margin:4px 0 10px">Your login details live on our secure account pages. They open in a new tab.</p>' +
+    ac.innerHTML = '<h2>Account</h2><p id="liveLoginAs" style="margin:4px 0 0" hidden>Logged in as <b id="liveLoginEmail"></b></p><p class="muted" style="margin:4px 0 10px">Your login details live on our secure account pages. They open in a new tab.</p>' +
       '<div class="btn-row" style="margin-bottom:10px"><button class="btn small" type="button" id="liveAcctInfo">Name and email</button><button class="btn small" type="button" id="livePassword">Change password</button><button class="btn small" type="button" id="liveContact" hidden>Contact us</button></div>' +
       '<div class="btn-row"><button class="btn small" type="button" id="liveLogout">Log out</button><button class="btn small ghost" type="button" id="liveDelete" style="color:#b3261e">Delete my account and data</button></div>';
     $('#view-settings').appendChild(ac);
@@ -533,6 +533,13 @@ function renderReplyState() {
   ch.querySelectorAll('[data-v]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === r.replies)));
   $('#liveRepliesHint').textContent = r.replies === 'us' ? 'Replies go to our inbox, so your email stays private.' : 'People who get your pizzas see your email when they reply, and the email invites them to say thanks back.';
   renderReplyLine();
+  renderLoginAs();
+}
+/* Settings > Account: the email they log in with (their BD login, sent by the server with the session) */
+function renderLoginAs() {
+  const p = $('#liveLoginAs'), b = $('#liveLoginEmail'); if (!p || !b) return;
+  const e = (LIVE.session && LIVE.session.login_email) || '';
+  b.textContent = e; p.hidden = !e;
 }
 async function saveReplyTo(v) {
   if (v && v.indexOf('@') < 1) { toast('That email address does not look right.'); return; }

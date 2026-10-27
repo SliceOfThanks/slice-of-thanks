@@ -74,6 +74,33 @@ export async function fetchBdEmail(opts: { site: string; key: string; bdUserId: 
   return e.includes("@") && e.length <= 200 ? e : null;
 }
 
+// The login email and the sign-up form's "Where did you hear about us?" answer (BD form field sot_heard_from), from the same
+// GET {site}/api/v2/user/get/{user_id}. The answer can sit on the user record or in its meta list, so both are checked.
+export async function fetchBdProfile(opts: { site: string; key: string; bdUserId: number; fetchFn?: typeof fetch }): Promise<{ email: string | null; heardFrom: string | null } | null> {
+  const res = await (opts.fetchFn ?? fetch)(opts.site.replace(/\/+$/, "") + "/api/v2/user/get/" + encodeURIComponent(String(opts.bdUserId)), {
+    headers: { "X-Api-Key": opts.key, accept: "application/json" }, signal: AbortSignal.timeout(6000), redirect: "manual",
+  });
+  const j = await res.json().catch(() => null);
+  if (!res.ok || !j || (j.status && j.status !== "success")) return null;
+  const m = Array.isArray(j.message) ? j.message[0] : j.message;
+  if (!m || typeof m !== "object") return null;
+  const e = String(m.email ?? "").trim().toLowerCase();
+  return { email: e.includes("@") && e.length <= 200 ? e : null, heardFrom: heardFromOf(m) };
+}
+
+export function heardFromOf(user: any): string | null {
+  const clean = (v: unknown) => { const t = typeof v === "string" || typeof v === "number" ? String(v).trim().slice(0, 80) : ""; return t || null; };
+  if (!user || typeof user !== "object") return null;
+  if (clean(user.sot_heard_from)) return clean(user.sot_heard_from);
+  for (const k of ["meta", "user_meta", "users_meta", "meta_data"]) {
+    const meta = user[k];
+    if (Array.isArray(meta)) {
+      for (const row of meta) if (row && (row.key === "sot_heard_from" || row.meta_key === "sot_heard_from")) return clean(row.value ?? row.meta_value);
+    } else if (meta && typeof meta === "object" && clean(meta.sot_heard_from)) return clean(meta.sot_heard_from);
+  }
+  return null;
+}
+
 export type Invoice = { id: string; number: string; date: string | null; paidAt: string | null; status: string; totalCents: number; items: { description: string; amountCents: number }[] };
 
 const cents = (v: unknown) => { const n = Math.round(parseFloat(String(v ?? "0")) * 100); return isNaN(n) ? 0 : n; };

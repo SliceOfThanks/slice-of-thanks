@@ -32,6 +32,7 @@ function report(st, q) {
     history: st.goals.length ? [{ id: st.goals[0].id, metric: st.goals[0].metric, label: st.goals[0].label, period: 'month', target: 100, better: 'higher', period_start: '2026-09-01', period_end: '2026-09-30', value: 40, status: 'missed', ended_on: null }] : [],
     status: { last_at: iso(-60000), last_trigger: st.lastTrigger, last_ok: true, last_error: null, last_good_at: iso(-60000), last_good_trigger: st.lastTrigger, refresh_ready_at: st.readyAt, next_auto_at: iso(3600000), tz: 'America/Los_Angeles' },
     budget: { month_start: '2026-10-01', emails: 24, budget: 10000 },
+    heard: [{ answer: 'Product Hunt', n: 4 }, { answer: 'Not answered yet', n: 3 }, { answer: 'A friend', n: 1 }],
   };
 }
 
@@ -88,6 +89,7 @@ async function run(browser, opts) {
   check(t.includes('24') && t.includes('of 10,000'), 'Brevo budget meter shows');
   check(t.includes('Made by Gerald') && t.includes('63.6%'), 'feature shares of pizzas delivered (Logo 14 of 22)');
   check(t.includes('Where new members came from') && t.includes('From partners'), 'signup sources show');
+  check(t.includes('How they heard about us') && (await page.textContent('#sa-heard')).includes('Product Hunt4'), 'sign-up question answers show with counts');
   check(t.includes('Every number') && t.includes('Before means'), 'full table shows with the comparison dates');
   check(t.includes('$4.99'), 'money formats as dollars');
   check(t.includes('No finished periods yet'), 'history empty state shows');

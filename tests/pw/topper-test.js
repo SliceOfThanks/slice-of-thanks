@@ -51,7 +51,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     st.handler = (path, req) => {
       let b = null; try { b = JSON.parse(req.postData() || 'null'); } catch (e) {}
       if (b) (st.bodies[path] = st.bodies[path] || []).push(b);
-      if (path === '/session') { const s = session(plan, { monthly: 50 }, {}); s.features = { automations: plan !== 'free' }; return s; }
+      if (path === '/session') { const s = session(plan, { monthly: 50 }, {}); s.features = { automations: plan !== 'free' }; if (plan === 'pro') s.login_email = 'owner@test.com'; return s; }
       if (path === '/people') return { ok: true, people: [{ id: 'p1', name: 'Rebecca Jones', email: 'rebecca@x.test', company: '', history: [] }] };
       if (path === '/presets') return { ok: true, limit: 10, presets: [] };
       if (path === '/calendar') return { ok: true, integrations: [], meetings: [] };
@@ -99,6 +99,9 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     await inRoot(page, "const b=R.querySelector('#liveSheet');if(b)b.hidden=true"); 
     const acc = await inRoot(page, "const c=R.querySelector('#liveAccount');const v=R.querySelector('#view-settings');return [!!c, c&&!!c.querySelector('#liveLogout'), c&&!!c.querySelector('#liveDelete'), c===v.lastElementChild||[...v.querySelectorAll(':scope > .card')].filter(x=>!x.hidden).pop()===c]");
     check(acc.every(Boolean), plan + ': Account card holds Log out and Delete, at the bottom: ' + acc);
+    const loginAs = await inRoot(page, "const p=R.querySelector('#liveLoginAs');return [p&&!p.hidden, p&&p.textContent]");
+    if (plan === 'pro') check(loginAs[0] && loginAs[1] === 'Logged in as owner@test.com', 'pro: Account card says which email is logged in: ' + loginAs[1]);
+    else check(!loginAs[0], 'free: no login line when the server has no email');
     await inRoot(page, "R.querySelector('#liveDelete').click()"); await wait(200);
     const title = await inRoot(page, "return R.querySelector('#liveSheet h2').textContent");
     if (plan === 'pro') check(title === 'Cancel your plan first', 'pro: asked to cancel the plan first: ' + title);

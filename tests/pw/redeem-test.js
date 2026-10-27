@@ -99,6 +99,11 @@ async function redeem(page, code) { await inRoot(page, "const i=R.querySelector(
   await inRoot(r.page, "R.querySelector('#planRedeem').click()"); await wait(300);
   check(await vis(r.page, '#view-redeem') && await vis(r.page, '#rdForm'), 'Redeem AppSumo code opens the redeem page');
   await r.ctx.close();
+  // 5b. All 3 codes: the Redeem AppSumo code button is gone
+  r = await run(browser, '/kitchen', { codes: 3 });
+  await inRoot(r.page, "R.querySelector('#tab-settings').click()"); await wait(300);
+  check(!(await vis(r.page, '#planRedeem')) && (await txt(r.page, '#planCard p.muted')).indexOf('3 of 3 codes: 750 emails a month') === 0, 'With 3 codes the Redeem button is hidden and the card says 750');
+  await r.ctx.close();
   // 6. Members without codes see the button too, and the free plan name
   r = await run(browser, '/kitchen', { codes: 0 });
   await inRoot(r.page, "R.querySelector('#tab-settings').click()"); await wait(300);

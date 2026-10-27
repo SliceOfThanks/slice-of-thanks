@@ -204,6 +204,8 @@ renderPlanCard = function () {
     const rb = document.createElement('button'); rb.type = 'button'; rb.className = 'btn small'; rb.id = 'planRedeem'; rb.textContent = 'Redeem AppSumo code'; rb.onclick = () => show('redeem');
     row.appendChild(rb);
   }
+  /* All 3 codes in: nothing left to redeem */
+  if ($('#planRedeem')) $('#planRedeem').hidden = (as.codes || 0) >= (as.max || 3);
   if (row && s.plan !== 'free' && !$('#planPacks')) {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'btn small'; b.id = 'planPacks'; b.textContent = 'Buy more emails'; b.onclick = openPacks;
     row.insertBefore(b, row.firstChild);
